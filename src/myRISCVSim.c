@@ -26,6 +26,8 @@ static unsigned int X[32];
 //memory
 static unsigned char MEM[4000];
 
+static unsigned char DataMEM[1000];
+
 //intermediate datapath and control path signals
 static unsigned int instruction_word;
 static unsigned int operand1;
@@ -35,6 +37,8 @@ static unsigned int pc=0;
 static unsigned int ALUop = 0;
 static unsigned int ALUResult = 0;
 
+static unsigned int MemOp = 0;
+static unsigned int ReadData = 0;
 
 void run_riscvsim() {
   while(1) {
@@ -156,6 +160,29 @@ void execute() {
 }
 //perform the memory operation
 void mem() {
+  /*
+    MemOp operation
+    0 - Do nothing (skip)
+    1 - Write 
+    2 - Read
+  */
+  if (MemOp == 0)
+  { 
+    ReadData = ALUResult;
+  }
+  else if (MemOp == 1)
+  {
+    int *data_p;
+    data_p = (int*)(DataMEM + ALUResult);
+    *data_p = operand2;
+    ReadData = operand2;
+  }
+  else if (MemOp == 2)
+  {
+    int *data_p;
+    data_p = (int*)(DataMEM + ALUResult);
+    ReadData = *data_p;
+  }
 }
 //writes the results back to register file
 void write_back() {
