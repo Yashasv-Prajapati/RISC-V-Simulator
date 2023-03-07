@@ -32,6 +32,9 @@ static unsigned int operand1;
 static unsigned int operand2;
 static unsigned int pc=0;
 
+static unsigned int ALUop = 0;
+static unsigned int ALUResult = 0;
+
 
 void run_riscvsim() {
   while(1) {
@@ -105,6 +108,51 @@ void decode() {
 }
 //executes the ALU operation based on ALUop
 void execute() {
+  /*
+    ALUop operation
+    0 - perform none (skip)
+    1 - add
+    2 - subtract
+    3 - and
+    4 - or 
+    5 - shift left
+    6 - shift right
+    7 - xor
+    8 - set less than
+  */
+
+  if (ALUop == 1)
+  {
+    ALUResult = operand1 + operand2;
+  }
+  else if (ALUop == 2)
+  {
+    ALUResult = operand1 - operand2;
+  }
+  else if (ALUop == 3)
+  {
+    ALUResult = operand1 & operand2;
+  }
+  else if (ALUop == 4)
+  {
+    ALUResult = operand1 | operand2;
+  }
+  else if (ALUop == 5)
+  {
+    ALUResult = operand1 << operand2;
+  }
+  else if (ALUop == 6)
+  {
+    ALUResult = operand1 >> operand2;
+  }
+  else if (ALUop == 7)
+  {
+    ALUResult = operand1 ^ operand2;
+  }
+  else if (ALUop == 8)
+  {
+    ALUResult = (operand1 < operand2)?1:0;
+  }
 }
 //perform the memory operation
 void mem() {
