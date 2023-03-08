@@ -40,6 +40,9 @@ static unsigned int ALUResult = 0;
 static unsigned int MemOp = 0;
 static unsigned int ReadData = 0;
 
+static unsigned int ResultSelect = 0;
+static unsigned int RFWrite = 0;
+
 void run_riscvsim() {
   while(1) {
     fetch();
@@ -184,8 +187,40 @@ void mem() {
     ReadData = *data_p;
   }
 }
+
+
 //writes the results back to register file
 void write_back() {
+  /*
+    ResultSelect
+    0 - PC+4
+    1 - ImmU_lui
+    2 - ImmU_auipc
+    3 - LoadData
+    4 - ALUResult
+  */
+  if(!RFWrite)
+    switch(ResultSelect){
+      case 0:{
+        rd = pc+4;
+      }
+      case 1:{
+        rd = ImmU_lui << 12;
+      }
+      case 2:{
+        rd = pc + (Immu_auipc << 12) ;
+      }
+      case 3:{
+        static unsigned int *LoadData;
+        LoadData = ReadData ;
+        rd = LoadData;
+      }
+      case 4:{
+        rd = ALUResult;
+      }
+    }
+
+
 }
 
 
