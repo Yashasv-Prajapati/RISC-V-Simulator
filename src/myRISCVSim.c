@@ -59,12 +59,13 @@ void load_program_memory(char *file_name) {
     printf("Error opening input mem file\n");
     exit(1);
   }
+  
   while(fscanf(fp, "%x %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
   }
   fclose(fp);
   for(int i=0;i<4000;i++){
-    printf("%d ", MEM[i]);
+    printf("%x ", MEM[i]);
   }
 }
 
@@ -97,7 +98,7 @@ void fetch(){
     exit(0);
   }
   instruction_word = read_word(MEM, pc);
-  printf("instruction word is %x\n", instruction_word);
+  // printf("instruction word is %x\n", instruction_word);
   pc = pc + 4;
 }
 //reads the instruction register, reads operand1, operand2 fromo register file, decides the operation to be performed in execute stage
@@ -125,12 +126,4 @@ void write_word(char *mem, unsigned int address, unsigned int data) {
   printf(" address is %d\n", address);
   data_p = (int*) (mem + address);
   *data_p = data;
-}
-
-
-void parseBytes(char *mem, unsigned int address){
-  int *data_p;
-  data_p = (int*) (mem + address);
-  unsigned int data = MEM[address];
-
 }
