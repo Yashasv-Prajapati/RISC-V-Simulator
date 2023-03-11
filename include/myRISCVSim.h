@@ -21,6 +21,7 @@ void write_data_memory();
 void swi_exit();
 
 
+
 //reads from the instruction memory and updates the instruction register
 void fetch();
 //reads the instruction register, reads operand1, operand2 fromo register file, decides the operation to be performed in execute stage

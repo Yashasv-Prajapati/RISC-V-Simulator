@@ -26,7 +26,7 @@ static unsigned int X[32];
 //memory
 static unsigned char MEM[4000];
 
-static unsigned char DataMEM[1000];
+static unsigned char DataMEM[10000];
 
 //intermediate datapath and control path signals
 static unsigned int instruction_word;
@@ -39,6 +39,7 @@ static unsigned int ALUResult = 0;
 
 static unsigned int MemOp = 0;
 static unsigned int ReadData = 0;
+static unsigned int LoadData=0;
 
 static unsigned int ResultSelect = 0;
 static unsigned int RFWrite = 0;
@@ -161,7 +162,14 @@ void execute() {
   {
     ALUResult = (operand1 < operand2)?1:0;
   }
+
+  // branch target select address calculation
+  
+
+
+
 }
+
 //perform the memory operation
 void mem() {
   /*
@@ -174,14 +182,14 @@ void mem() {
   { 
     ReadData = ALUResult;
   }
-  else if (MemOp == 1)
+  else if (MemOp == 1) // write
   {
     int *data_p;
     data_p = (int*)(DataMEM + ALUResult);
     *data_p = operand2;
     ReadData = operand2;
   }
-  else if (MemOp == 2)
+  else if (MemOp == 2) // read
   {
     int *data_p;
     data_p = (int*)(DataMEM + ALUResult);
@@ -197,9 +205,13 @@ void write_back() {
     0 - PC+4
     1 - ImmU_lui
     2 - ImmU_auipc
-    3 - LoadData
+    3 - LoadData - essentially same as ReadData
     4 - ALUResult
   */
+
+//  rd , ImmU_lui, Immu_auipc are to be decided, so creating temp variables in their name
+  int rd, ImmU_lui, Immu_auipc;
+
   if(!RFWrite)
     switch(ResultSelect){
       case 0:{
@@ -212,8 +224,7 @@ void write_back() {
         rd = pc + (Immu_auipc << 12) ;
       }
       case 3:{
-        static unsigned int *LoadData;
-        LoadData = ReadData ;
+        LoadData = ReadData;
         rd = LoadData;
       }
       case 4:{
@@ -233,7 +244,6 @@ int read_word(char *mem, unsigned int address) {
 
 void write_word(char *mem, unsigned int address, unsigned int data) {
   int *data_p;
-  printf(" address is %d\n", address);
   data_p = (int*) (mem + address);
   *data_p = data;
 }
