@@ -23,7 +23,7 @@ Date:
 
 //Register file
 static unsigned int X[32];
-//X[0]=0;
+// X[0]=0;
 //flags
 //memory
 static unsigned char MEM[4000];
