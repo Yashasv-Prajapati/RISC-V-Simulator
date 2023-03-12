@@ -1,16 +1,17 @@
 const express = require('express')
 const fs = require('fs')
-// const path = require('path')
 const app = express()
 const cors = require('cors')
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 
-// Serve static files from the React app
-// app.use(express.static(path.join(__dirname, 'client/build')))
+// middleware
 app.use(cors())
-// An api endpoint that returns a short list of items
+app.use(express.json())
 
+
+// An api endpoint that returns a short list of items
 app.post('/api/getData', (req, res) => {
+
     const textData = req.body.textData;
 
     // write to file named test.mem
@@ -19,18 +20,35 @@ app.post('/api/getData', (req, res) => {
         console.log('Saved!');
     });
 
-    // let rawdata = fs.readFileSync('data.json')
-    exec('./myRISCVSim test.mem', (err, stdout, stderr) => {
-        if(err){
-            console.log(`exec error: ${err}`);
-            return;
-        }else{
-            console.log(`stdout: ${stdout}`);
-            console.log(`stderr: ${stderr}`);
-        }
+    const resultData = "";
+    const success = true;
+    // spawn new child process to run the executable
+    const process = spawn('./myRISCVSim', ['./test.mem']);
     
-    })
-    res.status(201).json(data)
+    // listen for output
+    process.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+        resultData = data;
+        success = true;
+    });
+    
+    // listen for errors
+    process.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+        resultData = data;
+        success = false;
+    });
+    
+    // listen for the process to exit
+    process.on('close', (code) => {
+        console.log(`child process exited with code ${code}`);
+    });
+
+    const DataToSend = {
+        resultData: resultData,
+        success:success
+    }
+    res.status(201).json(DataToSend)
 })
 
 

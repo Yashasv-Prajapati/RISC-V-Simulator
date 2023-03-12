@@ -12,19 +12,22 @@ function App() {
     if(textData===null || textData===undefined || textData===''){
       return;
     }
-    fetch('http://localhost:5000/api/getData', {
+
+    fetch("http://localhost:5000/api/getData", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({textData})
-        })
-        .then(res => 
-          res.json().then(data => {
-            console.log(data);
-            }
-          )
-        )
+      },
+      body: JSON.stringify({textData})
+    })
+    .then(res => 
+      res.json().then(data => {
+        console.log(data);
+        }
+      ).catch(err=>console.log(err))
+    ).catch(err=>{
+      console.log(err)
+    })
 
 
 
