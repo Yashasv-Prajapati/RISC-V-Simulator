@@ -73,13 +73,14 @@ int BranchTargetResult;
 int imm_final_decimal;
 int BranchTargetAddress;
 int isBranch;
-static int t=100;
+static int t=14;
 
 void run_riscvsim() {
   
- while(1){
-  //  printf("t in starting of loop=%d\n", t);
-  //  printf("pc before fetch=%d\n", pc);
+ while(t>0){
+  t--;
+   printf("t in starting of loop=%d\n", t);
+   printf("pc before fetch=%d\n", pc);
    fetch();
    if (pc > 4000)
    {
@@ -87,27 +88,26 @@ void run_riscvsim() {
     }
 
     X[0]=0;
-    // printf("pc after fetch=%d\n",pc);
+     printf("pc after fetch=%d\n",pc);
     decode();
 
     X[0]=0;
-    // printf("pc after decode=%d\n",pc);
+     printf("pc after decode=%d\n",pc);
     execute();
 
     X[0]=0;
-    // printf("pc after execute=%d\n",pc);
+    printf("pc after execute=%d\n",pc);
     mem();
 
     X[0]=0;
-    // printf("pc after mem=%d\n",pc);
+    printf("pc after mem=%d\n",pc);
     write_back();
-    // printf("pc after write_back=%d\n",pc);
+    printf("pc after write_back=%d\n",pc);
     // if(t<0){
     //   break;
     // }
     X[0]=0;
-    t--;
-    // printf("t in ending of loop=%d\n",t);
+    printf("t in ending of loop=%d\n",t);
     // printf("X[2] at end of loop=%d\n",X[2]);
     printf("\n");
  }
@@ -249,7 +249,7 @@ void decode() {
       // printf("immJ=%s\n",immJ);
       imm_final_gen(imm_final,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      // printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
+      printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
       printf("instType=%c\n",instType);
       // printf("OpCode=%s\n",opCode);
       //Control Signals
@@ -378,11 +378,11 @@ void write_back() {
         break;
       }
       case 1:{
-        X[rd_decimal] = imm_final_decimal << 12;
+        X[rd_decimal] = imm_final_decimal;
         break;
       }
       case 2:{
-        X[rd_decimal] = pc + (imm_final_decimal << 12) ;
+        X[rd_decimal] = pc + (imm_final_decimal) ;
         break;
       }
       case 3:{
@@ -401,6 +401,7 @@ void write_back() {
   }
     
     printf("ISbranch=%d and ALUResult=%d\n",isBranch,ALUResult);
+    printf("Branch Target Address=%d\n",BranchTargetAddress);
     //IS BRANCH MUX
     /*
       IsBranch=0 => ALUResult
@@ -589,7 +590,7 @@ void immU_gen(char* immU,char* bin_32_arr){
 //        printf("bin_32_arr[i] = %c\n", bin_32_arr[i]);
     }
     immU[32]='\0';
-//    printf("IMMU AFTER %s\n", immU);
+    printf("IMMU AFTER %s\n", immU);
 //    printf("IMMU SIZE %d\n", sizeof(immU)/sizeof(immU[0]));
 }
 void immJ_gen(char* immJ,char* bin_32_arr){
@@ -608,6 +609,7 @@ void signExtender(char *array,int index){
     for(int i=index+1;i<=31;i++){
         array[i]=array[index];
     }
+    array[32]='\0';
 }
 
 void imm_final_gen(char *imm_final,char* bin_32_arr){
@@ -641,9 +643,13 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
         signExtender(imm_final,12);
     }
     else if(!strncmp(opCode,"1110110",7)){
+      printf("yooooooo\n");
         //U-Type
         instType='U';
         strncpy(imm_final,immU,32);
+        imm_final[32]='\0';
+        printf("Immu finzlllll: %s\n", imm_final);
+        
 //        signExtender(imm_final)
     }
     else if(!strncmp(opCode,"1111011",7)){
@@ -655,6 +661,7 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
       instType = 'Z';
     }
     imm_final_decimal=BintoDec(imm_final,32);
+    printf("kkkkkkk: %d\n", imm_final_decimal);
 }
 void ALUop_gen(){
     /*
@@ -878,7 +885,7 @@ void ResultSelect_gen(){
     if(!strncmp(opCode, "1110110",7)){
         ResultSelect=1;
         RFWrite = 1;
-        // printf("ResultSelect=1");
+         printf("ResultSelect=1");
         // printf("ResultSelect=1");
     }
     else if(!strncmp(opCode, "1110100",7)){
