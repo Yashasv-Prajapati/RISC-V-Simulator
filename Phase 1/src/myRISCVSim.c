@@ -77,30 +77,38 @@ static int t=100;
 
 void run_riscvsim() {
   
- while(t>0){
-   printf("t in starting of loop=%d\n", t);
-   printf("pc before fetch=%d\n", pc);
+ while(1){
+  //  printf("t in starting of loop=%d\n", t);
+  //  printf("pc before fetch=%d\n", pc);
    fetch();
    if (pc > 4000)
    {
      break;
     }
-    printf("pc after fetch=%d\n",pc);
+
+    X[0]=0;
+    // printf("pc after fetch=%d\n",pc);
     decode();
-    printf("pc after decode=%d\n",pc);
+
+    X[0]=0;
+    // printf("pc after decode=%d\n",pc);
     execute();
-    printf("pc after execute=%d\n",pc);
+
+    X[0]=0;
+    // printf("pc after execute=%d\n",pc);
     mem();
-    printf("pc after mem=%d\n",pc);
+
+    X[0]=0;
+    // printf("pc after mem=%d\n",pc);
     write_back();
-    printf("pc after write_back=%d\n",pc);
+    // printf("pc after write_back=%d\n",pc);
     // if(t<0){
     //   break;
     // }
     X[0]=0;
     t--;
-    printf("t in ending of loop=%d\n",t);
-    printf("X[2] at end of loop=%d\n",X[2]);
+    // printf("t in ending of loop=%d\n",t);
+    // printf("X[2] at end of loop=%d\n",X[2]);
     printf("\n");
  }
   printf("SHOWING ALL THE REGISTERS\n");
@@ -157,7 +165,7 @@ void load_program_memory(char *file_name) {
 
   while(fscanf(fp, "%X %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
-    printf("Instruction word from file is %d and address=%d and &instruction=%d and &address=%d\n", instruction,address,&instruction,&address);
+    // printf("Instruction word from file is %d and address=%d and &instruction=%d and &address=%d\n", instruction,address,&instruction,&address);
     // printf("Instruction word from file in hex is %X\n", instruction);
   }
 
@@ -415,9 +423,9 @@ unsigned int read_word(char *mem, unsigned int address) {
   unsigned int *data;
   // printf("here instruction_word=%d\n",instruction_word);
   printf("pc=%d\n",pc);
-  printf("mem=%d and address=%d",mem,address);
+  // printf("mem=%d and address=%d",mem,address);
   data =  (unsigned int*) (mem + address);
-  printf("READ DATA from read_word function is %d and *data=%d\n", data,*data);
+  // printf("READ DATA from read_word function is %d and *data=%d\n", data,*data);
   return *data;
 }
 
@@ -517,13 +525,13 @@ void rs1_gen(char *rs1,char *bin_32_arr){
     for(int i=15;i<=19;i++){
         rs1[i-15]=bin_32_arr[i];
     }
-    rs1[6]='\0';
+    rs1[5]='\0';
 }
 void rs2_gen(char *rs2,char *bin_32_arr){
     for(int i=20;i<=24;i++){
         rs2[i-20]=bin_32_arr[i];
     }
-    rs2[6]='\0';
+    rs2[5]='\0';
 }
 void funct3_gen(char *funct3,char *bin_32_arr){
     for(int i=12;i<=14;i++){
@@ -607,38 +615,38 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
     
         // printf("YES HERE\n");
         // printf("opCode = %s\n", opCode);
-    if(!strcmp(opCode,"1100110")){
+    if(!strncmp(opCode,"1100110", 7)){
         //R-Type
         instType='R';
         // printf("YES HERE\n");
 //        strncpy(imm_final,imm,12);
 //        signExtender(imm_final,11);
     }
-    else if(!strcmp(opCode,"1100100") || !strcmp(opCode,"1100000")){
+    else if(!strncmp(opCode,"1100100", 7) || !strncmp(opCode,"1100000", 7)){
         //I-type
         instType='I';
         strncpy(imm_final,imm,12);
         signExtender(imm_final,11);
     }
-    else if(!strcmp(opCode,"1100010")){
+    else if(!strncmp(opCode,"1100010",7)){
         //S-Type
         instType='S';
         strncpy(imm_final,immS,12);
         signExtender(imm_final,11);
     }
-    else if(!strcmp(opCode,"1100011")){
+    else if(!strncmp(opCode,"1100011",7)){
         //B-Type
         instType='B';
         strncpy(imm_final,immB,13);
         signExtender(imm_final,12);
     }
-    else if(!strcmp(opCode,"1110110")){
+    else if(!strncmp(opCode,"1110110",7)){
         //U-Type
         instType='U';
         strncpy(imm_final,immU,32);
 //        signExtender(imm_final)
     }
-    else if(!strcmp(opCode,"1111011")){
+    else if(!strncmp(opCode,"1111011",7)){
         //J-Type
         instType='J';
         strncpy(imm_final,immJ,21);
@@ -661,31 +669,31 @@ void ALUop_gen(){
       7 - xor
       8 - set less than
     */
-    if(strcmp(funct3,"000")==0&&instType=='R'){
+    if(strncmp(funct3,"000",3)==0&&instType=='R'){
         ALUop=1;
     }
-    else if(strcmp(funct3,"111")==0&&instType=='I'){
+    else if(strncmp(funct3,"111",3)==0&&instType=='I'){
         ALUop=3;
     }
-    else if(strcmp(funct3,"011")==0){
+    else if(strncmp(funct3,"011",3)==0){
             ALUop=4;
     }
-    else if(strcmp(funct3,"100")==0&&instType=='R'){
+    else if(strncmp(funct3,"100",3)==0&&instType=='R'){
         ALUop=5;
     }
-    else if(strcmp(funct3,"010")==0&&instType=='R'){
+    else if(strncmp(funct3,"010",3)==0&&instType=='R'){
         ALUop=8;
     }
-    else if(strcmp(funct3,"101")==0&&instType=='R'){
+    else if(strncmp(funct3,"101",3)==0&&instType=='R'){
         ALUop=6;
     }
-    else if(strcmp(funct3,"001")==0&&instType=='R'){
+    else if(strncmp(funct3,"001",3)==0&&instType=='R'){
         ALUop=7;
     }
     else if(instType=='B'){
         ALUop=2;
     }
-    else if(strcmp(funct7,"0000010")==0&&strcmp(funct3,"000")==0&&instType=='R'){
+    else if(strncmp(funct7,"0000010",7)==0&&strncmp(funct3,"000",3)==0&&instType=='R'){
         ALUop=2;
     }
     else{
@@ -847,7 +855,7 @@ void MemOp_gen(){
         MemOp=1;
       // printf("YES HERE 1 \n");
     }
-    else if(!strcmp(opCode,"1100000")){
+    else if(!strncmp(opCode,"1100000",7)){
         MemOp=2;
       // printf("YES HERE \n");
     }
@@ -867,27 +875,27 @@ void ResultSelect_gen(){
     4 - ALUResult
   */
     RFWrite = 0;
-    if(!strcmp(opCode, "1110110")){
+    if(!strncmp(opCode, "1110110",7)){
         ResultSelect=1;
         RFWrite = 1;
         // printf("ResultSelect=1");
         // printf("ResultSelect=1");
     }
-    else if(!strcmp(opCode, "1110100")){
+    else if(!strncmp(opCode, "1110100",7)){
         ResultSelect=2;
         RFWrite = 1;
         // printf("ResultSelect=2");
     }
-    else if(!strcmp(opCode, "1111011")||!strcmp(opCode, "1110011")){
+    else if(!strncmp(opCode, "1111011",7)||!strncmp(opCode, "1110011",7)){
         ResultSelect=0;
         RFWrite = 1;
         // printf("ResultSelect=3");
     }
-    else if(!strcmp(opCode, "1100000")){
+    else if(!strncmp(opCode, "1100000",7)){
         ResultSelect=3;
         RFWrite = 1;
         // printf("ResultSelect=4");
-    }else if(!strcmp(opCode, "1100010")){ // store instruction - no write to RF added
+    }else if(!strncmp(opCode, "1100010",7)){ // store instruction - no write to RF added
         RFWrite = 0;
     }
     else if(instType=='B'){
@@ -907,6 +915,7 @@ void IsBranch_gen(){
       =1         => BranchTargetAddress
       =2         => pc+4(default)
     */
+   printf("operand1=%d operand2=%d", operand1, operand2);
     if(opCode=="1110011"){
         isBranch=0;
     }
@@ -914,27 +923,30 @@ void IsBranch_gen(){
       isBranch=2;
 
       // we already have funct3 for Branch so using that funct3
-      if(!strcmp(funct3, "000")){
+      printf("strncmp= %d", strncmp(funct3, "000", 3));
+
+      if(!strncmp(funct3, "000", 3)){
         // beq 
         if(operand1==operand2){
             isBranch=1;
         }
       }
-      if(!strcmp(funct3, "100")){
+
+      if(!strncmp(funct3, "100", 3)){
         // bne
         if(operand1!=operand2){
             isBranch=1;
         }
       }
 
-      if(!strcmp(funct3, "001")){
+      if(!strncmp(funct3, "001", 3)){
         // blt
         if(operand1<operand2){
             isBranch=1;
         }
       }
 
-      if(!strcmp(funct3, "101")){
+      if(!strncmp(funct3, "101", 3)){
         // bge
         if(operand1>=operand2){
             isBranch=1;
