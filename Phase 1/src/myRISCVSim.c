@@ -38,7 +38,7 @@ static unsigned int operand2;
 static unsigned int pc=0;
 
 static unsigned int ALUop = 0;
-static unsigned int ALUResult = 0;
+static int ALUResult = 0;
 
 static unsigned int MemOp = 0;
 static unsigned int ReadData = 0;
@@ -73,11 +73,11 @@ int BranchTargetResult;
 int imm_final_decimal;
 int BranchTargetAddress;
 int isBranch;
-static int t=14;
+static int t=4000;
 
 void run_riscvsim() {
   
- while(t>0){
+ while(1){
   t--;
    printf("t in starting of loop=%d\n", t);
    printf("pc before fetch=%d\n", pc);
@@ -115,6 +115,10 @@ void run_riscvsim() {
   for(int i=0;i<32;i++){
     printf("X[%d] = %d\n", i, X[i]);
   }
+  // printf("SHOWING ALL MEMORY\n");
+  // for(int i=0;i<100;i++){
+  //   printf("D[%d] = %d\n", i, DataMEM[i]);
+  // }
 }
 
 // it is used to set the reset values
@@ -175,7 +179,7 @@ void load_program_memory(char *file_name) {
   // }
 
   // initialize the data memory
-  DataMEM = (unsigned char*) calloc(100,sizeof(unsigned char));
+  DataMEM = (unsigned char*) calloc(2147483647 ,sizeof(unsigned char));
 
 }
 
@@ -624,7 +628,7 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
 //        strncpy(imm_final,imm,12);
 //        signExtender(imm_final,11);
     }
-    else if(!strncmp(opCode,"1100100", 7) || !strncmp(opCode,"1100000", 7)){
+    else if(!strncmp(opCode,"1100100", 7) || !strncmp(opCode,"1100000", 7)||!strncmp(opCode,"1110011",7)){
         //I-type
         instType='I';
         strncpy(imm_final,imm,12);
@@ -676,7 +680,7 @@ void ALUop_gen(){
       7 - xor
       8 - set less than
     */
-    if(strncmp(funct3,"000",3)==0&&instType=='R'){
+    if(strncmp(funct3,"000",3)==0&&instType=='R'&&strncmp(funct7,"0000000",7)==0){
         ALUop=1;
     }
     else if(strncmp(funct3,"111",3)==0&&instType=='I'){
@@ -923,7 +927,7 @@ void IsBranch_gen(){
       =2         => pc+4(default)
     */
    printf("operand1=%d operand2=%d", operand1, operand2);
-    if(opCode=="1110011"){
+    if(strncmp(opCode,"1110011",7)==0){
         isBranch=0;
     }
     else if(instType=='B'){
