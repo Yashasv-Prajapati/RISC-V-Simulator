@@ -1,3 +1,5 @@
 *.svg
 /node_modules
 node_modules
+myRISCVSim
+myRISCVSim.exe
