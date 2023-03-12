@@ -148,7 +148,7 @@ void load_program_memory(char *file_name) {
   while(fscanf(fp, "%X %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
     printf("Instruction word from file is %d\n", instruction);
-    printf("Instruction word from file in hex is %X\n", instruction);
+    // printf("Instruction word from file in hex is %X\n", instruction);
   }
 
   fclose(fp);
@@ -186,7 +186,7 @@ void swi_exit() {
 //reads from the instruction memory and updates the instruction register
 void fetch(){
   instruction_word = read_word(MEM, pc);
-  printf("instruction_word Read from memory=%d\n", instruction_word);
+  // printf("instruction_word Read from memory=%d\n", instruction_word);
 }
 //reads the instruction register, reads operand1, operand2 fromo register file, decides the operation to be performed in execute stage
 void decode() {
@@ -403,7 +403,7 @@ void write_back() {
 unsigned int read_word(char *mem, unsigned int address) {
   unsigned int *data;
   data =  (unsigned int*) (mem + address);
-  printf("READ DATA from read_word function is %d\n", data);
+  // printf("READ DATA from read_word function is %d\n", data);
   return *data;
 }
 
@@ -445,10 +445,10 @@ void Dec_to_Hex(){
         i++;
         decimal_Number = decimal_Number / 16;
     }
-    // while(i<8){
-    //     hexa_instr[i]='0';
-    //     i++;
-    // }
+    while(i<8){
+        hexa_instr[i]='0';
+        i++;
+    }
     hex_instr[8]='\0';
     // sprintf(hex_instr, "%08X", decimal_Number);
     // printf("hex_instr is %s and it's length is %lu\n", hex_instr, strlen(hex_instr));
@@ -456,9 +456,10 @@ void Dec_to_Hex(){
    for(int i=0;i<=7;i++){
        hex_instr[i]=hexa_instr[7-i];
    }
-   printf("instruction word is %d\n", instruction_word);
+  //  printf("instruction word is %d\n", instruction_word);
   //  printf("actual hex = %X\n", instruction_word);
     printf("HEX_INSTRUCTION STRING IS %s\n", hex_instr);
+    printf("HEXA_INSTRUCTION STRING IS %s\n", hexa_instr);
 
 }
 //int char_to_int(char c){
@@ -590,12 +591,12 @@ void signExtender(char *array,int index){
 void imm_final_gen(char *imm_final,char* bin_32_arr){
   // printf("STRING COMPARE = %d and opCode is = %s\n", strcmp(opCode,"1100100"), opCode);
     
-        printf("YES HERE\n");
-        printf("opCode = %s\n", opCode);
+        // printf("YES HERE\n");
+        // printf("opCode = %s\n", opCode);
     if(!strcmp(opCode,"1100110")){
         //R-Type
         instType='R';
-        printf("YES HERE\n");
+        // printf("YES HERE\n");
 //        strncpy(imm_final,imm,12);
 //        signExtender(imm_final,11);
     }
