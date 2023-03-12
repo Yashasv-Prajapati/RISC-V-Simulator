@@ -32,7 +32,7 @@ unsigned char *DataMEM;
 
 
 //intermediate datapath and control path signals
-static unsigned long long int instruction_word=0;
+static unsigned int instruction_word=0;
 static unsigned int operand1;
 static unsigned int operand2;
 static unsigned int pc=0;
@@ -73,11 +73,11 @@ int BranchTargetResult;
 int imm_final_decimal;
 int BranchTargetAddress;
 int isBranch;
-static int t=9;
+static int t=20;
 
 void run_riscvsim() {
 
- while(1){
+ while(t>0){
     fetch();
     if(pc>4000){
       break;
@@ -90,6 +90,8 @@ void run_riscvsim() {
     //   break;
     // }
     X[0]=0;
+    t--;
+    printf("\n");
  }
   printf("SHOWING ALL THE REGISTERS\n");
   for(int i=0;i<32;i++){
@@ -135,16 +137,20 @@ void reset_proc() {
 // memory
 void load_program_memory(char *file_name) {
   FILE *fp;
-  unsigned int address, instruction;
+  unsigned int address;
+  unsigned int instruction;
   fp = fopen(file_name, "r");
   if(fp == NULL) {
     printf("Error opening input mem file\n");
     exit(1);
   }
 
-  while(fscanf(fp, "%X %X", &address, &instruction) != EOF) {
+  while(fscanf(fp, "%X %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
+    printf("Instruction word from file is %d\n", instruction);
+    printf("Instruction word from file in hex is %X\n", instruction);
   }
+
   fclose(fp);
   // for(int i=0;i<4000;i++){
   //   printf("%x ", MEM[i]);
@@ -177,36 +183,36 @@ void swi_exit() {
   exit(0);
 }
 
-
 //reads from the instruction memory and updates the instruction register
 void fetch(){
   instruction_word = read_word(MEM, pc);
+  printf("instruction_word Read from memory=%d\n", instruction_word);
 }
 //reads the instruction register, reads operand1, operand2 fromo register file, decides the operation to be performed in execute stage
 void decode() {
     Dec_to_Hex();//+++++++++c
     // printf("hex_instr=%s\n",hex_instr);
       HexToBin(hex_instr,bin_32_arr);
-      // printf("bin_32_arr=%s\n",bin_32_arr);
+      printf("bin_32_arr=%s\n",bin_32_arr);
       // Working Fine
       opCode_gen(opCode,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
+      printf("OpCode=%s\n",opCode);
       rs1_gen(rs1,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      //  printf("rs1=%s\n",rs1);
+       printf("rs1=%s\n",rs1);
       rs2_gen(rs2,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      // printf("rs2=%s\n",rs2);
+      printf("rs2=%s\n",rs2);
       rd_gen(rd,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      // printf("rd=%s and rd_decimal=%d\n",rd,rd_decimal);
+      printf("rd=%s and rd_decimal=%d\n",rd,rd_decimal);
       // printf("OpCode=%s\n",opCode);
       funct3_gen(funct3,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      // printf("funct3=%s\n",funct3);
+      printf("funct3=%s\n",funct3);
       funct7_gen(funct7,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      // printf("funct7=%s\n",funct7);
+      printf("funct7=%s\n",funct7);
       imm_gen(imm,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
       // printf("imm=%s\n",imm);
@@ -225,7 +231,7 @@ void decode() {
       imm_final_gen(imm_final,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
       // printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
-      // printf("instType=%c\n",instType);
+      printf("instType=%c\n",instType);
       // printf("OpCode=%s\n",opCode);
       //Control Signals
       ALUop_gen();
@@ -306,7 +312,7 @@ void mem() {
   */
   if (MemOp == 0)
   {
-    ReadData = 0;
+    ReadData = ALUResult;
   }
   else if (MemOp == 1) // Store
   {
@@ -378,9 +384,9 @@ void write_back() {
     
     //IS BRANCH MUX
     /*
-    IsBranch=0 => ALUResult
-    =1         => BranchTargetAddress
-    =2         => pc+4(default)
+      IsBranch=0 => ALUResult
+      =1         => BranchTargetAddress
+      =2         => pc+4(default)
     */
     if(isBranch==0){
         pc=ALUResult;
@@ -392,19 +398,18 @@ void write_back() {
         pc=pc+4;
     }
 
-    // reseting instType
-    // instType='X';
 }
 
 unsigned int read_word(char *mem, unsigned int address) {
   unsigned int *data;
   data =  (unsigned int*) (mem + address);
+  printf("READ DATA from read_word function is %d\n", data);
   return *data;
 }
 
 void write_word(char *mem, unsigned int address, unsigned int data) {
-  int *data_p;
-  data_p = (int*) (mem + address);
+  unsigned int *data_p;
+  data_p = (unsigned int*) (mem + address);
   *data_p = data;
 }
 
@@ -423,6 +428,7 @@ int BintoDec(char* Bin,int size){
 
 void Dec_to_Hex(){
     unsigned int decimal_Number=instruction_word;
+    printf("decimal number is %X\n", decimal_Number);
      char hexa_instr[8];
     int i=0;
     while (decimal_Number != 0) {
@@ -439,15 +445,20 @@ void Dec_to_Hex(){
         i++;
         decimal_Number = decimal_Number / 16;
     }
-    while(i<8){
-        hexa_instr[i]='0';
-        i++;
-    }
+    // while(i<8){
+    //     hexa_instr[i]='0';
+    //     i++;
+    // }
     hex_instr[8]='\0';
+    // sprintf(hex_instr, "%08X", decimal_Number);
+    // printf("hex_instr is %s and it's length is %lu\n", hex_instr, strlen(hex_instr));
+    
    for(int i=0;i<=7;i++){
        hex_instr[i]=hexa_instr[7-i];
    }
-    // printf("HEX_INSTRUCTION STRING IS %s\n", hexa_instr);
+   printf("instruction word is %d\n", instruction_word);
+  //  printf("actual hex = %X\n", instruction_word);
+    printf("HEX_INSTRUCTION STRING IS %s\n", hex_instr);
 
 }
 //int char_to_int(char c){
@@ -484,6 +495,7 @@ void opCode_gen(char *opCode,char *bin_32_arr){
     for(int i=0;i<=6;i++){
         opCode[i]=bin_32_arr[i];
     }
+    opCode[7]='\0';
 }
 
 void rs1_gen(char *rs1,char *bin_32_arr){
@@ -502,12 +514,14 @@ void funct3_gen(char *funct3,char *bin_32_arr){
     for(int i=12;i<=14;i++){
         funct3[i-12]=bin_32_arr[i];
     }
+    funct3[3]='\0';
 }
 
 void funct7_gen(char *rd,char *bin_32_arr){
     for(int i=25;i<=31;i++){
         funct7[i-25]=bin_32_arr[i];
     }
+    funct7[8]='\0';
 }
 void rd_gen(char *rd,char *bin_32_arr){
     for(int i=7;i<=11;i++){
@@ -575,9 +589,13 @@ void signExtender(char *array,int index){
 
 void imm_final_gen(char *imm_final,char* bin_32_arr){
   // printf("STRING COMPARE = %d and opCode is = %s\n", strcmp(opCode,"1100100"), opCode);
+    
+        printf("YES HERE\n");
+        printf("opCode = %s\n", opCode);
     if(!strcmp(opCode,"1100110")){
         //R-Type
         instType='R';
+        printf("YES HERE\n");
 //        strncpy(imm_final,imm,12);
 //        signExtender(imm_final,11);
     }
@@ -856,7 +874,38 @@ void IsBranch_gen(){
         isBranch=0;
     }
     else if(instType=='B'||instType=='J'){
-        isBranch=1;
+      isBranch=0;
+
+      // we already have funct3 for Branch so using that funct3
+      if(!strcmp(funct3, "000")){
+        // beq 
+        if(operand1==operand2){
+            isBranch=1;
+        }
+      }
+      if(!strcmp(funct3, "100")){
+        // bne
+        if(operand1!=operand2){
+            isBranch=1;
+        }
+      }
+
+      if(!strcmp(funct3, "001")){
+        // blt
+        if(operand1<operand2){
+            isBranch=1;
+        }
+      }
+
+      if(!strcmp(funct3, "101")){
+        // bge
+        if(operand1>=operand2){
+            isBranch=1;
+        }
+      }
+
+    }else if(instType=='J'){
+        isBranch = 1;
     }
     else{
         isBranch=2;
