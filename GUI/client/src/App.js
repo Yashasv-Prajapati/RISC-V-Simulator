@@ -47,7 +47,7 @@ function App() {
     }
 
     setIsEditor(false);
-    fetch("http://localhost:5000/api/run", {
+    fetch("http://localhost:5000/api/load", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -59,11 +59,11 @@ function App() {
         if(data.success){
 
           console.log(data);
-          const regArray = [];
-          for(let i=0;i<32;i++){
-            regArray.push(parseInt(data.resultData[`X[${i}]`]));
-          }
-          setRegisterData(regArray);
+          // const regArray = [];
+          // for(let i=0;i<32;i++){
+          //   regArray.push(parseInt(data.resultData[`X[${i}]`]));
+          // }
+          // setRegisterData(regArray);
         }
 
       }
@@ -124,7 +124,7 @@ function App() {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({prev})
+      body: JSON.stringify({'prevNum':`${prevNum-1<=0 ? 0: prevNum-1}`})
     })
     .then(res =>
       res.json().then(data => {

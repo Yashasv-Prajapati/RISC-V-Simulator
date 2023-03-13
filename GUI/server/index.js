@@ -2,9 +2,14 @@ const express = require('express')
 const fs = require('fs')
 const app = express()
 const cors = require('cors')
-const { spawn } = require('child_process');
-const RunData = require('./data_out.json') ? require('./data_out.json') : [];
+const { spawn, exec } = require('child_process');
 
+let RunData;
+try{
+    RunData = require('./data_out.json');
+}catch(err){
+    RunData = [];
+}
 // middleware
 app.use(cors())
 app.use(express.json())
@@ -12,6 +17,7 @@ app.use(express.json())
 
 // An api endpoint that returns a short list of items
 app.post('/api/load', (req, res) => {
+    
     const textData = req.body.textData;
 
     // write to file named test.mem
@@ -19,53 +25,61 @@ app.post('/api/load', (req, res) => {
         if (err){
             throw err;
         };
+
         console.log('Saved!');
-    });
 
-    let success = true;
-    // spawn new child process to run the executable
-    try{
-        const process = spawn('./myRISCVSim', ['./test.mem']);
-        
-        // listen for output
-        // process.stdout.on('data', (data) => {
-            //     console.log(`stdout: ${data}`);
-            //     resultData = data;
-            //     success = true;
-            // });
-        const resultData = "Data Loaded";
-        // // listen for errors
-        process.stderr.on('data', (data) => {
-            console.error(`stderr: ${data}`);
-            resultData = data;
+        let success = true;
+        // spawn new child process to run the executable
+        try{
+            const child = spawn('./myRISCVSim', ['./test.mem']);
+
+            
+            // listen for output
+            // child.stdout.on('data', (data) => {
+            //         console.log(`stdout: ${data}`);
+            //         // resultData = data;
+            //         success = true;
+            //     });
+
+            const resultData = "Data Loaded";
+            // // listen for errors
+            child.stderr.on('data', (data) => {
+                console.error(`stderr: ${data}`);
+                // resultData = data;
+                success = false;
+            });
+
+            child.stderr.on('error', (data) => {
+                console.log(`stderr: ${data}`);
+                // resultData = data;
+                success = false;
+            });
+
+            // listen for the process to exit
+            child.on('close', (code) => {
+                console.log(`child process exited with code ${code}`);
+                const DataToSend = {
+                    resultData: resultData,
+                    success:success
+                }
+            
+                res.status(201).json(DataToSend)
+            });
+            
+        }
+        catch(err){
+            console.log(err);
             success = false;
-        });
-    
-        // listen for the process to exit
-        process.on('close', (code) => {
-            console.log(`child process exited with code ${code}`);
-        });
+            const resultData = "Error";
 
-        const DataToSend = {
-            resultData: resultData,
-            success:success
+            const DataToSend = {
+                resultData: resultData,
+                success:success
+            }
+
+            res.status(500).json(DataToSend)
         }
-    
-        res.status(201).json(DataToSend)
-    }
-    catch(err){
-        console.log(err);
-        success = false;
-        const resultData = "Error";
-
-        const DataToSend = {
-            resultData: resultData,
-            success:success
-        }
-
-        res.status(500).json(DataToSend)
-    }
-
+        });
 })
 
 app.get('/api/run', (req, res) => {

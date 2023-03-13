@@ -201,16 +201,29 @@ void load_program_memory(char *file_name, FILE *jsonFile) {
   unsigned int address;
   unsigned int instruction;
   fp = fopen(file_name, "r");
+  printf("FILE NAME IS %s", file_name);
+
   if(fp == NULL) {
     printf("Error opening input mem file\n");
     exit(1);
   }
 
-  while(fscanf(fp, "%X %x", &address, &instruction) != EOF) {
+  char *c;
+  if (fscanf(fp, "%s", c) == -1) {
+    perror("fscanf failed");
+    printf("STRING IS %s", c);
+    printf("Data read is %u %u\n\n", address, instruction);
+    exit(EXIT_FAILURE);
+  }
+
+
+  printf("BEFORE WHILE\n");
+  while(fscanf(fp, "%x %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
-    // printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
+    printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
     // printf("Instruction word from file in hex is %X\n", instruction);
   }
+  printf("AFTER WHILE\n");
 
   fclose(fp);
 
@@ -251,6 +264,7 @@ void swi_exit() {
 //reads from the instruction memory and updates the instruction register
 void fetch(){
   instruction_word = read_word(MEM, pc);
+
   
   //  printf("instruction_word Read from memory=%u\n", instruction_word);
 }
