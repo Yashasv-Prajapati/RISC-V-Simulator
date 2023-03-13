@@ -62,10 +62,12 @@ char immJ[21];
 char imm_final[32];
 char bin_32_arr[32];
 char hex_instr[8];//"019C5263";
+char hexa_instr[8];
 int Op2Select;
 int Op1;
 int Op2_final;
 int rd_decimal;
+char operation[5];
 //int ALUOp=0;
 int BranchTargetSet;
 int BranchTargetResult;
@@ -82,6 +84,7 @@ void run_riscvsim(FILE *jsonFile) {
     
     //  printf("t in starting of loop=%d\n", t);
     //  printf("pc before fetch=%d\n", pc);
+    // printf("-fetch prints:\n");
     fetch();
     if(instruction_word>=4294967291){
       // fprintf(jsonFile,"\b \b\n");
@@ -95,6 +98,7 @@ void run_riscvsim(FILE *jsonFile) {
     }
 
     X[0]=0;
+
     //  printf("pc after fetch=%d\n",pc);
     decode();
 
@@ -264,7 +268,7 @@ void swi_exit() {
 //reads from the instruction memory and updates the instruction register
 void fetch(){
   instruction_word = read_word(MEM, pc);
-
+  printf("FETCH:");
   
   //  printf("instruction_word Read from memory=%u\n", instruction_word);
 }
@@ -312,7 +316,7 @@ void decode() {
       imm_final_gen(imm_final,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
       // printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
-      printf("instType=%c\n",instType);
+      // printf("instType=%c\n",instType);
       // printf("OpCode=%s\n",opCode);
       //Control Signals
       ALUop_gen();
@@ -327,10 +331,13 @@ void decode() {
       // printf("MemOp=%d\n",MemOp);
       ResultSelect_gen();
       IsBranch_gen();
+      hex_instr[8]='\0';
+      printf("Fetch Instruction 0x%s from address 0x%X\n", hex_instr,pc);
+          printf("DECODE:");
+      operation_gen();
       // printf("isBranch=%d\n",isBranch);
     //  printf("ResultSet=%d and ResultSelect=");
       // printf("operand1=%d and operand2=%d\n",operand1,operand2);
-
 }
 //executes the ALU operation based on ALUop
 void execute() {
@@ -391,8 +398,10 @@ void mem() {
     1 - Write in memory --> Store
     2 - Read from memory --> Load
   */
+  printf("MEMORY:");
   if (MemOp == 0)
   {
+    printf("There is no Memory Operation\n");
     ReadData = ALUResult;
   }
   else if (MemOp == 1) // Store
@@ -404,6 +413,7 @@ void mem() {
 
     *data_p = X[rs2Value];
     ReadData = X[rs2Value];
+    printf("There is a Store Operation to be done from memory\n");
   }
   else if (MemOp == 2) // Load
   {
@@ -411,10 +421,12 @@ void mem() {
     data_p = (int*)(DataMEM + ALUResult);
     ReadData = *data_p;
     // printf("ReadData = %d\n", ReadData);
+    printf("There is a Read Operation to be done from memory\n");
   }
 
   // reset the control signal 
   MemOp=0;
+  // memprint_gen();
 }
 
 //writes the results back to register file
@@ -428,7 +440,7 @@ void write_back() {
     3 - LoadData - essentially same as ReadData
     4 - ALUResult
   */
-
+  printf("WRITEBACK:");
 //  rd , ImmU_lui, Immu_auipc are to be decided, so creating temp variables in their name
   int rd, ImmU_lui, Immu_auipc;
   // printf("RFWrite in Write_back=%d and ResultSelect=%d\n",RFWrite,ResultSelect);
@@ -437,14 +449,17 @@ void write_back() {
     switch(ResultSelect){
       case 0:{
         X[rd_decimal] = pc+4;
+        printf("write back %d to R%d\n",pc+4,rd_decimal);
         break;
       }
       case 1:{
         X[rd_decimal] = imm_final_decimal;
+        printf("write back %d to R%d\n", imm_final_decimal, rd_decimal);
         break;
       }
       case 2:{
         X[rd_decimal] = pc + (imm_final_decimal) ;
+        printf("write back %d to R%d\n", pc + imm_final_decimal, rd_decimal);
         break;
       }
       case 3:{
@@ -452,14 +467,19 @@ void write_back() {
         static unsigned int LoadData;
         LoadData = ReadData ;
         X[rd_decimal] = ReadData;
+        printf("write back %d to R%d\n", ReadData, rd_decimal);
         break;
       }
       case 4:{
         X[rd_decimal] = ALUResult;
+        printf("write back %d to R%d\n", ALUResult, rd_decimal);
         break;
       }
       // need to make another case for store instruction
     }
+  }
+  else{
+    printf("There is no Write Back\n");
   }
     
     // printf("ISbranch=%d and ALUResult=%d\n",isBranch,ALUResult);
@@ -514,7 +534,6 @@ int BintoDec(char* Bin,int size){
 void Dec_to_Hex(){
     unsigned int decimal_Number=instruction_word;
     // printf("decimal number is %d\n", decimal_Number);
-     char hexa_instr[8];
     int i=0;
     while (decimal_Number != 0) {
         int temp = decimal_Number % 16;
@@ -1030,5 +1049,136 @@ void IsBranch_gen(){
         isBranch=2;
     }
 }
+void operation_gen(){
+    if(instType=='R'){
+        if (ALUop == 1)
+        {
+        printf("Instruction Type is ADD\n");
+      }
+      else if(ALUop==3){
+        printf("Instruction Type is AND\n");
+      }
+      else if (ALUop == 4)
+      {
+        printf("Instruction Type is OR\n");
+      }
+      else if (ALUop == 2)
+      {
+        printf("Instruction Type is SUB\n");
+      }
+      else if (ALUop == 7)
+      {
+        printf("Instruction Type is XOR\n");
+      }
+      else if (ALUop == 5&&strncmp(funct3,"100",3)==0){
+        printf("Instruction Type is SLL\n");
+      }
+      else if (ALUop == 5 && strncmp(funct3, "010", 3) == 0)
+      {
+        printf("Instruction Type is SLT\n");
+      }
+      else if (ALUop == 6 && strncmp(funct7, "0100000", 7) == 0)
+      {
+        printf("Instruction Type is SRA\n");
+      }
+      else if (ALUop == 5 && strncmp(funct3, "0000000", 7) == 0)
+      {
+        printf("Instruction Type is SRL\n");
+      }
+      printf("first operand is R%d\n", Op1);
+      printf("Second Operand is R%d\n", Op2_final);
+      printf("Result Register is R%d\n", rd_decimal);
+    }
+    else if(instType=='I'){
+      if(ALUop==1&&strncmp(opCode,"1100100",7)==0){
+        printf("Instruction Type is ADDI\n");
+      }
+      else if (ALUop == 3)
+      {
+        printf("Instruction Type is ANDI\n");
+      }
+      else if (ALUop == 4)
+      {
+        printf("Instruction Type is ORI\n");
+      }
+      else if(ALUop==1&&strncmp(opCode,"1100000",7)==0&&strncmp(funct3,"000",3)==0){
+        printf("Instruction Type is LB\n");
+      }
+      else if (ALUop == 1 && strncmp(opCode, "1100000", 7) == 0 && strncmp(funct3, "100", 3) == 0)
+      {
+        printf("Instruction Type is LH\n");
+      }
+      else if (ALUop == 1 && strncmp(opCode, "1100000", 7) == 0 && strncmp(funct3, "010", 3) == 0)
+      {
+        printf("Instruction Type is LW\n");
+      }
+      else if(strncmp(opCode,"1110011",7)==0){
+        printf("Instruction Type is JALR\n");
+      }
+      printf("first operand is R%d\n", Op1);
+      printf("value of immediate is %d\n", imm_final_decimal);
+      printf("Result Register is R%d\n", rd_decimal);
+    }
+    else if(instType=='S'){
+      if(strncmp(funct3,"000",3)==0){
+        printf("Instruction Type is SB\n");
+      }
+      else if (strncmp(funct3, "100", 3) == 0)
+      {
+        printf("Instruction Type is SH\n");
+      }
+      else if (strncmp(funct3, "010", 3) == 0)
+      {
+        printf("Instruction Type is SW\n");
+      }
+      printf("first operand is R%d\n", Op1);
+      printf("value of immediate is %d\n", imm_final_decimal);
+      printf("Register from which Value to store R%d\n", BintoDec(rs2, 5));
+    }
+    else if(instType=='B'){
+      if(strncmp(funct3,"000",3)==0){
+        printf("Instruction Type is BEQ\n");
+      }
+      else if(strncmp(funct3,"100",3)==0){
+        printf("Instruction Type is BNE\n");
+      }
+      else if (strncmp(funct3, "001", 3) == 0)
+      {
+        printf("Instruction Type is BLT\n");
+      }
+      else if (strncmp(funct3, "101", 3) == 0)
+      {
+        printf("Instruction Type is BGE\n");
+      }
+      printf("first operand is R%d\n", Op1);
+      printf("Second Operand is R%d\n", Op2_final);
+      printf("value of immediate is %d\n", imm_final_decimal);
+    }
+    else if(instType=='J'){
+      printf("Instruction Type is JAL\n");
+      printf("value of immediate is %d\n", imm_final_decimal);
+      printf("Result Register is R%d\n", rd_decimal);
+    }
+    else if(instType=='U'){
+      if(strncmp(opCode,"1110110",7)==0){
+        printf("Instruction Type is LUI\n");
+      }
+      else if (strncmp(opCode, "1110100", 7) == 0)
+      {
+        printf("Instruction Type is AUIPC\n");
+      }
+      printf("value of immediate is %d\n", imm_final_decimal);
+      printf("Result Register is R%d\n", rd_decimal);
+    }
 
+}
+// void memprint_gen(){
+//   printf("MEMORY:");
+//   if(){
+//     printf("There is a memory operation\n");
+//   }
+//   else {
+//     printf("There is no memory Operation\n");
+//   }
+// }
 // Decode functions ends here
