@@ -26,13 +26,22 @@ int main(int argc, char** argv) {
     printf("Incorrect number of arguments. Please invoke the simulator \n\t./myRISCVSim <input mem file> \n");
     exit(1);
   }
+
+  FILE *jsonFile;
+  jsonFile = fopen("data_out.json", "w");
+  if(jsonFile == NULL) {
+    printf("Error opening input mem file\n");
+    exit(1);
+  }
   
   //reset the processor
   reset_proc();
   //load the program memory
-  load_program_memory(argv[1]);
+  load_program_memory(argv[1], jsonFile);
   //run the simulator
-  run_riscvsim();
+  run_riscvsim(jsonFile);
+
+  fclose(jsonFile);
 
   return 1;
 }

@@ -15,11 +15,11 @@ Date:
    Purpose of this file: implementation file for myRISCVSim
 */
 
-#include "myRISCVSim.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "myRISCVSim.h"
 
 //Register file
 static unsigned int X[32];
@@ -62,7 +62,6 @@ char immJ[21];
 char imm_final[32];
 char bin_32_arr[32];
 char hex_instr[8];//"019C5263";
-//int instruction_word=908445968;
 int Op2Select;
 int Op1;
 int Op2_final;
@@ -73,52 +72,92 @@ int BranchTargetResult;
 int imm_final_decimal;
 int BranchTargetAddress;
 int isBranch;
-static int t=4000;
+static int t=0;
 
-void run_riscvsim() {
+void run_riscvsim(FILE *jsonFile) {
   
+  fprintf(jsonFile, "[ \n");
+
  while(1){
-  t--;
-   printf("t in starting of loop=%d\n", t);
-   printf("pc before fetch=%d\n", pc);
-   fetch();
-   if (pc > 4000)
-   {
-     break;
+    
+    //  printf("t in starting of loop=%d\n", t);
+    //  printf("pc before fetch=%d\n", pc);
+    fetch();
+    if(instruction_word>=4294967291){
+      // fprintf(jsonFile,"\b \b\n");
+      break;
+    }
+
+    if(t==0){
+      t++;
+    }else{
+      fprintf(jsonFile,",\n");
     }
 
     X[0]=0;
-     printf("pc after fetch=%d\n",pc);
+    //  printf("pc after fetch=%d\n",pc);
     decode();
 
     X[0]=0;
-     printf("pc after decode=%d\n",pc);
+    //  printf("pc after decode=%d\n",pc);
     execute();
 
     X[0]=0;
-    printf("pc after execute=%d\n",pc);
+    // printf("pc after execute=%d\n",pc);
     mem();
 
     X[0]=0;
-    printf("pc after mem=%d\n",pc);
+    // printf("pc after mem=%d\n",pc);
     write_back();
-    printf("pc after write_back=%d\n",pc);
+    // printf("pc after write_back=%d\n",pc);
     // if(t<0){
     //   break;
     // }
     X[0]=0;
-    printf("t in ending of loop=%d\n",t);
+    // printf("t in ending of loop=%d\n",t);
     // printf("X[2] at end of loop=%d\n",X[2]);
-    printf("\n");
+    // printf("\n");
+
+    fprintf(jsonFile, "{\n");
+
+    for(int i=0;i<32;i++){
+      fprintf(jsonFile, "\"X[%d]\" : %d,\n", i, X[i]);
+    }
+
+    
+    for(int i=0;i<10000000;i++){
+      if(i==9999999){
+        fprintf(jsonFile,"\"DataMem[%d]\":%d\n",i,DataMEM[i]);
+        continue;
+      }
+
+      if(DataMEM[i]==0){
+        continue;
+      }
+
+      fprintf(jsonFile, "\"DataMem[%d]\":%d,\n",i,DataMEM[i]);
+    }
+
+    // if(t==1){
+    //   fprintf(jsonFile,"}\n\n");
+    //   t--;
+    //   continue;
+    // }
+    fprintf(jsonFile,"}\n");
+    // t--;
  }
-  printf("SHOWING ALL THE REGISTERS\n");
-  for(int i=0;i<32;i++){
-    printf("X[%d] = %d\n", i, X[i]);
-  }
+  // printf("SHOWING ALL THE REGISTERS\n");
+  // for(int i=0;i<32;i++){
+  //   printf("X[%d] = %d\n", i, X[i]);
+  // }
   // printf("SHOWING ALL MEMORY\n");
   // for(int i=0;i<100;i++){
-  //   printf("D[%d] = %d\n", i, DataMEM[i]);
+  //   fprintf("D[%d] = %d\n", i, DataMEM[i]);
   // }
+  fprintf(jsonFile, "]\n");
+  // fclose(jsonFile);
+  
+
 }
 
 // it is used to set the reset values
@@ -157,7 +196,7 @@ void reset_proc() {
 
 //load_program_memory reads the input memory, and pupulates the instruction
 // memory
-void load_program_memory(char *file_name) {
+void load_program_memory(char *file_name, FILE *jsonFile) {
   FILE *fp;
   unsigned int address;
   unsigned int instruction;
@@ -169,17 +208,18 @@ void load_program_memory(char *file_name) {
 
   while(fscanf(fp, "%X %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
-    // printf("Instruction word from file is %d and address=%d and &instruction=%d and &address=%d\n", instruction,address,&instruction,&address);
+    // printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
     // printf("Instruction word from file in hex is %X\n", instruction);
   }
 
   fclose(fp);
+
   // for(int i=0;i<4000;i++){
-  //   printf("%x ", MEM[i]);
+  //   printf("\"INSTMEM\": %x,", MEM[i]);
   // }
 
   // initialize the data memory
-  DataMEM = (unsigned char*) calloc(2147483647 ,sizeof(unsigned char));
+  DataMEM = (unsigned char*) calloc(10000000 ,sizeof(unsigned char));
 
 }
 
@@ -187,11 +227,14 @@ void load_program_memory(char *file_name) {
 void write_data_memory() {
   FILE *fp;
   unsigned int i;
-  fp = fopen("data_out.mem", "w");
+  fp = fopen("data_out.json", "w");
   if(fp == NULL) {
     printf("Error opening dataout.mem file for writing\n");
     return;
   }
+  
+  
+
 
   for(i=0; i < 4000; i = i+4){
     fprintf(fp, "%X %X\n", i, read_word(MEM, i));
@@ -208,34 +251,35 @@ void swi_exit() {
 //reads from the instruction memory and updates the instruction register
 void fetch(){
   instruction_word = read_word(MEM, pc);
-   printf("instruction_word Read from memory=%d\n", instruction_word);
+  
+  //  printf("instruction_word Read from memory=%u\n", instruction_word);
 }
 //reads the instruction register, reads operand1, operand2 fromo register file, decides the operation to be performed in execute stage
 void decode() {
-    printf("instruction_word in Decode startin=%d\n",instruction_word);
+    // printf("instruction_word in Decode startin=%d\n",instruction_word);
     Dec_to_Hex();//+++++++++c
     // printf("hex_instr=%s\n",hex_instr);
       HexToBin(hex_instr,bin_32_arr);
-      printf("bin_32_arr=%s\n",bin_32_arr);
+      // printf("bin_32_arr=%s\n",bin_32_arr);
       // Working Fine
       opCode_gen(opCode,bin_32_arr);
-      printf("OpCode=%s\n",opCode);
+      // printf("OpCode=%s\n",opCode);
       rs1_gen(rs1,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-       printf("rs1=%s\n",rs1);
+      //  printf("rs1=%s\n",rs1);
       rs2_gen(rs2,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      printf("rs2=%s\n",rs2);
+      // printf("rs2=%s\n",rs2);
       rd_gen(rd,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      printf("rd=%s and rd_decimal=%d\n",rd,rd_decimal);
+      // printf("rd=%s and rd_decimal=%d\n",rd,rd_decimal);
       // printf("OpCode=%s\n",opCode);
       funct3_gen(funct3,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      printf("funct3=%s\n",funct3);
+      // printf("funct3=%s\n",funct3);
       funct7_gen(funct7,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      printf("funct7=%s\n",funct7);
+      // printf("funct7=%s\n",funct7);
       imm_gen(imm,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
       // printf("imm=%s\n",imm);
@@ -253,7 +297,7 @@ void decode() {
       // printf("immJ=%s\n",immJ);
       imm_final_gen(imm_final,bin_32_arr);
       // printf("OpCode=%s\n",opCode);
-      printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
+      // printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
       printf("instType=%c\n",instType);
       // printf("OpCode=%s\n",opCode);
       //Control Signals
@@ -288,7 +332,7 @@ void execute() {
     7 - xor
     8 - set less than
   */
-  printf("ALUop=%d\n",ALUop);
+  // printf("ALUop=%d\n",ALUop);
   if (ALUop == 1)
   {
     ALUResult = operand1 + operand2;
@@ -339,8 +383,8 @@ void mem() {
   }
   else if (MemOp == 1) // Store
   {
-    int *data_p;
-    data_p = (int*)(DataMEM + ALUResult);
+    unsigned int *data_p;
+    data_p = (unsigned int*)(DataMEM + ALUResult);
     int rs2Value = BintoDec(rs2,5);
     // printf("X[%d] = %d and Op2_final is = %d\n",Op2_final, X[Op2_final], Op2_final);
 
@@ -373,7 +417,7 @@ void write_back() {
 
 //  rd , ImmU_lui, Immu_auipc are to be decided, so creating temp variables in their name
   int rd, ImmU_lui, Immu_auipc;
-  printf("RFWrite in Write_back=%d and ResultSelect=%d\n",RFWrite,ResultSelect);
+  // printf("RFWrite in Write_back=%d and ResultSelect=%d\n",RFWrite,ResultSelect);
   if(RFWrite){
     // printf("rd_decimal = %d\n", rd_decimal);
     switch(ResultSelect){
@@ -404,8 +448,8 @@ void write_back() {
     }
   }
     
-    printf("ISbranch=%d and ALUResult=%d\n",isBranch,ALUResult);
-    printf("Branch Target Address=%d\n",BranchTargetAddress);
+    // printf("ISbranch=%d and ALUResult=%d\n",isBranch,ALUResult);
+    // printf("Branch Target Address=%d\n",BranchTargetAddress);
     //IS BRANCH MUX
     /*
       IsBranch=0 => ALUResult
@@ -427,7 +471,7 @@ void write_back() {
 unsigned int read_word(char *mem, unsigned int address) {
   unsigned int *data;
   // printf("here instruction_word=%d\n",instruction_word);
-  printf("pc=%d\n",pc);
+  // printf("pc=%d\n",pc);
   // printf("mem=%d and address=%d",mem,address);
   data =  (unsigned int*) (mem + address);
   // printf("READ DATA from read_word function is %d and *data=%d\n", data,*data);
@@ -455,7 +499,7 @@ int BintoDec(char* Bin,int size){
 
 void Dec_to_Hex(){
     unsigned int decimal_Number=instruction_word;
-    printf("decimal number is %d\n", decimal_Number);
+    // printf("decimal number is %d\n", decimal_Number);
      char hexa_instr[8];
     int i=0;
     while (decimal_Number != 0) {
@@ -485,8 +529,8 @@ void Dec_to_Hex(){
    }
   //  printf("instruction word is %d\n", instruction_word);
   //  printf("actual hex = %X\n", instruction_word);
-    printf("HEX_INSTRUCTION STRING IS %s\n", hex_instr);
-    printf("HEXA_INSTRUCTION STRING IS %s\n", hexa_instr);
+    // printf("HEX_INSTRUCTION STRING IS %s\n", hex_instr);
+    // printf("HEXA_INSTRUCTION STRING IS %s\n", hexa_instr);
 
 }
 //int char_to_int(char c){
@@ -594,7 +638,7 @@ void immU_gen(char* immU,char* bin_32_arr){
 //        printf("bin_32_arr[i] = %c\n", bin_32_arr[i]);
     }
     immU[32]='\0';
-    printf("IMMU AFTER %s\n", immU);
+    // printf("IMMU AFTER %s\n", immU);
 //    printf("IMMU SIZE %d\n", sizeof(immU)/sizeof(immU[0]));
 }
 void immJ_gen(char* immJ,char* bin_32_arr){
@@ -647,12 +691,12 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
         signExtender(imm_final,12);
     }
     else if(!strncmp(opCode,"1110110",7)){
-      printf("yooooooo\n");
+      // printf("yooooooo\n");
         //U-Type
         instType='U';
         strncpy(imm_final,immU,32);
         imm_final[32]='\0';
-        printf("Immu finzlllll: %s\n", imm_final);
+        // printf("Immu finzlllll: %s\n", imm_final);
         
 //        signExtender(imm_final)
     }
@@ -665,7 +709,7 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
       instType = 'Z';
     }
     imm_final_decimal=BintoDec(imm_final,32);
-    printf("kkkkkkk: %d\n", imm_final_decimal);
+    // printf("kkkkkkk: %d\n", imm_final_decimal);
 }
 void ALUop_gen(){
     /*
@@ -889,7 +933,7 @@ void ResultSelect_gen(){
     if(!strncmp(opCode, "1110110",7)){
         ResultSelect=1;
         RFWrite = 1;
-         printf("ResultSelect=1");
+        //  printf("ResultSelect=1");
         // printf("ResultSelect=1");
     }
     else if(!strncmp(opCode, "1110100",7)){
@@ -926,7 +970,7 @@ void IsBranch_gen(){
       =1         => BranchTargetAddress
       =2         => pc+4(default)
     */
-   printf("operand1=%d operand2=%d", operand1, operand2);
+  //  printf("operand1=%d operand2=%d", operand1, operand2);
     if(strncmp(opCode,"1110011",7)==0){
         isBranch=0;
     }
@@ -934,7 +978,7 @@ void IsBranch_gen(){
       isBranch=2;
 
       // we already have funct3 for Branch so using that funct3
-      printf("strncmp= %d", strncmp(funct3, "000", 3));
+      // printf("strncmp= %d", strncmp(funct3, "000", 3));
 
       if(!strncmp(funct3, "000", 3)){
         // beq 

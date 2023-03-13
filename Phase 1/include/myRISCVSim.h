@@ -8,7 +8,7 @@ Developer's Email id:
 Date: 
 
 */
-
+#include<stdio.h>
 
 /* myRISCVSim.h
    Purpose of this file: header file for myARMSim
@@ -16,7 +16,7 @@ Date:
 
 void run_riscvsim();
 void reset_proc();
-void load_program_memory(char* file_name);
+void load_program_memory(char* file_name, FILE *jsonFile);
 void write_data_memory();
 void swi_exit();
 
