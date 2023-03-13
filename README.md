@@ -13,11 +13,12 @@ The team members are:
 4. <p style="color:#FFF4D2;"> Yashasav Prajapati </p>
 
 <br>
-The simulator is written in (yet to be decided) and is a command line tool.
+
+The simulator is written in `C`, the GUI is written in `ReactJs` and `NodeJs`.
 
 <br>
 
-## Testing the simulator
+## Testing the simulator using command line
 To test the simulator, add a `.mem` file containing addresses of each instruction followed by the machine code of each instruction in the `test` directory and run the program as described below. Example below
 
 ```
@@ -29,6 +30,9 @@ To test the simulator, add a `.mem` file containing addresses of each instructio
 0X14 0X0202423
 0X18 0X00802283
 ```
+
+## Testing the simulator using GUI
+To test the simulator using the GUI, go to the `gui` directory and follow the commands in the README.md file in the `gui` directory.
 
 
 ## Running the simulator
@@ -52,4 +56,5 @@ make clean
 
 
 ## Key Features
-...
+1. The simulator supports all the instructions mentioned in the project description.
+2. The GUI is fully functional and supports all the features, which include Run, Step, Reset, Previous, Register. [Memory to be added soon]

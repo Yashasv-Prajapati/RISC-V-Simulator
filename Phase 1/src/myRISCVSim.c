@@ -212,22 +212,12 @@ void load_program_memory(char *file_name, FILE *jsonFile) {
     exit(1);
   }
 
-  char *c;
-  if (fscanf(fp, "%s", c) == -1) {
-    perror("fscanf failed");
-    printf("STRING IS %s", c);
-    printf("Data read is %u %u\n\n", address, instruction);
-    exit(EXIT_FAILURE);
-  }
 
-
-  printf("BEFORE WHILE\n");
   while(fscanf(fp, "%x %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
-    printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
+    // printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
     // printf("Instruction word from file in hex is %X\n", instruction);
   }
-  printf("AFTER WHILE\n");
 
   fclose(fp);
 
