@@ -215,16 +215,16 @@ void load_program_memory(char *file_name, FILE *jsonFile) {
 
   while(fscanf(fp, "%x %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
-    // printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
+    printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
     // printf("Instruction word from file in hex is %X\n", instruction);
   }
 
   fclose(fp);
 
-  // for(int i=0;i<4000;i++){
-  //   printf("\"INSTMEM\": %x,", MEM[i]);
-  // }
-
+  for(int i=0;i<4000;i++){
+    printf(" %x ", MEM[i]);
+  }
+  printf("\n");
   // initialize the data memory
   DataMEM = (unsigned char*) calloc(10000000 ,sizeof(unsigned char));
 
@@ -240,8 +240,6 @@ void write_data_memory() {
     return;
   }
   
-  
-
 
   for(i=0; i < 4000; i = i+4){
     fprintf(fp, "%X %X\n", i, read_word(MEM, i));
@@ -266,8 +264,10 @@ void fetch(){
 void decode() {
     // printf("instruction_word in Decode startin=%d\n",instruction_word);
     Dec_to_Hex();//+++++++++c
+    // printf("hexInstruction=%s\n",hex_instr);
     // printf("hex_instr=%s\n",hex_instr);
-      HexToBin(hex_instr,bin_32_arr);
+      HexToBin();
+      //  printf("hexInstructionafter hex to bin=%s\n",hex_instr);
       // printf("bin_32_arr=%s\n",bin_32_arr);
       // Working Fine
       opCode_gen(opCode,bin_32_arr);
@@ -321,8 +321,9 @@ void decode() {
       // printf("MemOp=%d\n",MemOp);
       ResultSelect_gen();
       IsBranch_gen();
-      hex_instr[8]='\0';
-      printf("Fetch Instruction 0x%s from address 0x%X\n", hex_instr,pc);
+      // hex_instr[8]='\0';
+      // printf("hex string is %s", hex_instr);
+      printf("Fetch Instruction 0x%x from address 0x%X\n", instruction_word,pc);
           printf("DECODE:");
       operation_gen();
       // printf("isBranch=%d\n",isBranch);
@@ -490,6 +491,8 @@ void write_back() {
         pc=pc+4;
     }
 
+    printf("\n");
+
 }
 
 unsigned int read_word(char *mem, unsigned int address) {
@@ -539,17 +542,20 @@ void Dec_to_Hex(){
         i++;
         decimal_Number = decimal_Number / 16;
     }
+
     while(i<8){
         hexa_instr[i]='0';
         i++;
     }
-    hex_instr[8]='\0';
+
+    hexa_instr[8]='\0';
     // sprintf(hex_instr, "%08X", decimal_Number);
     // printf("hex_instr is %s and it's length is %lu\n", hex_instr, strlen(hex_instr));
     
    for(int i=0;i<=7;i++){
        hex_instr[i]=hexa_instr[7-i];
    }
+    hex_instr[8]='\0';
   //  printf("instruction word is %d\n", instruction_word);
   //  printf("actual hex = %X\n", instruction_word);
     // printf("HEX_INSTRUCTION STRING IS %s\n", hex_instr);
@@ -778,115 +784,123 @@ void ALUop_gen(){
         ALUop=1;
     }
 }
-void HexToBin(char* hexdec,char *bin_32_arr)
+void HexToBin()
 {
 
     long int i = 0;
+    // printf("hex_instr in hextoBin=%s\n",hex_instr);
+    // printf("HEX STRING 2nd func before %s\n", hex_instr);
 //    char bin_32_arr[32];
-    while (hexdec[i]) {
-         if(hexdec[i]== '0'){
+    while (hex_instr[i]) {
+         if(hex_instr[i]== '0'){
             char* c0="0000";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c0[j];
 //                printf("%c",bin_32_arr[31-(4*i)-j]);
             }
           }
-         else if(hexdec[i]== '1'){
+         else if(hex_instr[i]== '1'){
             char* c1="0001";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c1[j];
             }
             }
-         else if(hexdec[i]== '2'){
+         else if(hex_instr[i]== '2'){
             char* c2="0010";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c2[j];
             }
             }
-         else if(hexdec[i]== '3'){
+         else if(hex_instr[i]== '3'){
             char* c3="0011";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c3[j];
                 // bin_32_arr[31-(4*i)-3+j]=c3[j];
             }
             }
-         else if(hexdec[i]== '4'){
+         else if(hex_instr[i]== '4'){
             char* c4="0100";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c4[j];
             }
             }
-         else if(hexdec[i]== '5'){
+         else if(hex_instr[i]== '5'){
             char* c5="0101";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c5[j];
             }
             }
-         else if(hexdec[i]== '6'){
+         else if(hex_instr[i]== '6'){
             char* c6="0110";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c6[j];
             }
             }
-         else if(hexdec[i]== '7'){
+         else if(hex_instr[i]== '7'){
             char* c7="0111";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c7[j];
             }
             }
-         else if(hexdec[i]== '8'){
+         else if(hex_instr[i]== '8'){
             char* c8="1000";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c8[j];
             }
             }
-         else if(hexdec[i]== '9'){
+         else if(hex_instr[i]== '9'){
             char* c9="1001";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c9[j];
             }
             }
-         else if(hexdec[i]== 'A'){
+         else if(hex_instr[i]== 'A'){
             char* c10="1010";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c10[j];
             }
             }
-         else if(hexdec[i]== 'B'){
+         else if(hex_instr[i]== 'B'){
             char* c11="1011";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c11[j];
             }
             }
-         else if(hexdec[i]== 'C'){
+         else if(hex_instr[i]== 'C'){
             char* c12="1100";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c12[j];
             }
             }
-         else if(hexdec[i]== 'D'){
+         else if(hex_instr[i]== 'D'){
             char* c13="1101";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c13[j];
             }
             }
-         else if(hexdec[i]== 'E'){
+         else if(hex_instr[i]== 'E'){
             char* c14="1110";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c14[j];
             }
             }
-         else if(hexdec[i]== 'F'){
+         else if(hex_instr[i]== 'F'){
             char* c15="1111";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c15[j];
             }
-            }
+          }
         i++;
     }
+        // printf("hex_instr in hextoBin after while loop=%s\n",hex_instr);
+
 //    printf("TS");
 //    printf("%c is the [33] of %s",bin_32_arr[33],bin_32_arr);
-    bin_32_arr[32]='\0';
+        bin_32_arr[32]='\0';
+        // *(bin_32_arr+31) = '\0';
+
+        // printf("HEX STRING 2nd func %s\n",hex_instr);
+    
 
 //    char *b=bin_32_arr;
 //    return b;
@@ -1040,6 +1054,8 @@ void IsBranch_gen(){
     }
 }
 void operation_gen(){
+  // printf("INSTRUCTION TYPE IS %c", instType);
+
     if(instType=='R'){
         if (ALUop == 1)
         {
