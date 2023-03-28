@@ -125,7 +125,39 @@ def decode():
     imm_mask = 0b111111111111
     imm = imm & imm_mask
 
-    #Generate immS, immB, ImmU, immJ
+    immS=instruction_word
+    immS1=immS>>7
+    immS2=immS>>20
+    immS_mask1=0b11111
+    immS_mask2=0b000001111111
+    immS=(immS1 & immS_mask1)+(immS2 & immS_mask2)
+
+    immB=instruction_word
+    immB1=instruction_word<<5
+    immB_mask1=0b000000000001#for 11th
+    immB2=instruction_word>>7
+    immB_mask2=0b01111
+    immB3=instruction_word>>20
+    immB_mask3=0b00000111111
+    immB4=instruction_word>>19
+    immB_mask4=0b0000000000001#for 12th
+    immB=(immB1 & immB_mask1) + (immB2 & immB_mask2) + (immB3 & immB_mask3) +(immB4& immB_mask4)
+
+    immU=instruction_word
+    immU_mask=0b00000000000011111111111111111111
+    immU=immU&immU_mask
+
+    immJ=instruction_word
+    immJ_mask1=0b00000000000011111111
+    immJ2=immJ>>9
+    immJ_mask2=0b000000000001
+    immJ3=immJ>>20
+    immJ_mask3=0b0111111111
+    immJ4=immJ>>11
+    immJ_mask4=0b000000000000000000001
+    immJ=(instruction_word& immJ_mask1)+(immJ2 & immJ_mask2)+(immJ3 & immJ_mask3)+(immJ4 & immJ_mask4)
+
+    #Generate immS, immB, ImmU, immJ done
 
     inst_type = getInstructionType(opcode)
 
@@ -149,7 +181,14 @@ def getFinalImmediate(inst_type, imm):
     immFinal = 0
     if inst_type == 'I':
         immFinal = imm
-
+    if inst_type == 'S':
+        immFinal= immS
+    if inst_type == 'B':
+        immFinal = immB
+    if inst_type == 'U':
+        immFinal= immU
+    if inst_type == 'J':
+        immFinal = immJ
     return immFinal
 
 def getInstructionType(opcode):
@@ -211,7 +250,19 @@ def getALUop(inst_type, func3, func7):
             ALUop = 1
         elif (func3 == 0x7):
             ALUop = 3
-
+    if inst_type=='I':
+        if ((func3== 0x0) or  (func3==0x2) or (func3==0x1)):
+            ALUop=1
+        elif func3== 0x6:
+            ALUop=4
+        elif func3 == 0x7:
+            ALUop=3
+    if inst_type=='S':
+        ALUop=1
+    if inst_type=='B':
+        ALUop=2
+    if inst_type=='U' or inst_type=='J':
+        ALUop=1
     return ALUop
 
 def op2selectMUX(inst_type, rs1, rs2, imm_final):
