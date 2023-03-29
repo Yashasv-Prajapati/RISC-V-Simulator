@@ -150,10 +150,10 @@ void run_riscvsim(FILE *jsonFile) {
     fprintf(jsonFile,"}\n");
     // t--;
  }
-  // printf("SHOWING ALL THE REGISTERS\n");
-  // for(int i=0;i<32;i++){
-  //   printf("X[%d] = %d\n", i, X[i]);
-  // }
+  printf("SHOWING ALL THE REGISTERS\n");
+  for(int i=0;i<32;i++){
+    printf("X[%d] = %d\n", i, X[i]);
+  }
   // printf("SHOWING ALL MEMORY\n");
   // for(int i=0;i<100;i++){
   //   fprintf("D[%d] = %d\n", i, DataMEM[i]);
