@@ -76,7 +76,7 @@ def fetch():
         Fetch Instruction
     '''
     global instruction_word
-    instruction_word = read_word(pc);
+    instruction_word = read_word(pc)
 
 def read_word(address):
     '''
@@ -161,9 +161,9 @@ def decode():
 
     inst_type = getInstructionType(opcode)
 
-    immFinal = getFinalImmediate(inst_type, imm) # immS, immB, ImmU, immJ
+    immFinal = getFinalImmediate(inst_type, imm,immS,immB,immU,immJ) 
 
-    ALUop = getALUop(inst_type, func3, func7) #Some Part Left
+    ALUop = getALUop(inst_type, func3, func7) 
 
     op2selectMUX(inst_type, rs1, rs2, immFinal)
     BranchTargetSelectMUX(inst_type, immFinal)
@@ -177,7 +177,8 @@ def decode():
     
     #print(bin(rs1), bin(rs2), bin(rd))
 
-def getFinalImmediate(inst_type, imm):
+
+def getFinalImmediate(inst_type, imm,immS, immB, immU, immJ):
     immFinal = 0
     if inst_type == 'I':
         immFinal = imm
