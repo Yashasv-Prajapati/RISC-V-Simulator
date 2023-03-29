@@ -166,6 +166,13 @@ app.post('/api/memory', (req,res)=>{
     // console.log(step, MemoryLocation, RunData[RunData.length-1][`DataMem[${MemoryLocation}]`],)
 
     // accessing data-memory from that step
+    if(!Number.isInteger(MemoryLocation)){
+        return res.status(404).json({
+            resultData:-1,
+            success:false
+        })
+    }
+
     try{
 
         if(step==-100){
@@ -185,9 +192,9 @@ app.post('/api/memory', (req,res)=>{
                 success:true
             })
         }else{
-            return res.status(404).json({
-                resultData:-1,
-                success:false
+            return res.status(201).json({
+                resultData:0,
+                success:true
             })
         }
     }catch(err){
