@@ -11,11 +11,14 @@ function App() {
   const[instructionString, setInstructionString] = useState(''); // instruction string
   const [runbtnClicked, setRunbtnClicked] = useState(false); // run button clicked
   const [registerData, setRegisterData] = useState([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]); // register data
-  
+  const [MemoryLocation, setMemoryLocation] = useState('');
+  const [MemoryDataToShow, setMemoryDataToShow]= useState(0);
+  const [checkRun, setCheckRun]= useState(false);
+
   function Run(){
     
     setRunbtnClicked(true);
-
+    setCheckRun(true);
     fetch("http://localhost:5000/api/run", {
       method: 'GET',
       headers: {
@@ -78,9 +81,11 @@ function App() {
       console.log("UNDEFINED OR NULL\n");
       return;
     }
+    // set run button clicked to false because we want to show step by step instructions
+    setCheckRun(false);
+
     console.log("StepNum is", stepNum);
     setRunbtnClicked(true);
-    // console.log("HELLO\n");
 
     fetch("http://localhost:5000/api/step", {
       method: 'POST',
@@ -115,6 +120,10 @@ function App() {
     if(prevNum===null || prevNum===undefined){
       return;
     }
+
+    // set run button clicked to false because we want to show step by step instructions
+    setCheckRun(false);
+
     setRunbtnClicked(true);
     console.log("Prev is ", prevNum);
 
@@ -164,7 +173,60 @@ function App() {
     setInstructions(e.target.value.split('\n'));
   }
 
+  function getStepMemoryData(){
+    if(MemoryLocation==undefined || MemoryLocation=="" || MemoryLocation==null){
+      window.alert("Enter valid memory location")
+      return;
+    }
 
+    fetch('http://localhost:5000/api/memory',{
+      method:'post',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({stepNum,MemoryLocation})
+    }).then(response=>{
+      response.json().then((data)=>{
+        if(data.success){
+          setMemoryDataToShow(data.resultData)
+        }else{
+          setMemoryDataToShow(-1);
+        }
+      })
+    })
+  }
+
+  function getRunMemoryData(){
+    if(MemoryLocation==undefined || MemoryLocation=="" || MemoryLocation==null){
+      window.alert("Enter valid memory location")
+      return;
+    }
+
+    fetch('http://localhost:5000/api/memory',{
+      method:'post',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({stepNum:-100,MemoryLocation})
+    }).then(response=>{
+      response.json().then((data)=>{
+        if(data.success){
+          setMemoryDataToShow(data.resultData)
+        }else{
+          setMemoryDataToShow(-1);
+        }
+      })
+    })
+  }
+
+  function getMemoryData(){
+    if(checkRun){
+      console.log("RUNNIGN THIS")
+      getRunMemoryData();
+    }else{
+      getStepMemoryData();
+    }
+  }
   useEffect(()=>{
 
   }, [registerData])
@@ -240,12 +302,12 @@ function App() {
           <div className='flex justify-center flex-col p-2'>
             <div>
               <label>Enter the location which you want to access</label>
-              <input type='text' className='border border-black '/>
-              <button className='p-2 m-4 rounded bg-blue-300 hover:bg-blue-400 active:bg-blue-300 shadow' > Submit </button>
+              <input onChange={(e)=>{setMemoryLocation(e.target.value)}} type='text' className='border border-black '/>
+              <button onClick={getMemoryData} className='p-2 m-4 rounded bg-blue-300 hover:bg-blue-400 active:bg-blue-300 shadow' > Submit </button>
             </div>
             
             <div>
-
+              {MemoryDataToShow}
             </div>
           </div>
         }
