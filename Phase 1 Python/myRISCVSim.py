@@ -71,12 +71,15 @@ def write_word(address, instruction):
     index = address/4
     MEM[int(index)] = instruction
 
+# Fetch Stage
+
 def fetch():
     '''
         Fetch Instruction
     '''
     global instruction_word
     instruction_word = read_word(pc)
+
 
 def read_word(address):
     '''
@@ -85,6 +88,7 @@ def read_word(address):
     global MEM
     return MEM[address]
 
+# Decode Stage
 def decode():
     '''
         Decode Instruction
@@ -414,6 +418,7 @@ def execute():
     
     BranchTargetAddress=BranchTargetResult+pc
     
+# Memory access stage
 def mem():
     '''
     MemOp operation
@@ -449,6 +454,7 @@ def mem():
 
     MemOp = 0
 
+# Write back stage
 def write_back():
     '''
         ResultSelect
