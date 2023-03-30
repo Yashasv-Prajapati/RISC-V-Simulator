@@ -173,10 +173,6 @@ def decode():
 
     printOperationDetails(inst_type, immFinal) # Left
 
-    #print(inst_type, immFinal, ALUop)
-    
-    #print(bin(rs1), bin(rs2), bin(rd))
-
 def getFinalImmediate(inst_type, imm):
     immFinal = 0
     if inst_type == 'I':
