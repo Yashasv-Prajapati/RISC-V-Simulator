@@ -150,10 +150,10 @@ void run_riscvsim(FILE *jsonFile) {
     fprintf(jsonFile,"}\n");
     // t--;
  }
-  // printf("SHOWING ALL THE REGISTERS\n");
-  // for(int i=0;i<32;i++){
-  //   printf("X[%d] = %d\n", i, X[i]);
-  // }
+  printf("SHOWING ALL THE REGISTERS\n");
+  for(int i=0;i<32;i++){
+    printf("X[%d] = %d\n", i, X[i]);
+  }
   // printf("SHOWING ALL MEMORY\n");
   // for(int i=0;i<100;i++){
   //   fprintf("D[%d] = %d\n", i, DataMEM[i]);
@@ -323,7 +323,7 @@ void decode() {
       IsBranch_gen();
       // hex_instr[8]='\0';
       // printf("hex string is %s", hex_instr);
-      printf("Fetch Instruction 0x%x from address 0x%X\n", instruction_word,pc);
+      printf("Fetch Instruction 0x%x i.e %d from address 0x%X\n", instruction_word,instruction_word,pc);
           printf("DECODE:");
       operation_gen();
       // printf("isBranch=%d\n",isBranch);

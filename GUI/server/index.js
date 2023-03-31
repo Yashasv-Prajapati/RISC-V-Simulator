@@ -33,16 +33,9 @@ app.post('/api/load', (req, res) => {
         try{
             const child = spawn('./myRISCVSim', ['./test.mem']);
 
-            
-            // listen for output
-            // child.stdout.on('data', (data) => {
-            //         console.log(`stdout: ${data}`);
-            //         // resultData = data;
-            //         success = true;
-            //     });
 
             const resultData = "Data Loaded";
-            // // listen for errors
+            // listen for errors
             child.stderr.on('data', (data) => {
                 console.error(`stderr: ${data}`);
                 // resultData = data;
@@ -165,6 +158,54 @@ app.post('/api/prev', (req, res)=>{
     }
 })
 
+
+// api endpoint that returns memory of that location
+app.post('/api/memory', (req,res)=>{
+    const step = parseInt(req.body.stepNum)
+    const MemoryLocation = parseInt(req.body.MemoryLocation)
+    // console.log(step, MemoryLocation, RunData[RunData.length-1][`DataMem[${MemoryLocation}]`],)
+
+    // accessing data-memory from that step
+    if(!Number.isInteger(MemoryLocation)){
+        return res.status(404).json({
+            resultData:-1,
+            success:false
+        })
+    }
+
+    try{
+
+        if(step==-100){
+            // send last step data memory
+            return res.status(201).json({
+                resultData:RunData[RunData.length-1][`DataMem[${MemoryLocation}]`],
+                success:true
+            })
+        }
+        // console.log("HEY")
+        // console.log(Number.isInteger(RunData[step][`DataMem[${MemoryLocation}]`]))
+
+        if(Number.isInteger(RunData[step][`DataMem[${MemoryLocation}]`])){
+            // console.log("INSIDER HERE")
+            return res.status(201).json({
+                resultData:RunData[step][`DataMem[${MemoryLocation}]`],
+                success:true
+            })
+        }else{
+            return res.status(201).json({
+                resultData:0,
+                success:true
+            })
+        }
+    }catch(err){
+        return res.status(500).json({
+            resultData:-1,
+            success:false
+        })
+    }
+
+
+})
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`Server listening on port ${process.env.PORT || 5000}`)

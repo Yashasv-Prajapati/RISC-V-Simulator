@@ -1,5 +1,4 @@
 from myRISCVSim import *
-# from pipeline import *
 import argparse
 import sys
 
