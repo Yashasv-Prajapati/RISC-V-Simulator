@@ -51,17 +51,28 @@ def load_program_memory(file):
 
 def run_riscvsim():
     global instruction_word, pc
+    counter=0
+    t=1
+    print("MEM=",MEM)
     while(1):
         fetch()
         if(instruction_word>=4294967291):
             print("EXITING\n")
             break
-        
+        register[0]=0
         decode()
+        register[0] = 0
         execute()
+        register[0]=0
         mem()
+        register[0]=0
         write_back()
+        register[0] = 0
+
         print('\n\n')
+        counter=counter+1
+        print("Instruction number is",counter)
+        t=t+1
     print("PRINTING REGISTER VALUES")
     i=0
     while(i<32):
@@ -182,7 +193,8 @@ def decode():
     immJ = ((immJ1 & immJ_mask1) << 12) + \
         ((immJ2 & immJ_mask2) << 11) + \
         ((immJ3 & immJ_mask3) << 1)+((immJ4 & immJ_mask4) << 20)
-
+    
+    print("-12 =",bin(-12))
     #Generate immS, immB, ImmU, immJ done
     print("opcode here=",bin(opcode))
     inst_type = getInstructionType(opcode)
@@ -208,14 +220,22 @@ def getFinalImmediate(inst_type, imm,immS, immB, immU, immJ):
     immFinal = 0
     if inst_type == 'I':
         immFinal = imm
+        if ((immFinal >> 11) == 1):
+            immFinal = immFinal-4096
     if inst_type == 'S':
         immFinal= immS
+        if((immFinal>>11)==1):
+            immFinal=immFinal-4096
     if inst_type == 'B':
         immFinal = immB
+        if ((immFinal >> 12) == 1):
+            immFinal = immFinal-8192
     if inst_type == 'U':
         immFinal= immU
     if inst_type == 'J':
         immFinal = immJ
+        if ((immFinal >> 20) == 1):
+            immFinal = immFinal-2097152
     return immFinal
 
 def getInstructionType(opcode):
@@ -402,7 +422,7 @@ def printOperationDetails(inst_type, immFinal):
     
     print("inst_type=", inst_type)
     print("Operand1 is: ",operand1)
-    print("ImmFinal is: ", immFinal)   
+    print("ImmFinal is: ", immFinal,"immFinal in binary=",bin(immFinal))   
     print("Write Register rd is: ", rd) 
     print("rs1=",rs1)
     print("opcode in binary=",bin(opcode))
@@ -458,7 +478,7 @@ def mem():
     global MemOp, ReadData, rs2
 
     print("MEMORY")
-
+    print("MemOp=",MemOp)
     if (MemOp == 0):
         print("There is no Memory Operation")
         ReadData = ALUResult
@@ -467,7 +487,7 @@ def mem():
 
         # unsigned int *data_p;
         # data_p = (unsigned int*)(DataMEM + ALUResult);
-        data_mem[ALUResult] = rs2
+        data_mem[ALUResult] = register[rs2]
         ReadData = data_mem[ALUResult]
         # int rs2Value = BintoDec(rs2,5);
         # *data_p = X[rs2Value];
@@ -502,17 +522,17 @@ def write_back():
 
     if (RFWrite):
         if (ResultSelect == 0):
-            register[rd] = pc + 1
-            print("Write Back to ", pc+1, "to R", rd)
+            register[rd] =4 * (pc + 1)
+            print("Write Back  ", 4*(pc+1), "to R", rd)
         elif (ResultSelect == 1):
             register[rd] = immFinal
             print("Write Back to ", immFinal, "to R", rd)
         elif (ResultSelect == 2):
-            register[rd] = pc + immFinal
+            register[rd] = pc*4 + immFinal
             print("Write Back to ", immFinal, "to R", rd)
         elif (ResultSelect == 3):
             register[rd] = ReadData
-            print("Write Back to ", ReadData, "to R", rd)
+            print("Write Back  ", ReadData, "to R", rd)
         elif (ResultSelect == 4):
             register[rd] = ALUResult
             print("Write Back to ", ALUResult, "to R", rd)
@@ -532,6 +552,7 @@ def isBranchMUX():
     if (isBranch == 0):
         print("ALUResult=",ALUResult)
         pc = ALUResult
+        pc//=4
     elif (isBranch == 1):
         print("BranchTargetAddress=",BranchTargetAddress)
         pc = BranchTargetAddress
