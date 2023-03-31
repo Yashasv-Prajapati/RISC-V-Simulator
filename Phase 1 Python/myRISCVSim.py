@@ -195,7 +195,7 @@ def getFinalImmediate(inst_type, imm,immS, immB, immU, immJ):
 def getInstructionType(opcode):
     '''Get Type of Instruction from opcode'''
     inst_type = ''
-
+    print("opcode=",bin(opcode))
     if (opcode == 0b0110011):
         inst_type = 'R'
     elif (opcode == 0b0010011 or opcode == 0b0000011 or opcode == 0b1100111):
@@ -209,7 +209,7 @@ def getInstructionType(opcode):
     elif (opcode == 0b1101111):
         inst_type = 'J'
     else:
-        print("Not valid instruction type Detected")
+        print("No valid instruction type Detected!")
         sys.exit(1)
     
     return inst_type
@@ -374,9 +374,12 @@ def printOperationDetails(inst_type, immFinal):
         elif (ALUop == 3):
             print("Instruction Type is ANDI")
 
-        print("Operand is: ",operand1)
-        print("Immediate is: ", immFinal)   
-        print("Write Register is: ", rd) 
+    print("Operand1 is: ",operand1)
+    print("rs1 is=",rs1)
+    print("ImmFinal is: ", immFinal)  
+    print("Operand2 is=",operand2) 
+    print("Write Register is: ", rd) 
+    print("inst_type=",inst_type)
 
 def execute():
     '''
@@ -462,7 +465,7 @@ def write_back():
     print("WRITEBACK ")
 
     global RFWrite, rd, immFinal, ReadData, ALUResult
-    print(ResultSelect)
+    print("Result Select=",ResultSelect)
 
     if (RFWrite):
         if (ResultSelect == 0):
