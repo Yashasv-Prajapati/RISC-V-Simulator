@@ -323,7 +323,7 @@ void decode() {
       IsBranch_gen();
       // hex_instr[8]='\0';
       // printf("hex string is %s", hex_instr);
-      printf("Fetch Instruction 0x%x from address 0x%X\n", instruction_word,pc);
+      printf("Fetch Instruction 0x%x i.e %d from address 0x%X\n", instruction_word,instruction_word,pc);
           printf("DECODE:");
       operation_gen();
       // printf("isBranch=%d\n",isBranch);
