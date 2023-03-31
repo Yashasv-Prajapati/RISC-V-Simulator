@@ -79,12 +79,14 @@ static int t=0;
 void run_riscvsim(FILE *jsonFile) {
   
   fprintf(jsonFile, "[ \n");
-
- while(1){
+  int instruction_number=0;
+   int t=1;
+   while(1){
     
     //  printf("t in starting of loop=%d\n", t);
     //  printf("pc before fetch=%d\n", pc);
     // printf("-fetch prints:\n");
+    printf("pc=%d\n",pc);
     fetch();
     if(instruction_word>=4294967291){
       // fprintf(jsonFile,"\b \b\n");
@@ -149,6 +151,9 @@ void run_riscvsim(FILE *jsonFile) {
     // }
     fprintf(jsonFile,"}\n");
     // t--;
+    instruction_number++;
+    t++;
+    printf("instruction_number=%d\n",instruction_number);
  }
   printf("SHOWING ALL THE REGISTERS\n");
   for(int i=0;i<32;i++){
@@ -410,6 +415,7 @@ void mem() {
   {
     int *data_p;
     data_p = (int*)(DataMEM + ALUResult);
+    printf("ReadData=%d and ALUResult=%d")
     ReadData = *data_p;
     // printf("ReadData = %d\n", ReadData);
     printf("There is a Read Operation to be done from memory\n");
