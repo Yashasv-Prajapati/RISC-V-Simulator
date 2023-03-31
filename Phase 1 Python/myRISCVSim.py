@@ -1,4 +1,5 @@
 import sys
+# sys.set_int_max_str_digits(0)
 
 register = [0] * 32
 
@@ -54,6 +55,7 @@ def run_riscvsim():
     while(1):
         fetch()
         if(instruction_word>=4294967291):
+            print("EXITING\n")
             break
         
         decode()
@@ -61,6 +63,9 @@ def run_riscvsim():
         mem()
         write_back()
         print('\n\n')
+
+    print("PRINTING REGISTER VALUES")
+    print(register)
 
 
 def write_word(address, instruction):
@@ -77,6 +82,8 @@ def fetch():
     '''
         Fetch Instruction
     '''
+    print("FETCH")
+    print("PC: ", pc)
     global instruction_word
     instruction_word = read_word(pc)
 
@@ -93,6 +100,7 @@ def decode():
     '''
         Decode Instruction
     '''
+    print("DECODE")
     global operand1, operand2
     global instruction_word, opcode, rs1, rs2, rd, func3, func7, imm, immS, immB, immU, immJ, ALUop, immFinal
 
@@ -136,6 +144,7 @@ def decode():
     immS_mask2=0b000001111111
     immS=(immS1 & immS_mask1)+(immS2 & immS_mask2)
 
+    # IMM B Generation
     immB=instruction_word
     immB1=instruction_word<<5
     immB_mask1=0b000000000001#for 11th
@@ -151,15 +160,25 @@ def decode():
     immU_mask=0b00000000000011111111111111111111
     immU=immU&immU_mask
 
-    immJ=instruction_word
-    immJ_mask1=0b00000000000011111111
-    immJ2=immJ>>9
-    immJ_mask2=0b000000000001
-    immJ3=immJ>>20
-    immJ_mask3=0b0111111111
-    immJ4=immJ>>11
-    immJ_mask4=0b000000000000000000001
-    immJ=(instruction_word& immJ_mask1)+(immJ2 & immJ_mask2)+(immJ3 & immJ_mask3)+(immJ4 & immJ_mask4)
+
+    immJ = instruction_word
+    # only extracting the 20 immediate bits
+
+    # IMMJ Generation
+    immJ = immJ>>12 
+    lastBit = immJ & 0b10000000000000000000
+    lastBit = lastBit>>19
+    print("LASTBIT",bin(lastBit))
+    bitsFrom7to0 = immJ & 0b00000000000011111111
+    bitsFrom18to9 = immJ & 0b01111111111000000000
+    # shift bits from 18 to 9 to the right by 9 bits to get bits from 9 to 0
+    bitsFrom18to9 = bitsFrom18to9>>9
+    eighthBit = immJ & 0b00000000000100000000
+    # shifting the eighth bit to the left by 8 bits 
+    eighthBit = eighthBit>>8
+    immJ = (lastBit<<19) + (bitsFrom7to0<<18) + (eighthBit<<8) + (bitsFrom18to9<<1) + (0b0)
+    # divide by 4 because the immediateJ value is in bytes
+    immJ //= 4
 
     #Generate immS, immB, ImmU, immJ done
 
@@ -177,9 +196,9 @@ def decode():
 
     printOperationDetails(inst_type, immFinal) # Left
 
-    #print(inst_type, immFinal, ALUop)
+    # print(inst_type, immFinal, ALUop)
     
-    #print(bin(rs1), bin(rs2), bin(rd))
+    # print(bin(rs1), bin(rs2), bin(rd))
 
 
 def getFinalImmediate(inst_type, imm,immS, immB, immU, immJ):
@@ -395,8 +414,10 @@ def execute():
     7 - xor
     8 - set less than
     '''
+    print("EXECUTE")
     global ALUop, ALUResult, BranchTargetAddress
 
+    print()
     if (ALUop == 1):
         ALUResult = operand1 + operand2
     elif (ALUop == 2):
@@ -431,7 +452,7 @@ def mem():
     print("MEMORY")
 
     if (MemOp == 0):
-        print("There is no Memory Operation\n")
+        print("There is no Memory Operation")
         ReadData = ALUResult
     elif (MemOp == 1): 
         # Store
@@ -443,14 +464,14 @@ def mem():
         # int rs2Value = BintoDec(rs2,5);
         # *data_p = X[rs2Value];
         # ReadData = X[rs2Value];
-        print("There is a Store Operation to be done from memory\n")
+        print("There is a Store Operation to be done from memory")
     elif (MemOp == 2):
         # Load
         # int *data_p;
         # data_p = (int*)(DataMEM + ALUResult);
         # ReadData = *data_p;
         ReadData = data_mem[ALUResult]
-        print("There is a Read Operation to be done from memory\n")
+        print("There is a Read Operation to be done from memory")
 
     MemOp = 0
 
@@ -465,15 +486,16 @@ def write_back():
         3 - LoadData - essentially same as ReadData
         4 - ALUResult
     '''
+
     print("WRITEBACK ")
 
     global RFWrite, rd, immFinal, ReadData, ALUResult
-    print(ResultSelect)
+    print("RESULTSELECT",ResultSelect)
 
     if (RFWrite):
         if (ResultSelect == 0):
             register[rd] = pc + 1
-            print("Write Back to ", pc+4, "to R", rd)
+            print("Write Back to ", pc+1, "to R", rd)
         elif (ResultSelect == 1):
             register[rd] = immFinal
             print("Write Back to ", immFinal, "to R", rd)
@@ -498,6 +520,7 @@ def isBranchMUX():
         =2         => pc+4(default)
     '''
     global isBranch, pc, ALUResult, BranchTargetAddress
+    print("Isbranch is ",isBranch)
     if (isBranch == 0):
         pc = ALUResult
     elif (isBranch == 1):

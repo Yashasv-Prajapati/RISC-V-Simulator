@@ -92,6 +92,20 @@ print(registerCheck)
 def reset_proc():
     pass
 
+def run_riscvsim():
+    global instruction_word, pc
+
+    while(1):
+        fetch()
+        if(instruction_word>=4294967291):
+            break
+        
+        decode()
+        execute()
+        mem()
+        write_back()
+        print('\n\n')
+
 
 def load_program_memory(file):
     '''
@@ -148,6 +162,8 @@ def decode():
     # global operand1,operand2
     # global instruction_word
     # opcode, rs1, rs2, rd, func3, func7, imm, immS, immB, immU, immJ, ALUop, immFinal
+    
+    # define local variables
     stage3['pc']=stage2['pc']
     local_instruction_word=stage2['instruction_word']
     opcode_mask = 0b1111111
@@ -284,7 +300,7 @@ def execute():
     BranchTargetAddress = BranchTargetResult+local_pc
 
 
-def memory():
+def mem():
     print('memory')
     '''
     MemOp operation
@@ -326,7 +342,7 @@ def memory():
     MemOp = 0
 
 
-def writeback():
+def write_back():
     print('writeback')
     '''
         ResultSelect
