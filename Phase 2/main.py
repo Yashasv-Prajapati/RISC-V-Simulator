@@ -1,4 +1,4 @@
-from myRISCVSim import *
+from multiProcess import *
 import argparse
 import sys
 
@@ -13,10 +13,10 @@ def init():
     args = parser.parse_args()
 
     if args.file:
-        print(args.file)
+        # print(args.file)
 
         reset_proc()
-        load_program_memory(args.file)
+        load_program_memory(args.file, MEM)
         run_riscvsim()
 
 
