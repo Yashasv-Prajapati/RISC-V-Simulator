@@ -415,7 +415,7 @@ void mem() {
   {
     int *data_p;
     data_p = (int*)(DataMEM + ALUResult);
-    printf("ReadData=%d and ALUResult=%d")
+    printf("ReadData=%d and ALUResult=%d");
     ReadData = *data_p;
     // printf("ReadData = %d\n", ReadData);
     printf("There is a Read Operation to be done from memory\n");
