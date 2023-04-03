@@ -3,6 +3,7 @@ import time
 from multiprocessing import Manager
 import sys
 import os
+import argparse
 
 
 
@@ -624,8 +625,8 @@ def run_riscvsim():
                 process.join()
             print("Out 1: ", out1)
             print("Out 2: ", out2)
-            # print("Out 3: ", out3)
-            # print("Out 4: ", out4)
+            print("Out 3: ", out3)
+            print("Out 4: ", out4)
             print("Out 5: ", out5)
             print("-------------------------------------------------------")
 
@@ -867,3 +868,31 @@ def printOperationDetails(inst_type, immFinal, operand1, operand2, rd, ALUop):
         print("Operand is: ", operand1)
         print("Immediate is: ", immFinal)
         print("Write Register is: ", rd)
+
+
+
+def init():
+    parser = argparse.ArgumentParser(
+                    prog='RISC V Simulator',
+                    description='This program Simulates the RISC V Architecture computer',
+                    epilog='Text at the bottom of help')
+    
+    parser.add_argument('--file', help='filename')
+
+    args = parser.parse_args()
+
+    if args.file:
+        # print(args.file)
+
+        reset_proc()
+        load_program_memory(args.file, MEM)
+        run_riscvsim()
+
+
+    else:
+        print("Incorrect number of arguments. Please invoke the simulator \n\t./myRISCVSim <input mem file>")
+        sys.exit(0)
+
+
+if __name__=='__main__':
+    init()
