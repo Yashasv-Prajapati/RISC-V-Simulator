@@ -103,14 +103,19 @@ def load_program_memory(file, MEM):
 
 
 
-def fetch(pipe1, out1):
+def fetch(pipe1, out1,extra_pipe,register):
     '''
         Fetch Instruction
     '''
+    register[0]=0
     # destructure variables
-    pc, fetch_ready, MEM, decode_ready = pipe1
-
-
+    pc, fetch_ready, MEM, decode_ready ,end_fetched= pipe1
+    # print("fetch_ready here =", fetch_ready)
+    fetch_ready1,read_pc_from_write,pc1=extra_pipe
+    if(read_pc_from_write==1):
+        pc=pc1
+        fetch_ready=1
+    print("fetch_ready=",fetch_ready)
     if (fetch_ready):
         print("FETCH")
         print("PC: ", pc)
@@ -118,6 +123,7 @@ def fetch(pipe1, out1):
         if(pc>int(0xfffffffb)):
             for _ in range(10):
                 out1.append(0)
+            out1.append(1)#pipe2 ka end_fetched=1
             return
     
         # global instruction_word
@@ -128,7 +134,7 @@ def fetch(pipe1, out1):
         if (instruction_word == 0xfffffffb):
             for _ in range(10):
                 out1.append(0)
-
+            out1.append(1)#pipe2 ka end_fetched=1
             return 
         
         opcode_mask = 0b1111111
@@ -237,6 +243,9 @@ def fetch(pipe1, out1):
 
         # updating pipe1 of fetch
         pipe1[0] = pc + 1
+        if(inst_type=='B' or inst_type=='J'):
+            pipe1[1]=0
+            extra_pipe[0]=0
 
         out1.append(pc)
         out1.append(opcode)
@@ -248,10 +257,11 @@ def fetch(pipe1, out1):
         out1.append(immFinal)
         out1.append(inst_type)
         out1.append(decode_ready)
-
+        out1.append(end_fetched)
         # pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready
         # out1 = list([rs1, rs2, rd, immFinal, func3, func7, inst_type, opcode])
         # print("Decode ready: ", out1[9])
+        register[0]=0
         return 
 
         sys.exit(0)
@@ -267,16 +277,22 @@ def fetch(pipe1, out1):
 
         # also return immFinal
         return [rs1, rs2, rd, func3, func7, ready, instructionType]
-
+    else:
+        print("Fetch_Ready=0")
+        for _ in range(10):
+            out1.append(0)
+        out1.append(end_fetched)
+        register[0]=0
+        return
         
     
 
     # counter[0] += 1
 def decode(pipe2, out2, register):
-
+    register[0] = 0
     # destructure arguments
     print("PIPE2 is ", pipe2)
-    pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready = pipe2
+    pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched = pipe2
     
     print("Ready: ")
 
@@ -321,8 +337,9 @@ def decode(pipe2, out2, register):
         out2.append(RFWrite)
         out2.append(execute_ready)
         out2.append(rs2)
+        out2.append(end_fetched)
 
-
+        register[0]=0
         # out2 = list(ALUop, ready, immFinal, operand1, operand2, rd, BranchTargetSelect, MemOp, ResultSelect, isBranch, ready, pc)
         return
     else:
@@ -341,14 +358,15 @@ def decode(pipe2, out2, register):
 
         for i in range(13):
             out2.append(0)
-
+        out2.append(end_fetched)
+        register[0] = 0
         return
 
     
-def execute(pipe3, out3):
-
+def execute(pipe3, out3,register):
+    register[0] = 0
     # destructure arguments
-    pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2 = pipe3
+    pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched = pipe3
     # print("Pipe3: ", pipe3)
     '''
     ALUop operation
@@ -418,6 +436,8 @@ def execute(pipe3, out3):
         out3.append(BranchTargetAddress)
         out3.append(memory_ready)
         out3.append(rs2)
+        out3.append(end_fetched)
+        register[0]=0
         # [BranchTargetAddress, ALUResult, pc, MemOp, isBranch, MemOp, ALUResult, pc, ResultSelect, rd, immFinal, isBranch, BranchTargetResult, ready]
         return 
     else:
@@ -436,16 +456,17 @@ def execute(pipe3, out3):
 
         for i in range(12):
             out3.append(0)
-
+        out3.append(end_fetched)
+        register[0] = 0
         return
 
 
     
 def Memory(pipe4, out4, data_mem,register):
-
+    register[0] = 0
     # destructure arguments
     # print("MEM debug: ", pipe4)
-    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2 = pipe4
+    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched = pipe4
 
     '''
     MemOp operation
@@ -467,6 +488,7 @@ def Memory(pipe4, out4, data_mem,register):
 
             # unsigned int *data_p;
             # data_p = (unsigned int*)(DataMEM + ALUResult);
+            print("data_mem[",ALUResult,"]=register[",rs2,"]")
             data_mem[ALUResult] = register[rs2]
             ReadData = data_mem[ALUResult]
             # int rs2Value = BintoDec(rs2,5);
@@ -506,7 +528,8 @@ def Memory(pipe4, out4, data_mem,register):
         out4.append(isBranch)
         out4.append(BranchTargetAddress)
         out4.append(write_ready)
-
+        out4.append(end_fetched)
+        register[0] = 0
         return
     else:
         # out4[0] = 0
@@ -522,15 +545,16 @@ def Memory(pipe4, out4, data_mem,register):
 
         for i in range(10):
             out4.append(0)
-
+        out4.append(end_fetched)
+        register[0] = 0
         return
         return [RFWrite, pc, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, ready]
     
-def Write(pipe5, out5, register):
-
+def Write(pipe5, out5, register,pipe1):
+    register[0] = 0
     # destructure arguments
     # print(args)
-    pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready = pipe5
+    pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched = pipe5
 
     '''
         ResultSelect
@@ -543,6 +567,7 @@ def Write(pipe5, out5, register):
     '''
 
     if (write_ready):
+        out5.append(1)
         print()
         print("WRITEBACK ")
 
@@ -578,27 +603,36 @@ def Write(pipe5, out5, register):
             print("ALUResult=",ALUResult)
             pc = ALUResult
             pc//=4
+            out5.append(1)
         elif (isBranch == 1):
             print("BranchTargetAddress=",BranchTargetAddress)
             pc = BranchTargetAddress
             pc//=4
+            out5.append(1)
         else:
             pc += 1
-
+            if(pipe1[1]==0 and end_fetched==0):# ie if fetch is waiting and it is not the end
+                out5.append(1)
+            else:
+                out5.append(0)
         # out5[0] = pc
         # out5[1] = register
 
         out5.append(pc)
         # out5.append(register)
-
+        register[0] = 0
         return
     else:
         # out5[0] = 0
         # out5[1] = 0
-
-        for i in range(1):
+        if(end_fetched==1):
+            for i in range(3):
+                out5.append(0)
+        else:
+            out5.append(1)
             out5.append(0)
-
+            out5.append(0)# this is useless
+        register[0] = 0
         return
     
         # return pc, ready
@@ -636,6 +670,8 @@ def run_riscvsim():
         execute_ready = 0
         mem_ready = 0
         write_ready = 0
+        end_fetched=0# 1 -> end has been fetched
+        read_pc_from_write=0# 1-> read pc from write
 
         pc = 0
         opcode = 0
@@ -658,7 +694,6 @@ def run_riscvsim():
         BranchTargetAddress = 0
         ReadData = 0
 
-
         # pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready])
         # out1 = manager.list([0]*10) #Stage 1 out
 
@@ -675,14 +710,15 @@ def run_riscvsim():
         # out5 = manager.list([0]*2)
 
         register = mp.Array('i', 32, lock=False)
-        data_mem = mp.Array('i', 1000, lock=False)
+        data_mem = mp.Array('i', 100000000, lock=False)
 
 
-        pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready])
-        pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready])
-        pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2])
-        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2])
-        pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready])
+        pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready,end_fetched])
+        pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched])
+        pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched])
+        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched])
+        pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched])
+        extra_pipe=manager.list([fetch_ready,read_pc_from_write,pc])
 
         out1 = manager.list()
         out2 = manager.list()
@@ -690,13 +726,13 @@ def run_riscvsim():
         out4 = manager.list()
         out5 = manager.list()
         
-        for i in range(6):
+        for i in range(400):
             # print("Pipe 3: ", pipe3)
-            p1 =  mp.Process(target= fetch, args=(pipe1, out1))
+            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
-            p3 =  mp.Process(target= execute, args=(pipe3, out3))
+            p3 =  mp.Process(target= execute, args=(pipe3, out3,register))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem,register))
-            p5 =  mp.Process(target= Write, args=(pipe5, out5, register))
+            p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1))
             
             p1.start()
             p2.start()
@@ -730,6 +766,7 @@ def run_riscvsim():
             pipe3 = manager.list()
             pipe4 = manager.list()
             pipe5 = manager.list()
+            extra_pipe=manager.list()
 
             # out3.append(data_mem)
             # out4[10] = register
@@ -739,7 +776,7 @@ def run_riscvsim():
             pipe3 = out2
             pipe4 = out3
             pipe5 = out4
-
+            extra_pipe=out5
             # pipe2.append(register)
             # pipe5.append(register)
             # out3[10] = data_mem #Data memory
