@@ -220,8 +220,8 @@ def fetch(pipe1, out1):
         print("Instruction type is: ",inst_type)
 
         immFinal = getFinalImmediate(inst_type, imm, immS ,immB, immU, immJ) 
-        print("Final immediate is: ",immFinal, " in hex: ", hex(immFinal))
-
+        print("Final immediate in FETCH is: ",immFinal, " in hex: ", hex(immFinal))
+        print("rs1 in FETCH is=",rs1,"and rs2 in FETCH is=",rs2)
         decode_ready = 1
 
         # out1[0] = pc
@@ -320,7 +320,7 @@ def decode(pipe2, out2, register):
         out2.append(isBranch)
         out2.append(RFWrite)
         out2.append(execute_ready)
-
+        out2.append(rs2)
 
 
         # out2 = list(ALUop, ready, immFinal, operand1, operand2, rd, BranchTargetSelect, MemOp, ResultSelect, isBranch, ready, pc)
@@ -339,7 +339,7 @@ def decode(pipe2, out2, register):
         # out2[10] = 0
         # out2[11] = 0
 
-        for i in range(12):
+        for i in range(13):
             out2.append(0)
 
         return
@@ -348,7 +348,7 @@ def decode(pipe2, out2, register):
 def execute(pipe3, out3):
 
     # destructure arguments
-    pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready = pipe3
+    pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2 = pipe3
     # print("Pipe3: ", pipe3)
     '''
     ALUop operation
@@ -417,7 +417,7 @@ def execute(pipe3, out3):
         out3.append(isBranch)
         out3.append(BranchTargetAddress)
         out3.append(memory_ready)
-
+        out3.append(rs2)
         # [BranchTargetAddress, ALUResult, pc, MemOp, isBranch, MemOp, ALUResult, pc, ResultSelect, rd, immFinal, isBranch, BranchTargetResult, ready]
         return 
     else:
@@ -434,18 +434,18 @@ def execute(pipe3, out3):
         # out3[10] = 0
         # out3[11] = 0
 
-        for i in range(11):
+        for i in range(12):
             out3.append(0)
 
         return
 
 
     
-def Memory(pipe4, out4, data_mem):
+def Memory(pipe4, out4, data_mem,register):
 
     # destructure arguments
     # print("MEM debug: ", pipe4)
-    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready = pipe4
+    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2 = pipe4
 
     '''
     MemOp operation
@@ -467,12 +467,12 @@ def Memory(pipe4, out4, data_mem):
 
             # unsigned int *data_p;
             # data_p = (unsigned int*)(DataMEM + ALUResult);
-            data_mem[ALUResult] = operand2
+            data_mem[ALUResult] = register[rs2]
             ReadData = data_mem[ALUResult]
             # int rs2Value = BintoDec(rs2,5);
             # *data_p = X[rs2Value];
             # ReadData = X[rs2Value];
-            print("There is a Store Operation to be done from memory")
+            print("There is a Store Operation to be done to memory and operand2=",operand2)
         elif (MemOp == 2):
             # Load
             # int *data_p;
@@ -695,7 +695,7 @@ def run_riscvsim():
             p1 =  mp.Process(target= fetch, args=(pipe1, out1))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
             p3 =  mp.Process(target= execute, args=(pipe3, out3))
-            p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem))
+            p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem,register))
             p5 =  mp.Process(target= Write, args=(pipe5, out5, register))
             
             p1.start()
@@ -967,7 +967,7 @@ def printOperationDetails(inst_type, immFinal, operand1, operand2, rd, ALUop):
     '''
         Print Operation Details
     '''
-
+    print("inst_type in DECODE=",inst_type)
     if (inst_type == 'R'):
         if (ALUop == 1):
             print("Instruction Type is ADD")
@@ -981,7 +981,9 @@ def printOperationDetails(inst_type, immFinal, operand1, operand2, rd, ALUop):
             print("Instruction Type is ADDI")
         elif (ALUop == 3):
             print("Instruction Type is ANDI")
-
-        print("Operand is: ", operand1)
+        print("Operand1 is: ", operand1)
         print("Immediate is: ", immFinal)
-        print("Write Register is: ", rd)
+        print("Write Register(rd) is: ", rd)
+    elif (inst_type=='S'):
+        print("Decode has Store instruction!")
+        print("immFinal in DECODE=",immFinal,"and operand1 in DECODE=",operand1,"and operand2 in DECODE=",operand2)
