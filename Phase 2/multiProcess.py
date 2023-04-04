@@ -11,7 +11,7 @@ import os
 
 MEM = [0] * 4000
 # data_mem = [0] * 100000000
-data_mem = [0] * 10
+# data_mem = [0] * 10
 
 preparation_status = {
     # 1 - Ready
@@ -441,7 +441,7 @@ def execute(pipe3, out3):
 
 
     
-def Memory(pipe4, out4):
+def Memory(pipe4, out4, data_mem):
 
     # destructure arguments
     # print("MEM debug: ", pipe4)
@@ -675,6 +675,7 @@ def run_riscvsim():
         # out5 = manager.list([0]*2)
 
         register = mp.Array('i', 32, lock=False)
+        data_mem = mp.Array('i', 1000, lock=False)
 
 
         pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready])
@@ -694,7 +695,7 @@ def run_riscvsim():
             p1 =  mp.Process(target= fetch, args=(pipe1, out1))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
             p3 =  mp.Process(target= execute, args=(pipe3, out3))
-            p4 =  mp.Process(target= Memory, args=(pipe4, out4))
+            p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem))
             p5 =  mp.Process(target= Write, args=(pipe5, out5, register))
             
             p1.start()
