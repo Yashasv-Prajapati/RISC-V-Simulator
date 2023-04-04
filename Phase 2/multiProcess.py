@@ -6,7 +6,7 @@ import os
 
 
 
-register = [0] * 32
+# register = [0] * 32
 
 
 MEM = [0] * 4000
@@ -111,10 +111,14 @@ def fetch(pipe1, out1):
     pc, fetch_ready, MEM, decode_ready = pipe1
 
 
-
     if (fetch_ready):
         print("FETCH")
         print("PC: ", pc)
+
+        if(pc>int(0xfffffffb)):
+            for _ in range(10):
+                out1.append(0)
+            return
     
         # global instruction_word
         instruction_word = read_word(pc, MEM)
@@ -122,7 +126,7 @@ def fetch(pipe1, out1):
         print("instruction word in binary=",bin(instruction_word))
 
         if (instruction_word == 0xfffffffb):
-            for i in range(9):
+            for _ in range(10):
                 out1.append(0)
 
             return 
@@ -231,6 +235,9 @@ def fetch(pipe1, out1):
         # out1[8] = inst_type
         # out1[9] = decode_ready
 
+        # updating pipe1 of fetch
+        pipe1[0] = pc + 1
+
         out1.append(pc)
         out1.append(opcode)
         out1.append(rs1)
@@ -265,17 +272,18 @@ def fetch(pipe1, out1):
     
 
     # counter[0] += 1
-def decode(pipe2, out2):
+def decode(pipe2, out2, register):
 
     # destructure arguments
+    print("PIPE2 is ", pipe2)
     pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready = pipe2
     
     print("Ready: ")
 
     if (decode_ready):
-        print("DECODE")
+        print("\nDECODE")
         ALUop = getALUop(instructionType, func3, func7)  
-        operand1, operand2 = op2selectMUX(instructionType, rs1, rs2, immFinal)
+        operand1, operand2 = op2selectMUX(instructionType, rs1, rs2, immFinal, register)
         BranchTargetSelect = BranchTargetSelectMUX(instructionType, immFinal) #this is left
         MemOp = getMemOp(instructionType, opcode)
         RFWrite, ResultSelect = ResultSelectMUX(opcode, instructionType)
@@ -518,7 +526,7 @@ def Memory(pipe4, out4):
         return
         return [RFWrite, pc, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, ready]
     
-def Write(pipe5, out5):
+def Write(pipe5, out5, register):
 
     # destructure arguments
     # print(args)
@@ -542,7 +550,7 @@ def Write(pipe5, out5):
 
         if (RFWrite):
             if (ResultSelect == 0):
-                register[rd] =4 * (pc + 1)
+                register[rd] = 4 * (pc + 1)
                 print("Write Back  ", 4*(pc+1), "to R", rd)
             elif (ResultSelect == 1):
                 register[rd] = immFinal
@@ -581,14 +589,14 @@ def Write(pipe5, out5):
         # out5[1] = register
 
         out5.append(pc)
-        out5.append(register)
+        # out5.append(register)
 
         return
     else:
         # out5[0] = 0
         # out5[1] = 0
 
-        for i in range(2):
+        for i in range(1):
             out5.append(0)
 
         return
@@ -596,7 +604,7 @@ def Write(pipe5, out5):
         # return pc, ready
 
 
-def op2selectMUX(inst_type, rs1, rs2, imm_final):
+def op2selectMUX(inst_type, rs1, rs2, imm_final, register):
     '''
         Op2SelectMUX
     '''
@@ -666,6 +674,8 @@ def run_riscvsim():
         # pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready, register])
         # out5 = manager.list([0]*2)
 
+        register = mp.Array('i', 32, lock=False)
+
 
         pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready])
         pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready])
@@ -679,17 +689,13 @@ def run_riscvsim():
         out4 = manager.list()
         out5 = manager.list()
         
-        for i in range(5):
-
-
-
-
+        for i in range(10):
             # print("Pipe 3: ", pipe3)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1))
-            p2 =  mp.Process(target= decode, args=(pipe2, out2))
+            p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
             p3 =  mp.Process(target= execute, args=(pipe3, out3))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4))
-            p5 =  mp.Process(target= Write, args=(pipe5, out5))
+            p5 =  mp.Process(target= Write, args=(pipe5, out5, register))
             
             p1.start()
             p2.start()
@@ -713,11 +719,11 @@ def run_riscvsim():
             print("Out 3: ", out3)
             print("Out 4: ", out4)
             print("Out 5: ", out5)
-            print("Out 5 (reg): ", out5[1])
+            # print("Out 5 (reg): ", out5[1])
             print("-------------------------------------------------------")
 
-            if out5[1] != 0:
-                register = out5[1]
+            # if out5[1] != 0:
+            #     register.value = out5[1]
 
             pipe2 = manager.list()
             pipe3 = manager.list()
@@ -733,12 +739,13 @@ def run_riscvsim():
             pipe4 = out3
             pipe5 = out4
 
-
+            # pipe2.append(register)
+            # pipe5.append(register)
             # out3[10] = data_mem #Data memory
 
 
-            if (out1[9] != 0):
-                pass
+            # if (out1[9] != 0):
+            #     pass
             #     pipe1[0] += 1   #move to next instruction
             out1 = manager.list()
             out2 = manager.list()
@@ -747,7 +754,7 @@ def run_riscvsim():
             out5 = manager.list()
 
 
-        print("Register: ", register)
+        print("Register: ", register[:])
 
 
 
