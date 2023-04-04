@@ -265,10 +265,10 @@ def decode(pipe2, out2):
     # destructure arguments
     pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready = pipe2
     
-    # print("Ready: ",args)
+    print("Ready: ")
 
     if (decode_ready):
-        print("\nDECODE")
+        print("DECODE")
         ALUop = getALUop(instructionType, func3, func7)  
         operand1, operand2 = op2selectMUX(instructionType, rs1, rs2, immFinal)
         BranchTargetSelect = BranchTargetSelectMUX(instructionType, immFinal) #this is left
@@ -635,7 +635,7 @@ def run_riscvsim():
             pipe4 = out3
             pipe5 = out4
 
-            out3[10] = data_mem #Data memory
+            # out3[10] = data_mem #Data memory
             out4[10] = register
             if (out1[9] != 0):
                 pass
