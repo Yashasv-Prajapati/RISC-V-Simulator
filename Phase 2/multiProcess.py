@@ -437,7 +437,7 @@ def Memory(pipe4, out4):
 
     # destructure arguments
     # print("MEM debug: ", pipe4)
-    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready, data_mem = pipe4
+    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready = pipe4
 
     '''
     MemOp operation
@@ -522,7 +522,7 @@ def Write(pipe5, out5):
 
     # destructure arguments
     # print(args)
-    pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready, register = pipe5
+    pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready = pipe5
 
     '''
         ResultSelect
@@ -535,6 +535,7 @@ def Write(pipe5, out5):
     '''
 
     if (write_ready):
+        print()
         print("WRITEBACK ")
 
         print("RESULTSELECT",ResultSelect)
@@ -669,8 +670,8 @@ def run_riscvsim():
         pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready])
         pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready])
         pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready])
-        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready, data_mem])
-        pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready, register])
+        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready])
+        pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready])
 
         out1 = manager.list()
         out2 = manager.list()
@@ -712,18 +713,20 @@ def run_riscvsim():
             print("Out 3: ", out3)
             print("Out 4: ", out4)
             print("Out 5: ", out5)
+            print("Out 5 (reg): ", out5[1])
             print("-------------------------------------------------------")
 
-            # register = out5[1]
+            if out5[1] != 0:
+                register = out5[1]
 
             pipe2 = manager.list()
             pipe3 = manager.list()
             pipe4 = manager.list()
             pipe5 = manager.list()
 
-            out3.append(data_mem)
+            # out3.append(data_mem)
             # out4[10] = register
-            out4.append(register)
+            # out4.append(register)
 
             pipe2 = out1
             pipe3 = out2
