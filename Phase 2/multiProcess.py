@@ -680,8 +680,8 @@ def run_riscvsim():
 
         pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready])
         pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready])
-        pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready])
-        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready])
+        pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2])
+        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2])
         pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready])
 
         out1 = manager.list()
@@ -690,7 +690,7 @@ def run_riscvsim():
         out4 = manager.list()
         out5 = manager.list()
         
-        for i in range(10):
+        for i in range(6):
             # print("Pipe 3: ", pipe3)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
