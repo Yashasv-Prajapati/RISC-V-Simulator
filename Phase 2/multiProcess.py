@@ -243,7 +243,7 @@ def fetch(pipe1, out1,extra_pipe,register):
 
         # updating pipe1 of fetch
         pipe1[0] = pc + 1
-        if(inst_type=='B' or inst_type=='J'):
+        if(inst_type=='B' or inst_type=='J' or opcode==0b1100111):
             pipe1[1]=0
             extra_pipe[0]=0
 
@@ -338,6 +338,7 @@ def decode(pipe2, out2, register):
         out2.append(execute_ready)
         out2.append(rs2)
         out2.append(end_fetched)
+        out2.append(instructionType)
 
         register[0]=0
         # out2 = list(ALUop, ready, immFinal, operand1, operand2, rd, BranchTargetSelect, MemOp, ResultSelect, isBranch, ready, pc)
@@ -359,6 +360,8 @@ def decode(pipe2, out2, register):
         for i in range(13):
             out2.append(0)
         out2.append(end_fetched)
+        out2.append(instructionType)
+
         register[0] = 0
         return
 
@@ -366,7 +369,7 @@ def decode(pipe2, out2, register):
 def execute(pipe3, out3,register):
     register[0] = 0
     # destructure arguments
-    pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched = pipe3
+    pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched,inst_type = pipe3
     # print("Pipe3: ", pipe3)
     '''
     ALUop operation
@@ -437,6 +440,8 @@ def execute(pipe3, out3,register):
         out3.append(memory_ready)
         out3.append(rs2)
         out3.append(end_fetched)
+        out3.append(inst_type)
+
         register[0]=0
         # [BranchTargetAddress, ALUResult, pc, MemOp, isBranch, MemOp, ALUResult, pc, ResultSelect, rd, immFinal, isBranch, BranchTargetResult, ready]
         return 
@@ -457,6 +462,8 @@ def execute(pipe3, out3,register):
         for i in range(12):
             out3.append(0)
         out3.append(end_fetched)
+        out3.append(inst_type)
+
         register[0] = 0
         return
 
@@ -466,7 +473,7 @@ def Memory(pipe4, out4, data_mem,register):
     register[0] = 0
     # destructure arguments
     # print("MEM debug: ", pipe4)
-    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched = pipe4
+    pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched,inst_type = pipe4
 
     '''
     MemOp operation
@@ -529,6 +536,8 @@ def Memory(pipe4, out4, data_mem,register):
         out4.append(BranchTargetAddress)
         out4.append(write_ready)
         out4.append(end_fetched)
+        out4.append(inst_type)
+
         register[0] = 0
         return
     else:
@@ -546,6 +555,8 @@ def Memory(pipe4, out4, data_mem,register):
         for i in range(10):
             out4.append(0)
         out4.append(end_fetched)
+        out4.append(inst_type)
+
         register[0] = 0
         return
         return [RFWrite, pc, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, ready]
@@ -554,7 +565,7 @@ def Write(pipe5, out5, register,pipe1):
     register[0] = 0
     # destructure arguments
     # print(args)
-    pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched = pipe5
+    pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched,inst_type = pipe5
 
     '''
         ResultSelect
@@ -604,16 +615,21 @@ def Write(pipe5, out5, register,pipe1):
             pc = ALUResult
             pc//=4
             out5.append(1)
+            pipe1[1]=1
         elif (isBranch == 1):
             print("BranchTargetAddress=",BranchTargetAddress)
             pc = BranchTargetAddress
             pc//=4
             out5.append(1)
+            pipe1[1]=1
         else:
             pc += 1
-            if(pipe1[1]==0 and end_fetched==0):# ie if fetch is waiting and it is not the end
+            if(pipe1[1]==0 and end_fetched==0 and (inst_type=='J' or inst_type=='B')):# ie if fetch is waiting and it is not the end
+                print("YES")
                 out5.append(1)
+                pipe1[1]=1
             else:
+                print("NO")
                 out5.append(0)
         # out5[0] = pc
         # out5[1] = register
@@ -715,9 +731,9 @@ def run_riscvsim():
 
         pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready,end_fetched])
         pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched])
-        pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched])
-        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched])
-        pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched])
+        pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched,instructionType])
+        pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched,instructionType])
+        pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched,instructionType])
         extra_pipe=manager.list([fetch_ready,read_pc_from_write,pc])
 
         out1 = manager.list()
@@ -726,8 +742,9 @@ def run_riscvsim():
         out4 = manager.list()
         out5 = manager.list()
         
-        for i in range(400):
+        for i in range(20):
             # print("Pipe 3: ", pipe3)
+            print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register))
@@ -925,7 +942,7 @@ def isBranchInstruction(opcode, inst_type, func3, operand1, operand2):
         =1         => BranchTargetAddress
         =2         => pc+4(default)
     '''
-
+    print("operand1=",operand1,"and operand2=",operand2)
     if (opcode == 0b1100111):
         isBranch = 0
     elif (inst_type == 'B'):
