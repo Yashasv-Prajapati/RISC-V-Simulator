@@ -113,8 +113,11 @@ def fetch(pipe1, out1,extra_pipe,register):
     # print("fetch_ready here =", fetch_ready)
     fetch_ready1,read_pc_from_write,pc1=extra_pipe
     if(read_pc_from_write==1):
+        print("HERE")
         pc=pc1
+        pipe1[0]=pc1
         fetch_ready=1
+        extra_pipe[1]=0
     print("fetch_ready=",fetch_ready)
     if (fetch_ready):
         print("FETCH")
@@ -742,7 +745,7 @@ def run_riscvsim():
         out4 = manager.list()
         out5 = manager.list()
         
-        for i in range(20):
+        for i in range(250):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register))
