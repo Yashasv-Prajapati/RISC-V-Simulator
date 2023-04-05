@@ -119,7 +119,7 @@ def fetch(pipe1, out1,extra_pipe,register):
         fetch_ready=1
         extra_pipe[1]=0
     print("fetch_ready=",fetch_ready)
-    if (fetch_ready):
+    if (fetch_ready and end_fetched==0):
         print("FETCH")
         print("PC: ", pc)
 
@@ -498,7 +498,7 @@ def Memory(pipe4, out4, data_mem,register):
 
             # unsigned int *data_p;
             # data_p = (unsigned int*)(DataMEM + ALUResult);
-            print("data_mem[",ALUResult,"]=register[",rs2,"]")
+            print("data_mem[",ALUResult,"]=register[",rs2,"]=",register[rs2])
             data_mem[ALUResult] = register[rs2]
             ReadData = data_mem[ALUResult]
             # int rs2Value = BintoDec(rs2,5);
@@ -512,6 +512,7 @@ def Memory(pipe4, out4, data_mem,register):
             # ReadData = *data_p;
             ReadData = data_mem[ALUResult]
             print("There is a Read Operation to be done from memory")
+            print("ReadData=data_mem[",ALUResult,"]")
 
         MemOp = 0
 
@@ -745,7 +746,7 @@ def run_riscvsim():
         out4 = manager.list()
         out5 = manager.list()
         
-        for i in range(250):
+        for i in range(400):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register))
@@ -951,6 +952,7 @@ def isBranchInstruction(opcode, inst_type, func3, operand1, operand2):
     elif (inst_type == 'B'):
         isBranch = 2
         if (func3 == 0x0 and operand1 == operand2):
+            print("operand1==operand2 because operand1=",operand1," and operand2=",operand2)
             isBranch = 1
         elif (func3 == 0x1 and operand1 != operand2):
             isBranch = 1
