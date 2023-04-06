@@ -4,10 +4,7 @@ from multiprocessing import Manager
 import sys
 import os
 
-
-
 # register = [0] * 32
-
 
 MEM = [0] * 4000
 # data_mem = [0] * 100000000
@@ -477,7 +474,7 @@ def Memory(pipe4, out4, data_mem,register):
     # destructure arguments
     # print("MEM debug: ", pipe4)
     pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched,inst_type = pipe4
-
+    
     '''
     MemOp operation
     0 - Do nothing (skip)
@@ -746,7 +743,7 @@ def run_riscvsim():
         out4 = manager.list()
         out5 = manager.list()
         
-        for i in range(400):
+        for i in range(600):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register))
