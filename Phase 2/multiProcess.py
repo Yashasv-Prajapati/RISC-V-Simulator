@@ -13,61 +13,6 @@ MEM = [0] * 4000
 # data_mem = [0] * 100000000
 # data_mem = [0] * 10
 
-preparation_status = {
-    # 1 - Ready
-    # 0 - Not Ready
-    'pc': 1,
-    'instruction_word': 1,
-    'rs2':1,
-}
-
-stage1 = {
-    'pc': 0,
-}
-
-# dictionary for the fetch-decode stage
-stage2 = {
-    'instruction_word': 0,
-    'pc':0,
-}
-
-# dictionary for the decode-execute stage
-stage3 = {
-    'operand1':0,
-    'operand2':0,
-    'inst_type':'R',
-    'immFinal':0,
-    'pc':0,
-    'rs2':0,
-    'rd':0,
-}
-
-# dictionary for the execute-memory stage
-stage4 = {
-    'inst_type':'R',
-    'ALUResult':0,
-    'rs2':0,
-    'immFinal': 0,
-    'rd': 0,
-
-}
-
-# dictionary for the memory-writeback stage
-stage5 = {
-    'inst_type':'R',
-    'ReadData':0,
-    'rd': 0,
-    'immFinal': 0,
-    'ALUResult':0,
-}
-
-stage6={
-    'ALUResult':0,
-}
-
-# creating 4 dictionaries for each stage
-# dictionary for the fetch stage
-
 registerCheck = [1 for i in range(32)]
 # print("registerCheck= ")
 # print(registerCheck)    
@@ -103,7 +48,7 @@ def load_program_memory(file, MEM):
 
 
 
-def fetch(pipe1, out1,extra_pipe,register):
+def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
     '''
         Fetch Instruction
     '''
@@ -245,10 +190,27 @@ def fetch(pipe1, out1,extra_pipe,register):
         # out1[9] = decode_ready
 
         # updating pipe1 of fetch
-        pipe1[0] = pc + 1
+        
         if(inst_type=='B' or inst_type=='J' or opcode==0b1100111):
             pipe1[1]=0
             extra_pipe[0]=0
+
+        ready_reg[rd] = 0
+
+        if (ready_reg[rs1] == 0 or ready_reg[rs2] == 0):
+            # out_stall.append(pc)
+            # out_stall.append(opcode)
+            # out_stall.append(rs1)
+            # out_stall.append(rs2)
+            # out_stall.append(rd)
+            # out_stall.append(func3)
+            # out_stall.app
+            decode_ready = 0
+            pipe1[1] = 0
+            pipe1[0] = pc
+        else:
+            decode_ready = 1
+            pipe1[0] = pc + 1
 
         out1.append(pc)
         out1.append(opcode)
@@ -264,6 +226,9 @@ def fetch(pipe1, out1,extra_pipe,register):
         # pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready
         # out1 = list([rs1, rs2, rd, immFinal, func3, func7, inst_type, opcode])
         # print("Decode ready: ", out1[9])
+
+
+
         register[0]=0
         return 
 
@@ -294,10 +259,10 @@ def fetch(pipe1, out1,extra_pipe,register):
 def decode(pipe2, out2, register):
     register[0] = 0
     # destructure arguments
-    print("PIPE2 is ", pipe2)
+    # print("PIPE2 is ", pipe2)
     pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched = pipe2
     
-    print("Ready: ")
+    # print("Ready: ")
 
     if (decode_ready):
         print("\nDECODE")
@@ -565,7 +530,7 @@ def Memory(pipe4, out4, data_mem,register):
         return
         return [RFWrite, pc, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, ready]
     
-def Write(pipe5, out5, register,pipe1):
+def Write(pipe5, out5, register,pipe1, ready_reg):
     register[0] = 0
     # destructure arguments
     # print(args)
@@ -604,6 +569,9 @@ def Write(pipe5, out5, register,pipe1):
             elif (ResultSelect == 4):
                 register[rd] = ALUResult
                 print("Write Back to ", ALUResult, "to R", rd)
+
+            ready_reg[rd] = 1
+            pipe1[1]=1
         else:
             print("There is no Write Back")
 
@@ -731,6 +699,12 @@ def run_riscvsim():
 
         register = mp.Array('i', 32, lock=False)
         data_mem = mp.Array('i', 100000000, lock=False)
+        ready_reg = mp.Array('i', 32, lock=False)
+
+        for i in range(32):
+            ready_reg[i] = 1
+
+        # print("Ready Register", ready_reg[:])
 
 
         pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready,end_fetched])
@@ -745,15 +719,16 @@ def run_riscvsim():
         out3 = manager.list()
         out4 = manager.list()
         out5 = manager.list()
+        out_stall = manager.list()
         
-        for i in range(400):
+        for i in range(10):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
-            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register))
+            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem,register))
-            p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1))
+            p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1, ready_reg))
             
             p1.start()
             p2.start()
@@ -811,6 +786,7 @@ def run_riscvsim():
             out3 = manager.list()
             out4 = manager.list()
             out5 = manager.list()
+            out_stall = manager.list()
 
 
         print("Register: ", register[:])
