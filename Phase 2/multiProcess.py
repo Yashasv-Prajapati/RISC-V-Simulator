@@ -195,22 +195,29 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
             pipe1[1]=0
             extra_pipe[0]=0
 
-        ready_reg[rd] = 0
+        # pipe1[0]=pc+1
+       
 
-        if (ready_reg[rs1] == 0 or ready_reg[rs2] == 0):
-            # out_stall.append(pc)
-            # out_stall.append(opcode)
-            # out_stall.append(rs1)
-            # out_stall.append(rs2)
-            # out_stall.append(rd)
-            # out_stall.append(func3)
-            # out_stall.app
+        if ((ready_reg[rs1] == 0  and (inst_type=='I' or inst_type=='R'))or (ready_reg[rs2] == 0 and inst_type=='R')):
+        #     # out_stall.append(pc)
+        #     # out_stall.append(opcode)
+        #     # out_stall.append(rs1)
+        #     # out_stall.append(rs2)
+        #     # out_stall.append(rd)
+        #     # out_stall.append(func3)
+        #     # out_stall.app
             decode_ready = 0
-            pipe1[1] = 0
+            pipe1[1] = 1
+            
             pipe1[0] = pc
         else:
             decode_ready = 1
             pipe1[0] = pc + 1
+        
+        if(rd!=0):
+            ready_reg[rd] = 0
+        print("ready_reg ",ready_reg[:])
+
 
         out1.append(pc)
         out1.append(opcode)
@@ -721,7 +728,7 @@ def run_riscvsim():
         out5 = manager.list()
         out_stall = manager.list()
         
-        for i in range(10):
+        for i in range(25):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall))
