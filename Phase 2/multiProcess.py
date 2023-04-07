@@ -54,12 +54,14 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe
     pc, fetch_ready, MEM, decode_ready ,end_fetched= pipe1
     # print("fetch_ready here =", fetch_ready)
     fetch_ready1,read_pc_from_write,pc1=extra_pipe
+
     if(read_pc_from_write==1):
         print("HERE")
         pc=pc1
         pipe1[0]=pc1
         fetch_ready=1
         extra_pipe[1]=0
+        
     print("fetch_ready=",fetch_ready)
     if (fetch_ready and end_fetched==0):
         print("FETCH")
@@ -172,7 +174,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe
 
         immFinal = getFinalImmediate(inst_type, imm, immS ,immB, immU, immJ) 
         print("Final immediate in FETCH is: ",immFinal, " in hex: ", hex(immFinal))
-        print("rs1 in FETCH is=",rs1,"and rs2 in FETCH is=",rs2)
+        print("rd is = ", rd,"rs1 in FETCH is=",rs1,"and rs2 in FETCH is=",rs2)
         decode_ready = 1
 
         # out1[0] = pc
@@ -225,6 +227,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe
             out1.append(end_fetched)
         if(rd!=0):
             ready_reg[rd] = 0
+        
         print("ready_reg ",ready_reg[:])
 
 
