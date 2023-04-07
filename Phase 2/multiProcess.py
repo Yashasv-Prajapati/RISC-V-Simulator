@@ -45,7 +45,7 @@ def load_program_memory(file, MEM):
 
 
 
-def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
+def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe4,pipe5):
     '''
         Fetch Instruction
     '''
@@ -196,9 +196,8 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
 
         # pipe1[0]=pc+1
        
-
-        if ((ready_reg[rs1] == 0)or (ready_reg[rs2] == 0 and (inst_type=='R' or inst_type=='S' or inst_type=='B'))):
-        #     # out_stall.append(pc)
+        if (((ready_reg[rs1] == 0) and ((pipe2[4] == rs1) or (rs1 == pipe3[7]) or (rs1 == pipe4[6]) or (rs1 == pipe5[3]))) or (ready_reg[rs2] == 0 and (inst_type == 'R' or inst_type == 'S' or inst_type == 'B') and (((pipe2[4] == rs2) or (rs2 == pipe3[7]) or (rs2 == pipe4[6]) or (rs2 == pipe5[3]))))):
+            #     # out_stall.append(pc)
         #     # out_stall.append(opcode)
         #     # out_stall.append(rs1)
         #     # out_stall.append(rs2)
@@ -209,27 +208,30 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
             pipe1[1] = 1
             
             pipe1[0] = pc
+            for i in range(10):
+                out1.append(0)
+            out1.append(end_fetched)
         else:
             decode_ready = 1
             pipe1[0] = pc + 1
-        
+            out1.append(pc)
+            out1.append(opcode)
+            out1.append(rs1)
+            out1.append(rs2)
+            out1.append(rd)
+            out1.append(func3)
+            out1.append(func7)
+            out1.append(immFinal)
+            out1.append(inst_type)
+            out1.append(decode_ready)
+            out1.append(end_fetched)
         if(rd!=0):
             ready_reg[rd] = 0
         
         print("ready_reg ",ready_reg[:])
 
 
-        out1.append(pc)
-        out1.append(opcode)
-        out1.append(rs1)
-        out1.append(rs2)
-        out1.append(rd)
-        out1.append(func3)
-        out1.append(func7)
-        out1.append(immFinal)
-        out1.append(inst_type)
-        out1.append(decode_ready)
-        out1.append(end_fetched)
+        
         # pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready
         # out1 = list([rs1, rs2, rd, immFinal, func3, func7, inst_type, opcode])
         # print("Decode ready: ", out1[9])
@@ -537,7 +539,7 @@ def Memory(pipe4, out4, data_mem,register):
         return
         return [RFWrite, pc, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, ready]
     
-def Write(pipe5, out5, register,pipe1, ready_reg):
+def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4):
     register[0] = 0
     # destructure arguments
     # print(args)
@@ -578,7 +580,10 @@ def Write(pipe5, out5, register,pipe1, ready_reg):
                 print("Write Back to ", ALUResult, "to R", rd)
 
             ready_reg[rd] = 1
-            pipe1[1]=1
+            if(pipe2[8]!='J' and pipe2[8]!='B' and pipe3[14]!='J' and pipe3[14]!='B' and pipe4[13]!='J' and pipe4[13]!='B'):
+                print("pipe3[14]=",pipe3[14])
+                print("YES")
+                pipe1[1]=1
         else:
             print("There is no Write Back")
 
@@ -728,14 +733,14 @@ def run_riscvsim():
         out5 = manager.list()
         out_stall = manager.list()
 
-        for i in range(600):
+        for i in range(20):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
-            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall))
+            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe4,pipe5))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem,register))
-            p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1, ready_reg))
+            p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4))
             
             p1.start()
             p2.start()
