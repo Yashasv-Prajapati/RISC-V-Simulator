@@ -18,10 +18,9 @@ file2 = "helo1.py"
 # define the command to run the files and capture their output
 command = "python {}"
 
-f = open("demofile.txt", "r")
-print(f.read())
+output1 = os.system("python helo.py")
 
-output1 = os.popen(command.format(file1), mode='r', buffering=-1).read()
+# output1 = os.popen(command.format(file1), mode='r', buffering=-1).read()
 output2 = os.popen(command.format(file2)).read()
 
 # compare the outputs

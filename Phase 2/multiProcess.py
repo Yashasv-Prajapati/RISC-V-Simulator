@@ -45,7 +45,7 @@ def load_program_memory(file, MEM):
 
 
 
-def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe4,pipe5):
+def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
     '''
         Fetch Instruction
     '''
@@ -212,9 +212,6 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe
             pipe1[1] = 1
             
             pipe1[0] = pc
-            for i in range(10):
-                out1.append(0)
-            out1.append(end_fetched)
         else:
             decode_ready = 1
             pipe1[0] = pc + 1
@@ -761,7 +758,7 @@ def run_riscvsim():
         for i in range(200):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
-            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall,pipe2,pipe3,pipe4,pipe5))
+            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem,register))
