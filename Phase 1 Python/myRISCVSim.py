@@ -73,6 +73,7 @@ def run_riscvsim():
         counter=counter+1
         print("Instruction number is",counter)
         t=t+1
+        print("-------------------------------------------------------")
     print("PRINTING REGISTER VALUES")
     i=0
     while(i<32):
@@ -99,6 +100,8 @@ def fetch():
     global instruction_word
     instruction_word = read_word(pc)
     print("instruction_word in fetch after read_Word=",instruction_word)
+    print("REGISTER ARE ", register)
+
 
 def read_word(address):
     '''
