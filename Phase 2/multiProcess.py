@@ -203,13 +203,20 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag):
        
 
         if ((ready_reg[rs1] == 0 and inst_type!='J')or ( inst_type!='J' and ready_reg[rs2] == 0 and (inst_type=='R' or inst_type=='S' or inst_type=='B'))):
-        #     # out_stall.append(pc)
-        #     # out_stall.append(opcode)
-        #     # out_stall.append(rs1)
-        #     # out_stall.append(rs2)
-        #     # out_stall.append(rd)
-        #     # out_stall.append(func3)
-        #     # out_stall.app
+            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            out_stall[:] = [] 
+            out_stall.append(pc)
+            out_stall.append(opcode)
+            out_stall.append(rs1)
+            out_stall.append(rs2)
+            out_stall.append(rd)
+            out_stall.append(func3)
+            out_stall.append(func7)
+            out_stall.append(immFinal)
+            out_stall.append(inst_type)
+            out_stall.append(decode_ready)
+            out_stall.append(end_fetched)
+
             decode_ready = 0
             print('"YES"')
             pipe1[1] = 1
@@ -276,15 +283,29 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag):
     
 
     # counter[0] += 1
-def decode(pipe2, out2, register, codeExitFlag):
+def decode(pipe2, out2, register, codeExitFlag, prev_decode_ready, out_stall, first_time_decode):
     register[0] = 0
     # destructure arguments
     # print("PIPE2 is ", pipe2)
-    pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched = pipe2
+    pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready, end_fetched = pipe2
     
     # print("Ready: ")
 
     codeExitFlag[1] = decode_ready
+
+    if(prev_decode_ready[0] == 0 and decode_ready == 1 and len(out_stall) == 11 and first_time_decode[0] == 1):
+        print("Ending Stall")
+        print("Out Stall: ", out_stall)
+        print("Pipe2: ", pipe2)
+        pipe2[:] = out_stall[:]
+
+        print("pipe2 after: ", pipe2)
+
+
+    first_time_decode[0] = 1
+
+
+    prev_decode_ready[0] = decode_ready
 
     if (decode_ready):
         print("\nDECODE")
@@ -617,6 +638,7 @@ def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounte
             if(pipe2[8]!='J' and pipe2[8]!='B' and pipe3[14]!='J' and pipe3[14]!='B' and pipe4[13]!='J' and pipe4[13]!='B' and pipe5[11]!='J' and pipe5[11]!='B' and pipe2[1]==0b1100111 and pipe3[-1]!=0b1100111 and pipe4[-1]!=0b1100111 and pipe5[-1]!=0b1100111):
                 print("Here")
                 pipe1[1]=1
+                pipe2[9]=1
         else:
             print("There is no Write Back")
 
@@ -751,6 +773,12 @@ def run_riscvsim():
             codeExitFlag[i] = 1
         codeExitFlag[0] = 0
 
+        prev_decode_ready = mp.Array('i', 1, lock=False)
+        prev_decode_ready[0] = 0
+
+        first_time_decode = mp.Array('i', 1, lock=False)
+        first_time_decode[0] = 0
+
         register = mp.Array('i', 32, lock=False)
         data_mem = mp.Array('i', 100000000, lock=False)
         ready_reg = mp.Array('i', 32, lock=False)
@@ -782,7 +810,7 @@ def run_riscvsim():
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag))
-            p2 =  mp.Process(target= decode, args=(pipe2, out2, register, codeExitFlag))
+            p2 =  mp.Process(target= decode, args=(pipe2, out2, register, codeExitFlag, prev_decode_ready, out_stall, first_time_decode))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register, codeExitFlag))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem, register, codeExitFlag))
             p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounter, codeExitFlag))
@@ -848,7 +876,7 @@ def run_riscvsim():
             out3 = manager.list()
             out4 = manager.list()
             out5 = manager.list()
-            out_stall = manager.list()
+            # out_stall = manager.list()
 
 
         print("Register: ", register[:])
