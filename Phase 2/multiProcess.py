@@ -343,7 +343,7 @@ def decode(pipe2, out2, register):
         for i in range(13):
             out2.append(0)
         out2.append(end_fetched)
-        out2.append('\0')
+        out2.append('0')
         out2.append(0)
 
         register[0] = 0
@@ -447,7 +447,7 @@ def execute(pipe3, out3,register):
         for i in range(12):
             out3.append(0)
         out3.append(end_fetched)
-        out3.append('\0')
+        out3.append('0')
         out3.append(0)
 
         register[0] = 0
@@ -543,7 +543,7 @@ def Memory(pipe4, out4, data_mem,register):
         for i in range(10):
             out4.append(0)
         out4.append(end_fetched)
-        out4.append('\0')
+        out4.append('0')
         out4.append(0)
 
         register[0] = 0
@@ -755,7 +755,7 @@ def run_riscvsim():
         out5 = manager.list()
         out_stall = manager.list()
 
-        for i in range(30):
+        for i in range(1000):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall))
@@ -824,7 +824,12 @@ def run_riscvsim():
 
 
         print("Register: ", register[:])
-        print("data_mem[0]=",data_mem[0])
+        # print("data_mem[0]=",data_mem[0])
+
+        #Print data memory
+        for i in range(0,100000000):
+            if(data_mem[i]!=0):
+                print("data_mem[",i,"]=",data_mem[i])
 
 
 
