@@ -214,7 +214,10 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
             pipe1[0] = pc
         else:
             decode_ready = 1
-            pipe1[0] = pc + 1
+            if(inst_type!='J' and inst_type!='B' and opcode!=0b1100111): 
+                pipe1[0] = pc + 1
+            else:
+                pipe1[0]=pc
 
             if(rd!=0 and inst_type!='S' and inst_type!='B'):
                 ready_reg[rd] = 0
@@ -598,6 +601,7 @@ def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounte
                 print("Write Back to ", ALUResult, "to R", rd)
 
             ready_reg[rd] = 1
+
             if(pipe2[8]!='J' and pipe2[8]!='B' and pipe3[14]!='J' and pipe3[14]!='B' and pipe4[13]!='J' and pipe4[13]!='B' and pipe5[11]!='J' and pipe5[11]!='B' and pipe2[1]==0b1100111 and pipe3[-1]!=0b1100111 and pipe4[-1]!=0b1100111 and pipe5[-1]!=0b1100111):
                 print("Here")
                 pipe1[1]=1
@@ -755,7 +759,7 @@ def run_riscvsim():
         out5 = manager.list()
         out_stall = manager.list()
 
-        for i in range(30):
+        for i in range(600):
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall))
