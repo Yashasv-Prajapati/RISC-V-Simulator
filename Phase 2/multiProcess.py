@@ -45,7 +45,7 @@ def load_program_memory(file, MEM):
 
 
 
-def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
+def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag):
     '''
         Fetch Instruction
     '''
@@ -71,7 +71,8 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
         print("FETCH")
         print("PC: ", pc)
 
-        if(pc>int(0xfffffffb)):
+        if(pc>=0xfffffffb):
+            # print("ENDDDDDDD  pc>0xfffffffb")
             for _ in range(10):
                 out1.append(0)
             out1.append(1)#pipe2 ka end_fetched=1
@@ -83,6 +84,8 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
         print("instruction word in binary=",bin(instruction_word))
 
         if (instruction_word == 0xfffffffb):
+            codeExitFlag[0] = 1
+            # print("ENDDDDDDD  pc>0xfffffffb")
             for _ in range(10):
                 out1.append(0)
             out1.append(1)#pipe2 ka end_fetched=1
@@ -273,13 +276,15 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall):
     
 
     # counter[0] += 1
-def decode(pipe2, out2, register):
+def decode(pipe2, out2, register, codeExitFlag):
     register[0] = 0
     # destructure arguments
     # print("PIPE2 is ", pipe2)
     pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched = pipe2
     
     # print("Ready: ")
+
+    codeExitFlag[1] = decode_ready
 
     if (decode_ready):
         print("\nDECODE")
@@ -353,7 +358,7 @@ def decode(pipe2, out2, register):
         return
 
     
-def execute(pipe3, out3,register):
+def execute(pipe3, out3,register, codeExitFlag):
     register[0] = 0
     # destructure arguments
     pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched,inst_type,opcode = pipe3
@@ -373,6 +378,8 @@ def execute(pipe3, out3,register):
 
     # ready variable is used to check if the instruction is to be executed or not
 
+    codeExitFlag[2] = execute_ready
+    
     if (execute_ready):
         print()
         print("EXECUTE")
@@ -458,7 +465,7 @@ def execute(pipe3, out3,register):
 
 
     
-def Memory(pipe4, out4, data_mem,register):
+def Memory(pipe4, out4, data_mem,register, codeExitFlag):
     register[0] = 0
     # destructure arguments
     # print("MEM debug: ", pipe4)
@@ -470,6 +477,9 @@ def Memory(pipe4, out4, data_mem,register):
     1 - Write in memory --> Store
     2 - Read from memory --> Load
     '''
+
+    codeExitFlag[3] = mem_ready
+
     if (mem_ready):
         ReadData = 0
 
@@ -553,7 +563,7 @@ def Memory(pipe4, out4, data_mem,register):
         return
         return [RFWrite, pc, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, ready]
     
-def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounter):
+def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounter, codeExitFlag):
     register[0] = 0
     # destructure arguments
     # print(args)
@@ -571,6 +581,8 @@ def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounte
         3 - LoadData - essentially same as ReadData
         4 - ALUResult
     '''
+
+    codeExitFlag[4] = write_ready
 
     if (write_ready):
 
@@ -734,6 +746,10 @@ def run_riscvsim():
         # out5 = manager.list([0]*2)
 
         globalCounter = mp.Array('i', 1, lock=False)
+        codeExitFlag = mp.Array('i', 5, lock=False)
+        for i in range(5):
+            codeExitFlag[i] = 1
+        codeExitFlag[0] = 0
 
         register = mp.Array('i', 32, lock=False)
         data_mem = mp.Array('i', 100000000, lock=False)
@@ -760,16 +776,16 @@ def run_riscvsim():
         out_stall = manager.list()
 
 
-        for i in range(600):
+        for i in range(100000000):
 
 
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
-            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall))
-            p2 =  mp.Process(target= decode, args=(pipe2, out2, register))
-            p3 =  mp.Process(target= execute, args=(pipe3, out3,register))
-            p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem,register))
-            p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounter))
+            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag))
+            p2 =  mp.Process(target= decode, args=(pipe2, out2, register, codeExitFlag))
+            p3 =  mp.Process(target= execute, args=(pipe3, out3,register, codeExitFlag))
+            p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem, register, codeExitFlag))
+            p5 =  mp.Process(target= Write, args=(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounter, codeExitFlag))
             
             p1.start()
             p2.start()
@@ -793,6 +809,11 @@ def run_riscvsim():
             print("Out 3: ", out3)
             print("Out 4: ", out4)
             print("Out 5: ", out5)
+
+            if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
+                print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+                break
+
             # print("Out 5 (reg): ", out5[1])
             print("-------------------------------------------------------")
 
