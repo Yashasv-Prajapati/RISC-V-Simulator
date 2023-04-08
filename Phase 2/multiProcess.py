@@ -780,7 +780,7 @@ def run_riscvsim():
         first_time_decode[0] = 0
 
         register = mp.Array('i', 32, lock=False)
-        data_mem = mp.Array('i', 100000000, lock=False)
+        data_mem = mp.Array('i', 1000000000, lock=False)
         ready_reg = mp.Array('i', 32, lock=False)
 
         for i in range(32):
@@ -883,7 +883,7 @@ def run_riscvsim():
         # print("data_mem[0]=",data_mem[0])
 
         #Print data memory
-        for i in range(0,100000000):
+        for i in range(0,1000000000):
             if(data_mem[i]!=0):
                 print("data_mem[",i,"]=",data_mem[i])
 
