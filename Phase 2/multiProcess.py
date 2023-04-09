@@ -1,4 +1,3 @@
-
 import multiprocessing as mp
 import time
 from multiprocessing import Manager
@@ -44,11 +43,12 @@ def load_program_memory(file, MEM):
 
 
 
-def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2):
+def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag):
     '''
         Fetch Instruction
     '''
     register[0]=0
+
     # destructure variables
     pc, fetch_ready, MEM, decode_ready ,end_fetched= pipe1
     # print("fetch_ready here =", fetch_ready)
@@ -180,7 +180,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         immFinal = getFinalImmediate(inst_type, imm, immS ,immB, immU, immJ) 
         print("Final immediate in FETCH is: ",immFinal, " in hex: ", hex(immFinal))
         print("rd is = ", rd,"rs1 in FETCH is=",rs1,"and rs2 in FETCH is=",rs2)
-        # decode_ready = 1
+        decode_ready = 1
 
         # out1[0] = pc
         # out1[1] = opcode
@@ -208,15 +208,11 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         #     # out_stall.append(rd)
         #     # out_stall.append(func3)
         #     # out_stall.app
-            if(pipe2[-2]==1):
-                print("Yupp")
-                TotalCycles[0]=TotalCycles[0]-1
             decode_ready = 0
             print('"YES"')
             pipe1[1] = 1
             
             pipe1[0] = pc
-        
         else:
             decode_ready = 1
             if(inst_type!='J' and inst_type!='B' and opcode!=0b1100111): 
@@ -748,7 +744,6 @@ def run_riscvsim():
         # out5 = manager.list([0]*2)
 
         globalCounter = mp.Array('i', 1, lock=False)
-        TotalCycles=mp.Array('i',1,lock=False)
         codeExitFlag = mp.Array('i', 5, lock=False)
         for i in range(5):
             codeExitFlag[i] = 1
@@ -778,13 +773,13 @@ def run_riscvsim():
         out5 = manager.list()
         out_stall = manager.list()
 
-        TotalCycles[0]=0
+
         for i in range(100000000):
 
 
             # print("Pipe 3: ", pipe3)
             print("Cycle No.",i)
-            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2))
+            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register, codeExitFlag))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register, codeExitFlag))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem, register, codeExitFlag))
@@ -815,10 +810,8 @@ def run_riscvsim():
 
             if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
                 print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-                print("Total no. of cycles=",TotalCycles[0])
                 break
-            TotalCycles[0]+=1
-            print("TotalCycles=",TotalCycles[0])
+
             # print("Out 5 (reg): ", out5[1])
             print("-------------------------------------------------------")
 
@@ -860,9 +853,9 @@ def run_riscvsim():
         # print("data_mem[0]=",data_mem[0])
 
         #Print data memory
-        # for i in range(0,1000000000):
-        #     if(data_mem[i]!=0):
-        #         print("data_mem[",i,"]=",data_mem[i])
+        for i in range(0,1000000000):
+            if(data_mem[i]!=0):
+                print("data_mem[",i,"]=",data_mem[i])
 
 
 
