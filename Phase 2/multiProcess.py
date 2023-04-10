@@ -1,27 +1,10 @@
-
 import multiprocessing as mp
 import time
 from multiprocessing import Manager
 import sys
 import os
 
-# register = [0] * 32
-
 MEM = [0] * 4000
-# data_mem = [0] * 100000000
-# data_mem = [0] * 10
-
-registerCheck = [1 for i in range(32)]
-# print("registerCheck= ")
-# print(registerCheck)    
-# functions to be made----> fetch, decode, execute, memory, writeback
-
-
-'''
-Ready Bit
-1 -> Ready
-0 -> Not Ready
-'''
 
 def reset_proc():
     pass
@@ -43,16 +26,16 @@ def load_program_memory(file, MEM):
     f.close()
 
 
-
+                                                            #FETCH
 def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2):
     '''
         Fetch Instruction
     '''
-    register[0]=0
+    register[0]=0                   #X[0]=0
     # destructure variables
     pc, fetch_ready, MEM, decode_ready ,end_fetched= pipe1
-    # print("fetch_ready here =", fetch_ready)
     fetch_ready1,read_pc_from_write,pc1=extra_pipe
+
 
     if(read_pc_from_write==1):
         print("HERE")
@@ -73,7 +56,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
             # print("ENDDDDDDD  pc>0xfffffffb")
             for _ in range(10):
                 out1.append(0)
-            out1.append(1)#pipe2 ka end_fetched=1
+            out1.append(1)                                  #pipe2 ka end_fetched=1
             return
     
         # global instruction_word
@@ -141,7 +124,6 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         # IMM B Generation
         immB=instruction_word
         immB1=instruction_word>>7
-        # print("instruction word=",bin(instruction_word),"and instruction word<<5=",bin(instruction_word<<5),"and instruction_word>>5=",bin(instruction_word>>5))
         immB_mask1=0b1#for 11th
         immB2=instruction_word>>7
         immB_mask2=0b11110
@@ -149,15 +131,11 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         immB_mask3=0b111111
         immB4=instruction_word>>31
         immB_mask4=0b1#for 12th
-
         immB=((immB1 & immB_mask1)<<11) + ((immB2 & immB_mask2)) + ((immB3 & immB_mask3)<<5) +((immB4& immB_mask4)<<12)
-        # print("immB=",immB,"and immB in binary=",bin(immB))
-
 
         immU=instruction_word>>12
         immU_mask=0b11111111111111111111
         immU=((immU&immU_mask)<<12)
-        # print(hex(immU))
 
         immJ = instruction_word
         immJ1=instruction_word>>12
@@ -182,39 +160,17 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         print("rd is = ", rd,"rs1 in FETCH is=",rs1,"and rs2 in FETCH is=",rs2)
         # decode_ready = 1
 
-        # out1[0] = pc
-        # out1[1] = opcode
-        # out1[2] = rs1
-        # out1[3] = rs2
-        # out1[4] = rd
-        # out1[5] = func3
-        # out1[6] = func7
-        # out1[7] = immFinal
-        # out1[8] = inst_type
-        # out1[9] = decode_ready
-
-        # updating pipe1 of fetch
-        
-        
-
         # pipe1[0]=pc+1
        
-
         if ((ready_reg[rs1] == 0 and inst_type!='J')or ( inst_type!='J' and ready_reg[rs2] == 0 and (inst_type=='R' or inst_type=='S' or inst_type=='B'))):
-        #     # out_stall.append(pc)
-        #     # out_stall.append(opcode)
-        #     # out_stall.append(rs1)
-        #     # out_stall.append(rs2)
-        #     # out_stall.append(rd)
-        #     # out_stall.append(func3)
-        #     # out_stall.app
+
             if(pipe2[-2]==1):
                 print("Yupp")
                 TotalCycles[0]=TotalCycles[0]-1
+
             decode_ready = 0
             print('"YES"')
-            pipe1[1] = 1
-            
+            pipe1[1] = 1            
             pipe1[0] = pc
         
         else:
@@ -223,7 +179,6 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
                 pipe1[0] = pc + 1
             else:
                 pipe1[0]=pc
-
             if(rd!=0 and inst_type!='S' and inst_type!='B'):
                 ready_reg[rd] = 0
         
@@ -245,54 +200,36 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         out1.append(inst_type)
         out1.append(decode_ready)
         out1.append(end_fetched)
-        # pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready
-        # out1 = list([rs1, rs2, rd, immFinal, func3, func7, inst_type, opcode])
-        # print("Decode ready: ", out1[9])
-
 
 
         register[0]=0
         return 
 
-        sys.exit(0)
-        # get instruction type
-        instructionType = getInstructionType(opcode)
-
-        if(instructionType=='S' or instructionType=='B'):
-            # do nothing
-            None
-        else:
-            # set ready bit
-            ready[rd]=0
-
-        # also return immFinal
-        return [rs1, rs2, rd, func3, func7, ready, instructionType]
     else:
-        print("Fetch_Ready=0")
         for _ in range(10):
             out1.append(0)
         out1.append(end_fetched)
         register[0]=0
         return
         
-    
 
-    # counter[0] += 1
+
+
+                                                        #DECODE
 def decode(pipe2, out2, register, codeExitFlag):
+
     register[0] = 0
+
     # destructure arguments
-    # print("PIPE2 is ", pipe2)
     pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched = pipe2
     
-    # print("Ready: ")
-
     codeExitFlag[1] = decode_ready
 
     if (decode_ready):
         print("\nDECODE")
         ALUop = getALUop(instructionType, func3, func7)  
         operand1, operand2 = op2selectMUX(instructionType, rs1, rs2, immFinal, register)
-        BranchTargetSelect = BranchTargetSelectMUX(instructionType, immFinal) #this is left
+        BranchTargetSelect = BranchTargetSelectMUX(instructionType, immFinal) 
         MemOp = getMemOp(instructionType, opcode)
         RFWrite, ResultSelect = ResultSelectMUX(opcode, instructionType)
         isBranch = isBranchInstruction(opcode, instructionType, func3, operand1, operand2)
@@ -301,20 +238,6 @@ def decode(pipe2, out2, register, codeExitFlag):
         printOperationDetails(instructionType, immFinal, operand1, operand2, rd, ALUop) # this is not required
         
         execute_ready = 1
-
-        # out2[0] = pc
-        # out2[1] = ALUop
-        # out2[2] = BranchTargetSelect
-        # out2[3] = ResultSelect
-        # out2[4] = immFinal
-        # out2[5] = operand1
-        # out2[6] = operand2
-        # out2[7] = rd
-        # out2[8] = MemOp
-        # out2[9] = isBranch
-        # out2[10] = RFWrite
-        # out2[11] = execute_ready
-
 
         out2.append(pc)
         out2.append(ALUop)
@@ -334,21 +257,9 @@ def decode(pipe2, out2, register, codeExitFlag):
         out2.append(opcode)
 
         register[0]=0
-        # out2 = list(ALUop, ready, immFinal, operand1, operand2, rd, BranchTargetSelect, MemOp, ResultSelect, isBranch, ready, pc)
+
         return
     else:
-        # out2[0] = 0
-        # out2[1] = 0
-        # out2[2] = 0
-        # out2[3] = 0
-        # out2[4] = 0
-        # out2[5] = 0
-        # out2[6] = 0
-        # out2[7] = 0
-        # out2[8] = 0
-        # out2[9] = 0
-        # out2[10] = 0
-        # out2[11] = 0
 
         for i in range(13):
             out2.append(0)
@@ -357,14 +268,17 @@ def decode(pipe2, out2, register, codeExitFlag):
         out2.append(0)
 
         register[0] = 0
+
         return
 
-    
+                                                                #EXECUTE    
 def execute(pipe3, out3,register, codeExitFlag):
     register[0] = 0
     # destructure arguments
     pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready,rs2,end_fetched,inst_type,opcode = pipe3
-    # print("Pipe3: ", pipe3)
+
+    codeExitFlag[2] = execute_ready
+
     '''
     ALUop operation
     0 - perform none (skip)
@@ -377,11 +291,8 @@ def execute(pipe3, out3,register, codeExitFlag):
     7 - xor
     8 - set less than
     '''
-
     # ready variable is used to check if the instruction is to be executed or not
 
-    codeExitFlag[2] = execute_ready
-    
     if (execute_ready):
         print()
         print("EXECUTE")
@@ -404,24 +315,10 @@ def execute(pipe3, out3,register, codeExitFlag):
         elif (ALUop == 8):
             ALUResult = 1 if (operand1 < operand2) else 0
 
-        # print("ALUResult: ", ALUResult)
-        # print("BranchTargetResult=",BranchTargetResult)
         BranchTargetAddress=BranchTargetResult+(pc*4)
         print("ALUResult is: ", ALUResult)
 
         memory_ready = 1
-
-        # out3[0] = pc
-        # out3[1] = MemOp
-        # out3[2] = ALUResult
-        # out3[3] = operand2
-        # out3[4] = RFWrite
-        # out3[5] = ResultSelect
-        # out3[6] = rd
-        # out3[7] = immFinal
-        # out3[8] = isBranch
-        # out3[9] = BranchTargetAddress
-        # out3[10] = memory_ready
 
         out3.append(pc)
         out3.append(MemOp)
@@ -440,21 +337,9 @@ def execute(pipe3, out3,register, codeExitFlag):
         out3.append(opcode)
 
         register[0]=0
-        # [BranchTargetAddress, ALUResult, pc, MemOp, isBranch, MemOp, ALUResult, pc, ResultSelect, rd, immFinal, isBranch, BranchTargetResult, ready]
+
         return 
     else:
-        # out3[0] = 0
-        # out3[1] = 0
-        # out3[2] = 0
-        # out3[3] = 0
-        # out3[4] = 0
-        # out3[5] = 0
-        # out3[6] = 0
-        # out3[7] = 0
-        # out3[8] = 0
-        # out3[9] = 0
-        # out3[10] = 0
-        # out3[11] = 0
 
         for i in range(12):
             out3.append(0)
@@ -463,16 +348,19 @@ def execute(pipe3, out3,register, codeExitFlag):
         out3.append(0)
 
         register[0] = 0
-        return
+
+        return    
 
 
-    
+
+                                                            #MEMORY    
 def Memory(pipe4, out4, data_mem,register, codeExitFlag):
     register[0] = 0
     # destructure arguments
-    # print("MEM debug: ", pipe4)
     pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched,inst_type,opcode = pipe4
     
+    codeExitFlag[3] = mem_ready
+
     '''
     MemOp operation
     0 - Do nothing (skip)
@@ -480,52 +368,34 @@ def Memory(pipe4, out4, data_mem,register, codeExitFlag):
     2 - Read from memory --> Load
     '''
 
-    codeExitFlag[3] = mem_ready
-
     if (mem_ready):
+
         ReadData = 0
 
-        print()
         print("MEMORY")
 
         if (MemOp == 0):
             print("There is no Memory Operation")
             ReadData = ALUResult
         elif (MemOp == 1): 
-            # Store
 
-            # unsigned int *data_p;
-            # data_p = (unsigned int*)(DataMEM + ALUResult);
+            # Store
             print("data_mem[",ALUResult,"]=register[",rs2,"]=",register[rs2])
             data_mem[ALUResult] = register[rs2]
             ReadData = data_mem[ALUResult]
-            # int rs2Value = BintoDec(rs2,5);
-            # *data_p = X[rs2Value];
-            # ReadData = X[rs2Value];
+
             print("There is a Store Operation to be done to memory and operand2=",operand2)
+
         elif (MemOp == 2):
-            # Load
-            # int *data_p;
-            # data_p = (int*)(DataMEM + ALUResult);
-            # ReadData = *data_p;
+
             ReadData = data_mem[ALUResult]
+
             print("There is a Read Operation to be done from memory")
             print("ReadData=data_mem[",ALUResult,"]")
 
+
         MemOp = 0
-
         write_ready = 1
-
-        # out4[0] = pc
-        # out4[1] = RFWrite
-        # out4[2] = ResultSelect
-        # out4[3] = rd
-        # out4[4] = immFinal
-        # out4[5] = ReadData
-        # out4[6] = ALUResult
-        # out4[7] = isBranch
-        # out4[8] = BranchTargetAddress
-        # out4[9] = write_ready
 
         out4.append(pc)
         out4.append(RFWrite)
@@ -542,18 +412,9 @@ def Memory(pipe4, out4, data_mem,register, codeExitFlag):
         out4.append(opcode)
 
         register[0] = 0
+
         return
     else:
-        # out4[0] = 0
-        # out4[1] = 0
-        # out4[2] = 0
-        # out4[3] = 0
-        # out4[4] = 0
-        # out4[5] = 0
-        # out4[6] = 0
-        # out4[7] = 0
-        # out4[8] = 0
-        # out4[9] = 0
 
         for i in range(10):
             out4.append(0)
@@ -562,17 +423,17 @@ def Memory(pipe4, out4, data_mem,register, codeExitFlag):
         out4.append(0)
 
         register[0] = 0
+
         return
-        return [RFWrite, pc, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, ready]
     
+                                                        #WRITE    
 def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounter, codeExitFlag):
+    
     register[0] = 0
     # destructure arguments
-    # print(args)
     pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched,inst_type,opcode = pipe5
 
-
-
+    codeExitFlag[4] = write_ready
 
     '''
         ResultSelect
@@ -584,18 +445,17 @@ def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounte
         4 - ALUResult
     '''
 
-    codeExitFlag[4] = write_ready
-
     if (write_ready):
 
         print("WRITE BACK IS DONE, globalCounter = ",globalCounter[:], "#########################################" )
+        
         globalCounter[0]+=1 
 
         out5.append(1)
-        print()
-        print("WRITEBACK ")
 
-        print("RESULTSELECT",ResultSelect)
+        print("WRITEBACK ")
+        print("RESULTSELECT=",ResultSelect)
+
 
         if (RFWrite):
             if (ResultSelect == 0):
@@ -617,8 +477,8 @@ def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounte
             ready_reg[rd] = 1
 
             if(pipe2[8]!='J' and pipe2[8]!='B' and pipe3[14]!='J' and pipe3[14]!='B' and pipe4[13]!='J' and pipe4[13]!='B' and pipe5[11]!='J' and pipe5[11]!='B' and pipe2[1]==0b1100111 and pipe3[-1]!=0b1100111 and pipe4[-1]!=0b1100111 and pipe5[-1]!=0b1100111):
-                print("Here")
                 pipe1[1]=1
+
         else:
             print("There is no Write Back")
 
@@ -628,52 +488,50 @@ def Write(pipe5, out5, register,pipe1, ready_reg,pipe2,pipe3,pipe4, globalCounte
             =2         => pc+4(default)
         '''
 
-        print("Isbranch is ",isBranch)
+        print("Isbranch is =",isBranch)
+
         if (isBranch == 0):
             print("ALUResult=",ALUResult)
             pc = ALUResult
             pc//=4
             out5.append(1)
             pipe1[1]=1
+
         elif (isBranch == 1):
             print("BranchTargetAddress=",BranchTargetAddress)
             pc = BranchTargetAddress
             pc//=4
             out5.append(1)
             pipe1[1]=1
+
         else:
             pc += 1
+
             if(pipe1[1]==0 and end_fetched==0 and (inst_type=='J' or inst_type=='B')):# ie if fetch is waiting and it is not the end
-                print("YES")
                 out5.append(1) # this is to tell that fetch should take pc from write_back
                 pipe1[1]=1
-            else:
-                print("NO")
-                print("pipe1[1]=",pipe1[1])
-                out5.append(0) 
-        # out5[0] = pc
-        # out5[1] = register
-        print("new PC is ", pc)
 
+            else:
+                out5.append(0) 
+        print("new PC is =", pc)
         out5.append(pc)
-        # out5.append(register)
         register[0] = 0
+
         return
+    
     else:
-        # out5[0] = 0
-        # out5[1] = 0
+    
         if(end_fetched==1):
             for i in range(3):
                 out5.append(0)
+
         else:
             out5.append(1)
             out5.append(0)
-            out5.append(0)# this is useless
+            out5.append(0)          # this is useless
         register[0] = 0
+
         return
-    
-    
-        # return pc, ready
 
 
 def op2selectMUX(inst_type, rs1, rs2, imm_final, register):
@@ -697,19 +555,14 @@ def run_riscvsim():
 
         process_list = []
 
-        # for i in range(10):
-        #     p =  mp.Process(target= fetch(counter))
-        #     p.start()
-        #     process_list.append(p)
-        # p1 =  mp.Process(target= fetch, args=[counter])pc, ready, MEM
 
         fetch_ready = 1
         decode_ready = 0
         execute_ready = 0
         mem_ready = 0
         write_ready = 0
-        end_fetched=0# 1 -> end has been fetched
-        read_pc_from_write=0# 1-> read pc from write
+        end_fetched=0                                           # 1 -> end has been fetched
+        read_pc_from_write=0                                    # 1-> read pc from write
 
         pc = 0
         opcode = 0
@@ -732,37 +585,29 @@ def run_riscvsim():
         BranchTargetAddress = 0
         ReadData = 0
 
-        # pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready])
-        # out1 = manager.list([0]*10) #Stage 1 out
-
-        # pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready])
-        # out2 = manager.list([0]*12)
-
-        # pipe3 = manager.list([pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready])
-        # out3 = manager.list([0]*12)
-
-        # pipe4 = manager.list([pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, data_mem, mem_ready])
-        # out4 = manager.list([0]*11)
-
-        # pipe5 = manager.list([pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready, register])
-        # out5 = manager.list([0]*2)
 
         globalCounter = mp.Array('i', 1, lock=False)
-        TotalCycles=mp.Array('i',1,lock=False)
-        codeExitFlag = mp.Array('i', 5, lock=False)
-        for i in range(5):
+        
+        TotalCycles=mp.Array('i',1,lock=False)               #Count of Total No. of Cycles
+        TotalCycles[0]=0                                     #Initially Total Cycles=0
+
+        codeExitFlag = mp.Array('i', 5, lock=False)          #For Exiting Program
+        for i in range(5):                         
             codeExitFlag[i] = 1
         codeExitFlag[0] = 0
 
-        register = mp.Array('i', 32, lock=False)
-        data_mem = mp.Array('i', 1000000000, lock=False)
-        ready_reg = mp.Array('i', 32, lock=False)
+        register = mp.Array('i', 32, lock=False)             #All 32 Registers
+        data_mem = mp.Array('i', 1000000000, lock=False)     #Data Memory as Array
+
+        '''
+                Ready Bit
+                1 -> Ready
+                0 -> Not Ready
+         '''
+        ready_reg = mp.Array('i', 32, lock=False)                    #Showing if rd Ready to be Read
 
         for i in range(32):
             ready_reg[i] = 1
-
-        # print("Ready Register", ready_reg[:])
-
 
         pipe1 = manager.list([pc, fetch_ready, MEM, decode_ready,end_fetched])
         pipe2 = manager.list([pc, opcode, rs1, rs2, rd, func3, func7, immFinal, instructionType, decode_ready,end_fetched])
@@ -778,12 +623,11 @@ def run_riscvsim():
         out5 = manager.list()
         out_stall = manager.list()
 
-        TotalCycles[0]=0
+
+
         for i in range(100000000):
-
-
-            # print("Pipe 3: ", pipe3)
-            print("Cycle No.",i)
+        
+            print("Cycle No.",i+1)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register, codeExitFlag))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register, codeExitFlag))
@@ -792,9 +636,7 @@ def run_riscvsim():
             
             p1.start()
             p2.start()
-            # print("Pipe 31: ", pipe3)
             p3.start()
-            # print("Pipe 32: ", pipe3)
             p4.start()
             p5.start()
 
@@ -817,13 +659,10 @@ def run_riscvsim():
                 print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
                 print("Total no. of cycles=",TotalCycles[0])
                 break
-            TotalCycles[0]+=1
-            print("TotalCycles=",TotalCycles[0])
-            # print("Out 5 (reg): ", out5[1])
-            print("-------------------------------------------------------")
 
-            # if out5[1] != 0:
-            #     register.value = out5[1]
+            TotalCycles[0]+=1         #Incrementing Total Cycles
+
+            print("-------------------------------------------------------")
 
             pipe2 = manager.list()
             pipe3 = manager.list()
@@ -831,23 +670,13 @@ def run_riscvsim():
             pipe5 = manager.list()
             extra_pipe=manager.list()
 
-            # out3.append(data_mem)
-            # out4[10] = register
-            # out4.append(register)
 
             pipe2 = out1
             pipe3 = out2
             pipe4 = out3
             pipe5 = out4
             extra_pipe=out5
-            # pipe2.append(register)
-            # pipe5.append(register)
-            # out3[10] = data_mem #Data memory
 
-
-            # if (out1[9] != 0):
-            #     pass
-            #     pipe1[0] += 1   #move to next instruction
             out1 = manager.list()
             out2 = manager.list()
             out3 = manager.list()
@@ -857,8 +686,6 @@ def run_riscvsim():
 
 
         print("Register: ", register[:])
-        # print("data_mem[0]=",data_mem[0])
-
         #Print data memory
         # for i in range(0,1000000000):
         #     if(data_mem[i]!=0):
@@ -866,8 +693,7 @@ def run_riscvsim():
 
 
 
-# fetch helper functions
-
+# Fetch helper functions
 
 def write_word(address, instruction, MEM):
     '''
@@ -880,12 +706,12 @@ def read_word(address, MEM):
     '''
         Read Word
     '''
-    # print("address=",address,"MEM[address]=",MEM[address])
-    
+        
     return MEM[(address)]
 
 
-# decode helper functions
+# Decode helper functions
+
 def getFinalImmediate(inst_type, imm,immS, immB, immU, immJ):
     immFinal = 0
     if inst_type == 'I':
