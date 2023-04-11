@@ -209,7 +209,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag):
         #     # out_stall.append(func3)
         #     # out_stall.app
             decode_ready = 0
-            print('"YES"')
+            print("YES")
             pipe1[1] = 1
             
             pipe1[0] = pc
@@ -220,13 +220,14 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag):
             else:
                 pipe1[0]=pc
 
-            if(rd!=0 and inst_type!='S' and inst_type!='B'):
+            if(rd!=0 and inst_type!='S' and inst_type   !='B'):
                 ready_reg[rd] = 0
         
         
         if((inst_type=='B' or inst_type=='J' or opcode==0b1100111) and (ready_reg[rs1]!=0) and ready_reg[rs2]!=0):
             pipe1[1]=0
             extra_pipe[0]=0
+            
         print("ready_reg ",ready_reg[:])
 
 
@@ -436,7 +437,6 @@ def execute(pipe3, out3,register, codeExitFlag):
         out3.append(opcode)
 
         register[0]=0
-        # [BranchTargetAddress, ALUResult, pc, MemOp, isBranch, MemOp, ALUResult, pc, ResultSelect, rd, immFinal, isBranch, BranchTargetResult, ready]
         return 
     else:
         # out3[0] = 0
@@ -465,6 +465,7 @@ def execute(pipe3, out3,register, codeExitFlag):
     
 def Memory(pipe4, out4, data_mem,register, codeExitFlag):
     register[0] = 0
+
     # destructure arguments
     # print("MEM debug: ", pipe4)
     pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched,inst_type,opcode = pipe4

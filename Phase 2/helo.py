@@ -1,1 +1,1 @@
-print("helo gobar")
+file = open('TestFiles/output.mem', 'r')
