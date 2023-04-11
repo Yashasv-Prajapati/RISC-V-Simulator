@@ -87,18 +87,29 @@ class data_path:
         self.BranchTargetResult = None
         self.BranchTargetAddress = None
 
-    def fetch(self):
+        # stalls
+        self.controlStalls = 0
+        self.dataStalls = 0
+        self.instructionNum = 0
+        self.cpi = 0
+        self.dataHazards = 0
+        self.controlHazards = 0
+        self.wrongPredictions = 0
+        self.stalls = 0
+    
+    # Main five functions
+    def fetch(self, pc):
         '''
             Fetch
         '''
-
-        self.IF = self.read_word(self.pc) # read instruction from instruction memory
+        print("CURRENT PC IS ", pc)
+        self.IF = self.read_word(pc) # read instruction from instruction memory
         
         if(int(self.IF, 16)==0xfffffffb):
             print("ALL INSTRUCTIONS DONE, EXITING")
-            sys.exit(0)    
+            sys.exit(1)    
     
-    def decode(self):
+    def decode(self, pc):
 
         if(len(self.IF) == 0):
             print("NOTHING FOUND, RETURNING")
@@ -164,7 +175,7 @@ class data_path:
 
         register[0] = 0
 
-    def execute(self):
+    def execute(self, pc):
         '''
         ALUop operation
         0 - perform none (skip)
@@ -201,12 +212,12 @@ class data_path:
             self.ALUResult = 1 if (self.operand1 < self.operand2) else 0
 
         # Also at the same time set BranchTargetAddress to BranchTargetResult + pc*4
-        self.BranchTargetAddress= self.BranchTargetResult + (self.pc*4)
+        self.BranchTargetAddress= self.BranchTargetResult + (pc*4)
         print("ALUResult is: ", self.ALUResult)
         
         register[0] = 0
 
-    def memory(self):
+    def memory(self, pc):
         '''
         MemOp operation
         0 - Do nothing (skip)
@@ -240,7 +251,7 @@ class data_path:
         self.MemOp = 0
         register[0] = 0
 
-    def write(self):
+    def write(self, pc):
         '''
             ResultSelect
             5 - None
@@ -291,7 +302,7 @@ class data_path:
             =1         => BranchTargetAddress
             =2         => pc+4(default)
         '''
-
+        print("PRINTING PC HERE ", self.pc)
         # check if isBranch is 1 or 0 or none of these and accordingly set pc
         if (self.isBranch == 0):
             print("ALUResult=",self.ALUResult)
@@ -308,7 +319,9 @@ class data_path:
             else:
                 print("NO")
         print("new PC is ", self.pc)
+    # end of main 5 functions
 
+    # Decode helper functions
     def getInstructionType(self,opcode):
         '''Get Type of Instruction from opcode'''
         inst_type = ''
@@ -564,16 +577,92 @@ class data_path:
         instruction = bin(instruction)[2:] # convert to binary and [2:] to remove 0b
         return instruction
 
+    # functions for stalls
+    def DataHazardStall(self):
+        pass
+
+
+
+# if(1):
+#     load_program_memory('TestFiles/output.mem', MEM)
+#     non_pipeline = data_path()
+#     non_pipeline.pc = 0
+    
+#     while(1):
+#         non_pipeline.fetch()
+#         non_pipeline.decode()
+#         non_pipeline.execute()
+#         non_pipeline.memory()
+#         non_pipeline.write()
+#         print("--------------------------------------------")
+
+
+
+
+
+
+# NEEDS changes, but this is the very naive idea as to how we would implement the pipeline
 if(1):
     load_program_memory('TestFiles/output.mem', MEM)
-    non_pipeline = data_path()
-    non_pipeline.pc = 0
+    pipeline = data_path()
+    pipeline.pc = 0
     
     while(1):
-        non_pipeline.fetch()
-        non_pipeline.decode()
-        non_pipeline.execute()
-        non_pipeline.memory()
-        non_pipeline.write()
+        if(pipeline.cycle==0):
+
+            # we have to fetch the current instruction
+            pipeline.fetch(pipeline.pc)
+            # update the cycle count
+            pipeline.cycle +=1
+
+        elif(pipeline.cycle==1):
+
+            # we have to decode the current instruction
+            pipeline.decode(pipeline.pc)
+            # and also fetch the next instruction
+            pipeline.fetch(pipeline.pc+1)
+            # update the cycle count
+            pipeline.cycle +=1
+        elif(pipeline.cycle==2):
+                
+            # we have to execute the current instruction
+            pipeline.execute(pipeline.pc)
+            # and also decode the next instruction
+            pipeline.decode(pipeline.pc+1)
+            # and also fetch the 3rd instruction
+            pipeline.fetch(pipeline.pc+2)
+            # update the cycle count
+            pipeline.cycle +=1
+        elif(pipeline.cycle==3):
+                    
+            # we have to memory the current instruction
+            pipeline.memory(pipeline.pc)
+            # and also execute the next instruction
+            pipeline.execute(pipeline.pc+1)
+            # and also decode the 3rd instruction
+            pipeline.decode(pipeline.pc+2)
+            # and also fetch the 4th instruction
+            pipeline.fetch(pipeline.pc+3)
+            # update the cycle count
+            pipeline.cycle +=1
+        elif(pipeline.cycle>=4):
+
+            # we have to write the current instruction
+            pipeline.write(pipeline.pc)
+            # and also memory the next instruction
+            pipeline.memory(pipeline.pc+1)
+            # and also execute the 3rd instruction
+            pipeline.execute(pipeline.pc+2)
+            # and also decode the 4th instruction
+            pipeline.decode(pipeline.pc+3)
+            # and also fetch the 5th instruction
+            pipeline.fetch(pipeline.pc+4)
+            # update the cycle count
+            pipeline.cycle +=1
+
+        # pipeline.fetch()
+        # pipeline.decode()
+        # pipeline.execute()
+        # pipeline.memory()
+        # pipeline.write()
         print("--------------------------------------------")
-    
