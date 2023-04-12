@@ -453,3 +453,5 @@ def getALUReslt(ALUop, operand1, operand2):
         ALUResult = operand1 ^ operand2
     elif ALUop == 8:
         ALUResult = 1 if (operand1 < operand2) else 0
+
+    return ALUResult
