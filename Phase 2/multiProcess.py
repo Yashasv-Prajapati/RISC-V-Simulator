@@ -1,10 +1,10 @@
 import sys
-from helperFunctions import *
 import multiprocessing as mp
 from multiprocessing import Manager
 
-MEM = [0] * 4000
+from helperFunctions import *
 
+MEM = [0] * 4000
 
 
 def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag, TotalCycles, decode_input):
@@ -27,26 +27,23 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
     # Check if pc is to be read from write back
     if read_pc_from_write == 1:
-        print("HERE")
         pc = pc1
         fetch_input[pc] = pc1
         fetch_ready = 1
         write_output["read_pc_from_write"] = 0
 
-    # print("register values are: ", register[:])
-
-    # print("fetch_ready=",fetch_ready)
     if fetch_ready and end_fetched == 0:
+        print()
         print("FETCH")
         print("PC: ", pc)
 
         # global instruction_word
         instruction_word = read_word(pc, MEM)
-        print("instruction_word in fetch after read_Word=", hex(instruction_word))
+        print("Instruction Word", hex(instruction_word))
 
+        # End of program
         if instruction_word == 0xFFFFFFFB:
             codeExitFlag[0] = 1
-            # print("ENDDDDDDD  pc>0xfffffffb")
             fetch_output["pc"] = 0
             fetch_output["opcode"] = 0
             fetch_output["rs1"] = 0
@@ -61,25 +58,27 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
             return
 
+        # Split instructions from instruction word
         opcode, rs1, rs2, rd, func3, func7, imm, immS, immB, immU, immJ = splitInstruction(instruction_word)
 
+        # Get Instruction Type
         inst_type = getInstructionType(opcode)
-        print("Instruction type is: ", inst_type)
 
+        # Get final Immediate
         immFinal = getFinalImmediate(inst_type, imm, immS, immB, immU, immJ)
-        print("Final immediate in FETCH is: ", immFinal, " in hex: ", hex(immFinal))
-        print("rd is = ", rd, "rs1 in FETCH is=", rs1, "and rs2 in FETCH is=", rs2)
+
+        printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
+
         decode_ready = 1
 
+        # If instruction is not a branch or jump, increment pc --> Edit this for reducing 1 stall
         if (ready_reg[rs1] == 0 and inst_type != "J") or (
             inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B")
         ):
             if decode_input["decode_ready"] == 1:
-                print("Yupp")
                 TotalCycles[0] = TotalCycles[0] - 1
 
             decode_ready = 0
-            print('"YES"')
             fetch_input["fetch_ready"] = 1
             fetch_input["pc"] = pc
         else:
@@ -97,11 +96,9 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             and ready_reg[rs2] != 0
         ):
             fetch_input["fetch_ready"] = 0
-            # extra_pipe[0]=0
             write_output["fetch_ready1"] = 0
 
-        print("ready_reg ", ready_reg[:])
-
+        # Output to Decode
         fetch_output["pc"] = pc
         fetch_output["opcode"] = opcode
         fetch_output["rs1"] = rs1
@@ -115,9 +112,9 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_output["end_fetched"] = end_fetched
 
         register[0] = 0
-        return
 
     else:
+        # If fetch is not ready, output 0s
         fetch_output["pc"] = 0
         fetch_output["opcode"] = 0
         fetch_output["rs1"] = 0
@@ -131,7 +128,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_output["end_fetched"] = end_fetched
 
         register[0] = 0
-        return
+    return
 
 
 def decode(decode_input, decode_output, register, codeExitFlag):
@@ -150,10 +147,15 @@ def decode(decode_input, decode_output, register, codeExitFlag):
     decode_ready = decode_input["decode_ready"]
     end_fetched = decode_input["end_fetched"]
 
+    # For Code Exit
     codeExitFlag[1] = decode_ready
 
+    # Check if decode is ready
     if decode_ready:
-        print("\nDECODE")
+        print()
+        print("DECODE")
+
+        # Get ALUop, MemOp, RFWrite, ResultSelect, isBranch
         ALUop = getALUop(instructionType, func3, func7)
         operand1, operand2 = op2selectMUX(instructionType, rs1, rs2, immFinal, register)
         BranchTargetSelect = BranchTargetSelectMUX(instructionType, immFinal)
@@ -162,10 +164,11 @@ def decode(decode_input, decode_output, register, codeExitFlag):
         isBranch = isBranchInstruction(opcode, instructionType, func3, operand1, operand2)
 
         # printing operation details
-        printOperationDetails(instructionType, immFinal, operand1, operand2, rd, ALUop)  # this is not required
+        # printOperationDetails(instructionType, immFinal, operand1, operand2, rd, ALUop)  # Complete this
 
         execute_ready = 1
 
+        # Output to Execute
         decode_output["pc"] = pc
         decode_output["ALUop"] = ALUop
         decode_output["BranchTargetResult"] = BranchTargetSelect
@@ -185,8 +188,8 @@ def decode(decode_input, decode_output, register, codeExitFlag):
 
         register[0] = 0
 
-        return
     else:
+        # If decode is not ready, output 0s
         decode_output["pc"] = 0
         decode_output["ALUop"] = 0
         decode_output["BranchTargetResult"] = 0
@@ -206,14 +209,11 @@ def decode(decode_input, decode_output, register, codeExitFlag):
 
         register[0] = 0
 
-        return
-
-        # EXECUTE
+    return
 
 
 def execute(execute_input, execute_output, register, codeExitFlag):
     register[0] = 0
-    # destructure arguments
 
     pc = execute_input["pc"]
     ALUop = execute_input["ALUop"]
@@ -253,28 +253,17 @@ def execute(execute_input, execute_output, register, codeExitFlag):
         print("EXECUTE")
         ALUResult = 0
 
-        if ALUop == 1:
-            ALUResult = operand1 + operand2
-        elif ALUop == 2:
-            ALUResult = operand1 - operand2
-        elif ALUop == 3:
-            ALUResult = operand1 & operand2
-        elif ALUop == 4:
-            ALUResult = operand1 | operand2
-        elif ALUop == 5:
-            ALUResult = operand1 << operand2
-        elif ALUop == 6:
-            ALUResult = operand1 >> operand2
-        elif ALUop == 7:
-            ALUResult = operand1 ^ operand2
-        elif ALUop == 8:
-            ALUResult = 1 if (operand1 < operand2) else 0
+        # get ALUResult
+        ALUResult = getALUReslt(ALUop, operand1, operand2)
 
+        # Get BranchTargetAddress
         BranchTargetAddress = BranchTargetResult + (pc * 4)
         print("ALUResult is: ", ALUResult)
 
+        # Get memory_ready
         memory_ready = 1
 
+        # Output to Memory
         execute_output["pc"] = pc
         execute_output["MemOp"] = MemOp
         execute_output["ALUResult"] = ALUResult
@@ -293,8 +282,8 @@ def execute(execute_input, execute_output, register, codeExitFlag):
 
         register[0] = 0
 
-        return
     else:
+        # If execute is not ready, output 0s
         execute_output["pc"] = 0
         execute_output["MemOp"] = 0
         execute_output["ALUResult"] = 0
@@ -313,17 +302,20 @@ def execute(execute_input, execute_output, register, codeExitFlag):
 
         register[0] = 0
 
-        return
-
-        # MEMORY
+    return
 
 
 def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
+    """
+    MemOp operation
+    0 - Do nothing (skip)
+    1 - Write in memory --> Store
+    2 - Read from memory --> Load
+    """
+
     register[0] = 0
 
-    # destructure arguments
-    # pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready,rs2,end_fetched,inst_type,opcode = pipe4
-
+    # Input to Memory
     pc = memory_input["pc"]
     MemOp = memory_input["MemOp"]
     ALUResult = memory_input["ALUResult"]
@@ -340,18 +332,12 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
     inst_type = memory_input["instructionType"]
     opcode = memory_input["opcode"]
 
+    # For exiting the code
     codeExitFlag[3] = memory_ready
-
-    """
-    MemOp operation
-    0 - Do nothing (skip)
-    1 - Write in memory --> Store
-    2 - Read from memory --> Load
-    """
 
     if memory_ready:
         ReadData = 0
-
+        print()
         print("MEMORY")
 
         if MemOp == 0:
@@ -374,6 +360,7 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
         MemOp = 0
         write_ready = 1
 
+        # Output to WriteBack
         memory_output["pc"] = pc
         memory_output["RFWrite"] = RFWrite
         memory_output["ResultSelect"] = ResultSelect
@@ -390,8 +377,8 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
 
         register[0] = 0
 
-        return
     else:
+        # If memory is not ready, output 0s
         memory_output["pc"] = 0
         memory_output["RFWrite"] = 0
         memory_output["ResultSelect"] = 0
@@ -408,9 +395,7 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
 
         register[0] = 0
 
-        return
-
-        # WRITE
+    return
 
 
 def Write(
@@ -425,10 +410,19 @@ def Write(
     globalCounter,
     codeExitFlag,
 ):
-    register[0] = 0
-    # destructure arguments
-    # pc, RFWrite, ResultSelect, rd, immFinal, ReadData, ALUResult, isBranch, BranchTargetAddress, write_ready,end_fetched,inst_type,opcode = pipe5
+    """
+    ResultSelect
+    5 - None
+    0 - PC+4
+    1 - ImmU_lui
+    2 - ImmU_auipc
+    3 - LoadData - essentially same as ReadData
+    4 - ALUResult
+    """
 
+    register[0] = 0
+
+    # Input to Write
     pc = write_input["pc"]
     RFWrite = write_input["RFWrite"]
     ResultSelect = write_input["ResultSelect"]
@@ -443,17 +437,8 @@ def Write(
     inst_type = write_input["instructionType"]
     opcode = write_input["opcode"]
 
+    # For exiting the code
     codeExitFlag[4] = write_ready
-
-    """
-        ResultSelect
-        5 - None
-        0 - PC+4
-        1 - ImmU_lui
-        2 - ImmU_auipc
-        3 - LoadData - essentially same as ReadData
-        4 - ALUResult
-    """
 
     if write_ready:
         print("WRITE BACK IS DONE, globalCounter = ", globalCounter[:], "#########################################")
@@ -462,8 +447,8 @@ def Write(
 
         write_output["fetch_ready1"] = 1
 
-        print("WRITEBACK ")
-        print("RESULTSELECT=", ResultSelect)
+        print()
+        print("WRITEBACK")
 
         if RFWrite:
             if ResultSelect == 0:
@@ -515,7 +500,6 @@ def Write(
             print("ALUResult=", ALUResult)
             pc = ALUResult
             pc //= 4
-            # out5.append(1)
             write_output["read_pc_from_write"] = 1
             fetch_input["fetch_ready"] = 1
 
@@ -523,7 +507,6 @@ def Write(
             print("BranchTargetAddress=", BranchTargetAddress)
             pc = BranchTargetAddress
             pc //= 4
-            # out5.append(1)
             write_output["read_pc_from_write"] = 1
             fetch_input["fetch_ready"] = 1
 
@@ -538,20 +521,14 @@ def Write(
                 fetch_input["fetch_ready"] = 1
 
             else:
-                # out5.append(0)
                 write_output["read_pc_from_write"] = 0
 
         print("new PC is =", pc)
         write_output["pc1"] = pc
-        # out5.append(pc)
         register[0] = 0
-
-        return
 
     else:
         if end_fetched == 1:
-            # for i in range(3):
-            #     out5.append(0)
             write_output["fetch_ready1"] = 0
             write_output["read_pc_from_write"] = 0
             write_output["pc1"] = 0
@@ -560,13 +537,9 @@ def Write(
             write_output["fetch_ready1"] = 1
             write_output["read_pc_from_write"] = 0
             write_output["pc1"] = 0
-            # out5.append(1)
-            # out5.append(0)
-            # out5.append(0)          # this is useless
         register[0] = 0
 
-        return
-
+    return
 
 
 def run_riscvsim():
@@ -881,5 +854,3 @@ def run_riscvsim():
 
         # Print data memory
         print_data_mem(data_mem)
-        
-

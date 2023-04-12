@@ -1,4 +1,3 @@
-
 def makeDictEqual(dict1, dict2):
     """Make 2 dictionaries equal"""
     for key in dict1:
@@ -140,7 +139,6 @@ def getFinalImmediate(inst_type, imm, immS, immB, immU, immJ):
 def getInstructionType(opcode):
     """Get Type of Instruction from opcode"""
     inst_type = ""
-    print("opcode in getinstructiontype=", bin(opcode))
     if opcode == 0b0110011:
         inst_type = "R"
     elif opcode == 0b0010011 or opcode == 0b0000011 or opcode == 0b1100111:
@@ -303,35 +301,37 @@ def getALUop(inst_type, func3, func7):
     return ALUop
 
 
-def printOperationDetails(inst_type, immFinal, operand1, operand2, rd, ALUop):
-    """
-    Print Operation Details
-    """
-    print("inst_type in DECODE=", inst_type)
-    if inst_type == "R":
-        if ALUop == 1:
-            print("Instruction Type is ADD")
-        elif ALUop == 3:
-            print("Instruction Type is AND")
+# def printOperationDetails(inst_type, immFinal, operand1, operand2, rd, ALUop):
+#     """
+#     Print Operation Details
+#     """
+#     print("inst_type in DECODE=", inst_type)
+#     if inst_type == "R":
+#         if ALUop == 1:
+#             print("Instruction Type is ADD")
+#         elif ALUop == 3:
+#             print("Instruction Type is AND")
 
-        print("Operands are: ", operand1, operand2)
-        print("Write Register is: ", rd)
-    elif inst_type == "I":
-        if ALUop == 1:
-            print("Instruction Type is ADDI")
-        elif ALUop == 3:
-            print("Instruction Type is ANDI")
-        print("Operand1 is: ", operand1)
-        print("Immediate is: ", immFinal)
-        print("Write Register(rd) is: ", rd)
-    elif inst_type == "S":
-        print("Decode has Store instruction!")
-        print("immFinal in DECODE=", immFinal, "and operand1 in DECODE=", operand1, "and operand2 in DECODE=", operand2)
+#         print("Operands are: ", operand1, operand2)
+#         print("Write Register is: ", rd)
+#     elif inst_type == "I":
+#         if ALUop == 1:
+#             print("Instruction Type is ADDI")
+#         elif ALUop == 3:
+#             print("Instruction Type is ANDI")
+#         print("Operand1 is: ", operand1)
+#         print("Immediate is: ", immFinal)
+#         print("Write Register(rd) is: ", rd)
+#     elif inst_type == "S":
+#         print("Decode has Store instruction!")
+#         print("immFinal in DECODE=", immFinal, "and operand1 in DECODE=", operand1, "and operand2 in DECODE=", operand2)
+
 
 def print_data_mem(data_mem):
     for i in range(0, 1000000000):
         if data_mem[i] != 0:
             print("data_mem[", i, "]=", data_mem[i])
+
 
 def reset_proc():
     pass
@@ -366,3 +366,90 @@ def op2selectMUX(inst_type, rs1, rs2, imm_final, register):
         operand2 = register[rs2]
 
     return operand1, operand2
+
+
+def printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type):  # To be Completed
+    """
+    Print Details
+    """
+    if inst_type == "R":
+        if func3 == 0x0 and func7 == 0x00:
+            print("ADD ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x0 and func7 == 0x20:
+            print("SUB ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x4:
+            print("XOR ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x6:
+            print("OR ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x7:
+            print("AND ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x1:
+            print("SLL ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x5:
+            print("SRL ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x5 and func7 == 0x20:
+            print("SRA ", rd, " ", rs1, " ", rs2)
+        elif func3 == 0x2:
+            print("SLT ", rd, " ", rs1, " ", rs2)
+
+    elif inst_type == "I" and opcode == 0b0010011:
+        if func3 == 0x0:
+            print("ADDI ", rd, " ", rs1, " ", immFinal)
+        elif func3 == 0x7:
+            print("ANDI ", rd, " ", rs1, " ", immFinal)
+        elif func3 == 0x6:
+            print("ORI ", rd, " ", rs1, " ", immFinal)
+
+    elif inst_type == "I" and opcode == 0b0000011:
+        if func3 == 0x0:
+            print("LB ", rd, " ", rs1, " ", immFinal)
+        elif func3 == 0x1:
+            print("LH ", rd, " ", rs1, " ", immFinal)
+        elif func3 == 0x2:
+            print("LW ", rd, " ", rs1, " ", immFinal)
+
+    elif inst_type == "S":
+        if func3 == 0x0:
+            print("SB ", rs1, " ", rs2, " ", immFinal)
+        elif func3 == 0x1:
+            print("SH ", rs1, " ", rs2, " ", immFinal)
+        elif func3 == 0x2:
+            print("SW ", rs1, " ", rs2, " ", immFinal)
+
+    elif inst_type == "B":
+        if func3 == 0x0:
+            print("BEQ ", rs1, " ", rs2, " ", immFinal)
+        elif func3 == 0x1:
+            print("BNE ", rs1, " ", rs2, " ", immFinal)
+        elif func3 == 0x4:
+            print("BLT ", rs1, " ", rs2, " ", immFinal)
+        elif func3 == 0x5:
+            print("BGE ", rs1, " ", rs2, " ", immFinal)
+
+    elif inst_type == "U" and opcode == 0b0110111:
+        print("LUI ", rd, " ", immFinal)
+
+    elif inst_type == "U" and opcode == 0b0010111:
+        print("AUIPC ", rd, " ", immFinal)
+
+    elif inst_type == "J":
+        print("JAL ", rd, " ", immFinal)
+
+
+def getALUReslt(ALUop, operand1, operand2):
+    if ALUop == 1:
+        ALUResult = operand1 + operand2
+    elif ALUop == 2:
+        ALUResult = operand1 - operand2
+    elif ALUop == 3:
+        ALUResult = operand1 & operand2
+    elif ALUop == 4:
+        ALUResult = operand1 | operand2
+    elif ALUop == 5:
+        ALUResult = operand1 << operand2
+    elif ALUop == 6:
+        ALUResult = operand1 >> operand2
+    elif ALUop == 7:
+        ALUResult = operand1 ^ operand2
+    elif ALUop == 8:
+        ALUResult = 1 if (operand1 < operand2) else 0
