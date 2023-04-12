@@ -1,4 +1,4 @@
-from multiProcess import *
+from nomultiprocessing import *
 import argparse
 import sys
 

@@ -6,11 +6,15 @@ from helperFunctions import *
 
 MEM = [0] * 4000
 
+isStall = 0
+decode_ready = 0
+last_decode_done = 0
 
-def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag, TotalCycles, decode_input):
+def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag):
     """
     Fetch Instruction
     """
+    global isStall
     register[0] = 0  # X[0]=0
 
     # Input from Fetch
@@ -43,16 +47,17 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         # End of program
         if instruction_word == 0xFFFFFFFB:
             codeExitFlag[0] = 1
-            fetch_output["pc"] = 0
-            fetch_output["opcode"] = 0
-            fetch_output["rs1"] = 0
-            fetch_output["rs2"] = 0
-            fetch_output["rd"] = 0
-            fetch_output["func3"] = 0
-            fetch_output["func7"] = 0
-            fetch_output["immFinal"] = 0
-            fetch_output["instructionType"] = 0
-            fetch_output["decode_ready"] = 0
+            # fetch_output["pc"] = 0
+            # fetch_output["opcode"] = 0
+            # fetch_output["rs1"] = 0
+            # fetch_output["rs2"] = 0
+            # fetch_output["rd"] = 0
+            # fetch_output["func3"] = 0
+            # fetch_output["func7"] = 0
+            # fetch_output["immFinal"] = 0
+            # fetch_output["instructionType"] = 0
+            # fetch_output["decode_ready"] = 0
+            fetch_output["decode_end"] = 1
 
             return
 
@@ -68,20 +73,16 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         #Print Instruction
         printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
 
-        decode_ready = 1
 
         # If instruction is not a branch or jump, increment pc --> Edit this for reducing 1 stall
         if (ready_reg[rs1] == 0 and inst_type != "J") or (
             inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B")
         ):  # If rs1 or rs2 is not ready and instruction is R, S, or B and not J, stall
-            if decode_input["decode_ready"] == 1:
-                TotalCycles[0] = TotalCycles[0] - 1
-
-            decode_ready = 0
+            # print("HEREE")
             fetch_input["fetch_ready"] = 1
-            fetch_input["pc"] = pc
+            fetch_input["pc"] = pc + 1
+
         else:
-            decode_ready = 1
             if inst_type != "J" and inst_type != "B" and opcode != 0b1100111:
                 fetch_input["pc"] = pc + 1
             else:
@@ -108,28 +109,30 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_output["immFinal"] = immFinal
         fetch_output["instructionType"] = inst_type
         fetch_output["decode_ready"] = decode_ready
+        fetch_output["decode_end"] = 0
 
         register[0] = 0
 
     else:
         # If fetch is not ready, output 0s
-        fetch_output["pc"] = 0
-        fetch_output["opcode"] = 0
-        fetch_output["rs1"] = 0
-        fetch_output["rs2"] = 0
-        fetch_output["rd"] = 0
-        fetch_output["func3"] = 0
-        fetch_output["func7"] = 0
-        fetch_output["immFinal"] = 0
-        fetch_output["instructionType"] = 0
+        # fetch_output["pc"] = 0
+        # fetch_output["opcode"] = 0
+        # fetch_output["rs1"] = 0
+        # fetch_output["rs2"] = 0
+        # fetch_output["rd"] = 0
+        # fetch_output["func3"] = 0
+        # fetch_output["func7"] = 0
+        # fetch_output["immFinal"] = 0
+        # fetch_output["instructionType"] = 0
         fetch_output["decode_ready"] = 0
+        fetch_output["decode_end"] = 0
 
         register[0] = 0
-
+        
     return
 
 
-def decode(decode_input, decode_output, register, codeExitFlag):
+def decode(decode_input, decode_output, register, codeExitFlag, ready_reg):
     register[0] = 0
 
     # Read Inputs from decode
@@ -142,13 +145,30 @@ def decode(decode_input, decode_output, register, codeExitFlag):
     func7 = decode_input["func7"]
     immFinal = decode_input["immFinal"]
     instructionType = decode_input["instructionType"]
-    decode_ready = decode_input["decode_ready"]
+    decode_end = decode_input["decode_end"]
+
+    inst_type = instructionType
+
+    global decode_ready, last_decode_done
+
+    # if (isStall):
+    #     tmp_dict = decode_input
+
+    #     return
+    
+    # print("Decode ready: ", decode_ready)
 
     # For Code Exit
-    codeExitFlag[1] = decode_ready
+    codeExitFlag[1] = decode_end
+
+    if not(decode_ready):
+        decode_ready = 1
+        return
+    
+    print("Ready: ",rd, rs1, pc, inst_type)
 
     # Check if decode is ready
-    if decode_ready:
+    if not(last_decode_done) and not((ready_reg[rs1] == 0 and inst_type != "J") or (inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B"))):
         print()
         print("DECODE")
 
@@ -184,23 +204,26 @@ def decode(decode_input, decode_output, register, codeExitFlag):
 
         register[0] = 0
 
+        if (decode_end):
+            last_decode_done = 1
+
     else:
         # If decode is not ready, output 0s
-        decode_output["pc"] = 0
-        decode_output["ALUop"] = 0
-        decode_output["BranchTargetResult"] = 0
-        decode_output["ResultSelect"] = 0
-        decode_output["immFinal"] = 0
-        decode_output["operand1"] = 0
-        decode_output["operand2"] = 0
-        decode_output["rd"] = 0
-        decode_output["MemOp"] = 0
-        decode_output["isBranch"] = 0
-        decode_output["RFWrite"] = 0
+        # decode_output["pc"] = 0
+        # decode_output["ALUop"] = 0
+        # decode_output["BranchTargetResult"] = 0
+        # decode_output["ResultSelect"] = 0
+        # decode_output["immFinal"] = 0
+        # decode_output["operand1"] = 0
+        # decode_output["operand2"] = 0
+        # decode_output["rd"] = 0
+        # decode_output["MemOp"] = 0
+        # decode_output["isBranch"] = 0
+        # decode_output["RFWrite"] = 0
         decode_output["execute_ready"] = 0
-        decode_output["rs2"] = 0
-        decode_output["instructionType"] = "0"
-        decode_output["opcode"] = 0
+        # decode_output["rs2"] = 0
+        # decode_output["instructionType"] = "0"
+        # decode_output["opcode"] = 0
 
         register[0] = 0
 
@@ -247,7 +270,6 @@ def execute(execute_input, execute_output, register, codeExitFlag):
     if execute_ready:
         print()
         print("EXECUTE")
-        ALUResult = 0
 
         # get ALUResult
         ALUResult = getALUReslt(ALUop, operand1, operand2)
@@ -279,20 +301,20 @@ def execute(execute_input, execute_output, register, codeExitFlag):
 
     else:
         # If execute is not ready, output 0s
-        execute_output["pc"] = 0
-        execute_output["MemOp"] = 0
-        execute_output["ALUResult"] = 0
-        execute_output["operand2"] = 0
-        execute_output["RFWrite"] = 0
-        execute_output["ResultSelect"] = 0
-        execute_output["rd"] = 0
-        execute_output["immFinal"] = 0
-        execute_output["isBranch"] = 0
-        execute_output["BranchTargetAddress"] = 0
+        # execute_output["pc"] = 0
+        # execute_output["MemOp"] = 0
+        # execute_output["ALUResult"] = 0
+        # execute_output["operand2"] = 0
+        # execute_output["RFWrite"] = 0
+        # execute_output["ResultSelect"] = 0
+        # execute_output["rd"] = 0
+        # execute_output["immFinal"] = 0
+        # execute_output["isBranch"] = 0
+        # execute_output["BranchTargetAddress"] = 0
         execute_output["memory_ready"] = 0
-        execute_output["rs2"] = 0
-        execute_output["instructionType"] = "0"
-        execute_output["opcode"] = 0
+        # execute_output["rs2"] = 0
+        # execute_output["instructionType"] = "0"
+        # execute_output["opcode"] = 0
 
         register[0] = 0
 
@@ -371,18 +393,18 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
 
     else:
         # If memory is not ready, output 0s
-        memory_output["pc"] = 0
-        memory_output["RFWrite"] = 0
-        memory_output["ResultSelect"] = 0
-        memory_output["rd"] = 0
-        memory_output["immFinal"] = 0
-        memory_output["ReadData"] = 0
-        memory_output["ALUResult"] = 0
-        memory_output["isBranch"] = 0
-        memory_output["BranchTargetAddress"] = 0
+        # memory_output["pc"] = 0
+        # memory_output["RFWrite"] = 0
+        # memory_output["ResultSelect"] = 0
+        # memory_output["rd"] = 0
+        # memory_output["immFinal"] = 0
+        # memory_output["ReadData"] = 0
+        # memory_output["ALUResult"] = 0
+        # memory_output["isBranch"] = 0
+        # memory_output["BranchTargetAddress"] = 0
         memory_output["write_ready"] = 0
-        memory_output["instructionType"] = "0"
-        memory_output["opcode"] = 0
+        # memory_output["instructionType"] = "0"
+        # memory_output["opcode"] = 0
 
         register[0] = 0
 
@@ -431,9 +453,9 @@ def Write(
     codeExitFlag[4] = write_ready
 
     if write_ready:
-        print("WRITE BACK IS DONE, globalCounter = ", globalCounter[:], "#########################################")
+        print("WRITE BACK IS DONE, globalCounter = ", globalCounter, "#########################################")
 
-        globalCounter[0] += 1
+        globalCounter += 1
 
         write_output["fetch_ready1"] = 1
 
@@ -527,339 +549,260 @@ def Write(
 
 
 def run_riscvsim():
-    with Manager() as manager:
-        process_list = []
 
-        fetch_ready = 1
-        decode_ready = 0
-        execute_ready = 0
-        memory_ready = 0
-        write_ready = 0
-        read_pc_from_write = 0  # 1-> read pc from write
+    fetch_ready = 1
+    decode_ready = 0
+    execute_ready = 0
+    memory_ready = 0
+    write_ready = 0
+    read_pc_from_write = 0  # 1-> read pc from write
 
-        pc = 0
-        opcode = 0
-        rs1 = 0
-        rs2 = 0
-        rd = 0
-        func3 = 0
-        func7 = 0
-        immFinal = 0
-        instructionType = 0
-        ALUop = 0
-        BranchTargetResult = 0
-        ResultSelect = 0
-        operand1 = 0
-        operand2 = 0
-        MemOp = 0
-        isBranch = 0
-        RFWrite = 0
-        ALUResult = 0
-        BranchTargetAddress = 0
-        ReadData = 0
-        fetch_ready1 = 0
-        pc1 = 0
+    pc = 0
+    opcode = 0
+    rs1 = 0
+    rs2 = 0
+    rd = 0
+    func3 = 0
+    func7 = 0
+    immFinal = 0
+    instructionType = 0
+    ALUop = 0
+    BranchTargetResult = 0
+    ResultSelect = 0
+    operand1 = 0
+    operand2 = 0
+    MemOp = 0
+    isBranch = 0
+    RFWrite = 0
+    ALUResult = 0
+    BranchTargetAddress = 0
+    ReadData = 0
+    fetch_ready1 = 0
+    pc1 = 0
+    decode_end = 0
 
-        globalCounter = mp.Array("i", 1, lock=False)
+    globalCounter = 0
 
-        TotalCycles = mp.Array("i", 1, lock=False)  # Count of Total No. of Cycles
-        TotalCycles[0] = 0  # Initially Total Cycles=0
+    codeExitFlag = [0, 1, 1, 1, 1]
 
-        codeExitFlag = mp.Array("i", 5, lock=False)  # For Exiting Program
-        for i in range(5):
-            codeExitFlag[i] = 1
-        codeExitFlag[0] = 0
+    # register = mp.Array("i", 32, lock=False)  # All 32 Registers
+    # data_mem = mp.Array("i", 1000000000, lock=False)  # Data Memory as Array
 
-        register = mp.Array("i", 32, lock=False)  # All 32 Registers
-        data_mem = mp.Array("i", 1000000000, lock=False)  # Data Memory as Array
+    register = [0] * 32
+    # data_mem = [0] * 1000000000
+    data_mem = {}
 
-        """
-                Ready Bit
-                1 -> Ready
-                0 -> Not Ready
-         """
-        ready_reg = mp.Array("i", 32, lock=False)  # Showing if rd Ready to be Read
+    """
+        Ready Bit
+        1 -> Ready
+        0 -> Not Ready
+    """
+    # ready_reg = mp.Array("i", 32, lock=False)  # Showing if rd Ready to be Read
+    ready_reg = []
 
-        isStalled = mp.Array("i", 1, lock=False)  # For Stalling
-        isStalled[0] = 0
+    for i in range(32):
+        ready_reg.append(1)
 
-        for i in range(32):
-            ready_reg[i] = 1
+    fetch_input = {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
+    decode_input = {        # if (
+        #     codeExitFlag[0] == 1
+        #     and codeExitFlag[1] == 0
+        #     and codeExitFlag[2] == 0
+        #     and codeExitFlag[3] == 0
+        #     and codeExitFlag[4] == 0
+        # ):
+        #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+        #     break
+            "pc": pc,
+            "opcode": opcode,
+            "rs1": rs1,
+            "rs2": rs2,
+            "rd": rd,
+            "func3": func3,
+            "func7": func7,
+            "immFinal": immFinal,
+            "instructionType": instructionType,
+            "decode_ready": decode_ready,
+            "decode_end" : decode_end
+        }
 
-        fetch_input = manager.dict(
-            {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
-        )
-        decode_input = manager.dict(
-            {
-                "pc": pc,
-                "opcode": opcode,
-                "rs1": rs1,
-                "rs2": rs2,
-                "rd": rd,
-                "func3": func3,
-                "func7": func7,
-                "immFinal": immFinal,
-                "instructionType": instructionType,
-                "decode_ready": decode_ready,
-                
-            }
-        )
-        execute_input = manager.dict(
-            {
-                "pc": pc,
-                "ALUop": ALUop,
-                "BranchTargetResult": BranchTargetResult,
-                "ResultSelect": ResultSelect,
-                "immFinal": immFinal,
-                "operand1": operand1,
-                "operand2": operand2,
-                "rd": rd,
-                "MemOp": MemOp,
-                "isBranch": isBranch,
-                "RFWrite": RFWrite,
-                "execute_ready": execute_ready,
-                "rs2": rs2,
-                
-                "instructionType": instructionType,
-                "opcode": opcode,
-            }
-        )
-        memory_input = manager.dict(
-            {
-                "pc": pc,
-                "MemOp": MemOp,
-                "ALUResult": ALUResult,
-                "operand2": operand2,
-                "RFWrite": RFWrite,
-                "ResultSelect": ResultSelect,
-                "rd": rd,
-                "immFinal": immFinal,
-                "ReadData": ReadData,
-                "isBranch": isBranch,
-                "BranchTargetAddress": BranchTargetAddress,
-                "memory_ready": memory_ready,
-                "rs2": rs2,
-                
-                "instructionType": instructionType,
-                "opcode": opcode,
-            }
-        )
-        write_input = manager.dict(
-            {
-                "pc": pc,
-                "RFWrite": RFWrite,
-                "ResultSelect": ResultSelect,
-                "rd": rd,
-                "immFinal": immFinal,
-                "ReadData": ReadData,
-                "ALUResult": ALUResult,
-                "isBranch": isBranch,
-                "BranchTargetAddress": BranchTargetAddress,
-                "write_ready": write_ready,
-                "rs2": rs2,
-                
-                "instructionType": instructionType,
-                "opcode": opcode,
-            }
-        )
+    execute_input = {
+            "pc": pc,
+            "ALUop": ALUop,
+            "BranchTargetResult": BranchTargetResult,
+            "ResultSelect": ResultSelect,
+            "immFinal": immFinal,
+            "operand1": operand1,
+            "operand2": operand2,
+            "rd": rd,
+            "MemOp": MemOp,
+            "isBranch": isBranch,
+            "RFWrite": RFWrite,
+            "execute_ready": execute_ready,
+            "rs2": rs2,
+            
+            "instructionType": instructionType,
+            "opcode": opcode,
+        }
+    
+    memory_input = {
+            "pc": pc,
+            "MemOp": MemOp,
+            "ALUResult": ALUResult,
+            "operand2": operand2,
+            "RFWrite": RFWrite,
+            "ResultSelect": ResultSelect,
+            "rd": rd,
+            "immFinal": immFinal,
+            "ReadData": ReadData,
+            "isBranch": isBranch,
+            "BranchTargetAddress": BranchTargetAddress,
+            "memory_ready": memory_ready,
+            "rs2": rs2,
+            
+            "instructionType": instructionType,
+            "opcode": opcode,
+        }
+    
+    write_input = {
+            "pc": pc,
+            "RFWrite": RFWrite,
+            "ResultSelect": ResultSelect,
+            "rd": rd,
+            "immFinal": immFinal,
+            "ReadData": ReadData,
+            "ALUResult": ALUResult,
+            "isBranch": isBranch,
+            "BranchTargetAddress": BranchTargetAddress,
+            "write_ready": write_ready,
+            "rs2": rs2,
+            
+            "instructionType": instructionType,
+            "opcode": opcode,
+        }
+    
 
-        fetch_output = manager.dict(
-            {
-                "pc": pc,
-                "opcode": opcode,
-                "rs1": rs1,
-                "rs2": rs2,
-                "rd": rd,
-                "func3": func3,
-                "func7": func7,
-                "immFinal": immFinal,
-                "instructionType": instructionType,
-                "decode_ready": decode_ready,
-                
-            }
-        )
-        decode_output = manager.dict(
-            {
-                "pc": pc,
-                "ALUop": ALUop,
-                "BranchTargetResult": BranchTargetResult,
-                "ResultSelect": ResultSelect,
-                "immFinal": immFinal,
-                "operand1": operand1,
-                "operand2": operand2,
-                "rd": rd,
-                "MemOp": MemOp,
-                "isBranch": isBranch,
-                "RFWrite": RFWrite,
-                "execute_ready": execute_ready,
-                "rs2": rs2,
-                
-                "instructionType": instructionType,
-                "opcode": opcode,
-            }
-        )
-        execute_output = manager.dict(
-            {
-                "pc": pc,
-                "MemOp": MemOp,
-                "ALUResult": ALUResult,
-                "operand2": operand2,
-                "RFWrite": RFWrite,
-                "ResultSelect": ResultSelect,
-                "rd": rd,
-                "immFinal": immFinal,
-                "ReadData": ReadData,
-                "isBranch": isBranch,
-                "BranchTargetAddress": BranchTargetAddress,
-                "memory_ready": memory_ready,
-                "rs2": rs2,
-                
-                "instructionType": instructionType,
-                "opcode": opcode,
-            }
-        )
-        memory_output = manager.dict(
-            {
-                "pc": pc,
-                "RFWrite": RFWrite,
-                "ResultSelect": ResultSelect,
-                "rd": rd,
-                "immFinal": immFinal,
-                "ReadData": ReadData,
-                "ALUResult": ALUResult,
-                "isBranch": isBranch,
-                "BranchTargetAddress": BranchTargetAddress,
-                "write_ready": write_ready,
-                "rs2": rs2,
-                
-                "instructionType": instructionType,
-                "opcode": opcode,
-            }
-        )
-        write_output = manager.dict(
-            {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
-        )
+    fetch_output = {
+            "pc": pc,
+            "opcode": opcode,
+            "rs1": rs1,
+            "rs2": rs2,
+            "rd": rd,
+            "func3": func3,
+            "func7": func7,
+            "immFinal": immFinal,
+            "instructionType": instructionType,
+            "decode_ready": decode_ready,
+            "decode_end": decode_end
+        }
+    
+    decode_output = {
+            "pc": pc,
+            "ALUop": ALUop,
+            "BranchTargetResult": BranchTargetResult,
+            "ResultSelect": ResultSelect,
+            "immFinal": immFinal,
+            "operand1": operand1,
+            "operand2": operand2,
+            "rd": rd,
+            "MemOp": MemOp,
+            "isBranch": isBranch,
+            "RFWrite": RFWrite,
+            "execute_ready": execute_ready,
+            "rs2": rs2,
+            
+            "instructionType": instructionType,
+            "opcode": opcode,
+        }
+    
+    execute_output = {
+            "pc": pc,
+            "MemOp": MemOp,
+            "ALUResult": ALUResult,
+            "operand2": operand2,
+            "RFWrite": RFWrite,
+            "ResultSelect": ResultSelect,
+            "rd": rd,
+            "immFinal": immFinal,
+            "ReadData": ReadData,
+            "isBranch": isBranch,
+            "BranchTargetAddress": BranchTargetAddress,
+            "memory_ready": memory_ready,
+            "rs2": rs2,
+            
+            "instructionType": instructionType,
+            "opcode": opcode,
+        }
+    
+    memory_output = {
+            "pc": pc,
+            "RFWrite": RFWrite,
+            "ResultSelect": ResultSelect,
+            "rd": rd,
+            "immFinal": immFinal,
+            "ReadData": ReadData,
+            "ALUResult": ALUResult,
+            "isBranch": isBranch,
+            "BranchTargetAddress": BranchTargetAddress,
+            "write_ready": write_ready,
+            "rs2": rs2,
+            
+            "instructionType": instructionType,
+            "opcode": opcode,
+        }
+    
+    write_output = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
+    
 
-        fetch2_input = manager.dict(
-            {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
-        )
-
-        backup_fetch_output = manager.dict(
-            {
-                "pc": pc,
-                "opcode": opcode,
-                "rs1": rs1,
-                "rs2": rs2,
-                "rd": rd,
-                "func3": func3,
-                "func7": func7,
-                "immFinal": immFinal,
-                "instructionType": instructionType,
-                "decode_ready": decode_ready,
-                
-            }
-        )
+    fetch2_input = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
+    
 
 
-        for i in range(100000000):
-            print("Cycle No.", i + 1)
-            p1 = mp.Process(
-                target=fetch,
-                args=(
-                    fetch_input,
-                    fetch_output,
-                    fetch2_input,
-                    register,
-                    ready_reg,
-                    codeExitFlag,
-                    TotalCycles,
-                    decode_input,
-                ),
-            )
-            p2 = mp.Process(target=decode, args=(decode_input, decode_output, register, codeExitFlag))
-            p3 = mp.Process(target=execute, args=(execute_input, execute_output, register, codeExitFlag))
-            p4 = mp.Process(target=Memory, args=(memory_input, memory_output, data_mem, register, codeExitFlag))
-            p5 = mp.Process(
-                target=Write,
-                args=(
-                    write_input,
-                    write_output,
-                    register,
-                    fetch_input,
-                    ready_reg,
-                    decode_input,
-                    execute_input,
-                    memory_input,
-                    globalCounter,
-                    codeExitFlag,
-                ),
-            )
+    for i in range(100):
+        print("Cycle No.", i + 1)
 
-            p1.start()
-            p2.start()
-            p3.start()
-            p4.start()
-            p5.start()
-
-            process_list.append(p1)
-            process_list.append(p2)
-            process_list.append(p3)
-            process_list.append(p4)
-            process_list.append(p5)
-
-            for process in process_list:
-                process.join()
-
-            # print()
-            # print("Fetch out: ", fetch_output)
-            # print("Decode 2: ", decode_output)
-            # print("Execute 3: ", execute_output)
-            # print("Out 4: ", memory_output)
-            # print("Out 5: ", write_output)
-
-            if (
-                codeExitFlag[0] == 1
-                and codeExitFlag[1] == 0
-                and codeExitFlag[2] == 0
-                and codeExitFlag[3] == 0
-                and codeExitFlag[4] == 0
-            ):
-                print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-                break
-
-            TotalCycles[0] += 1  # Incrementing Total Cycles
-
-            print("-------------------------------------------------------")
-
-            decode_input = manager.dict()
-            execute_input = manager.dict()
-            memory_input = manager.dict()
-            write_input = manager.dict()
-            fetch2_input = manager.dict()
-
-            # tmp_dict = manager.dict()
-
-            # if (fetch_input["fetch_ready"] == 0 and write_output["read_pc_from_write"] == 0):
-            #     print("Stall")
-            #     makeDictEqual(fetch_input, tmp_dict)
-            #     print(tmp_dict)
+        fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag)
+        decode(decode_input, decode_output, register, codeExitFlag, ready_reg)
+        execute(execute_input, execute_output, register, codeExitFlag)
+        Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
+        Write(write_input, write_output, register, fetch_input, ready_reg, decode_input, execute_input, memory_input, globalCounter, codeExitFlag)
 
 
-            makeDictEqual(fetch_output, decode_input)
-            makeDictEqual(decode_output, execute_input)
-            makeDictEqual(execute_output, memory_input)
-            makeDictEqual(memory_output, write_input)
-            makeDictEqual(write_output, fetch2_input)
-            # extra_pipe=out5
 
-            fetch_output = manager.dict()
-            decode_output = manager.dict()
-            execute_output = manager.dict()
-            memory_output = manager.dict()
-            write_output = manager.dict()
-            # out5 = manager.list()
+        # print()
+        # print("Fetch out: ", fetch_output)
+        # print("Decode 2: ", decode_output)
+        # print("Execute 3: ", execute_output)
+        # print("Out 4: ", memory_output)
+        # print("Out 5: ", write_output)
 
-        print("Register: ", register[:])
+        # print("CodeExit: ", codeExitFlag, last_decode_done)
 
-        # Print data memory
-        print_data_mem(data_mem)
+        if (
+            codeExitFlag[0] == 1
+            and codeExitFlag[1] == 1
+            and codeExitFlag[2] == 0
+            and codeExitFlag[3] == 0
+            and codeExitFlag[4] == 1
+            and last_decode_done == 1
+        ):
+            print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+            break
+
+        print("-------------------------------------------------------")
+
+
+
+
+        makeDictEqual(fetch_output, decode_input)
+        makeDictEqual(decode_output, execute_input)
+        makeDictEqual(execute_output, memory_input)
+        makeDictEqual(memory_output, write_input)
+        makeDictEqual(write_output, fetch2_input)
+
+
+    print("Register: ", register[:])
+
+    # Print data memory
+    # print("Data Memory: ", data_mem)
+    print_data_mem(data_mem)
