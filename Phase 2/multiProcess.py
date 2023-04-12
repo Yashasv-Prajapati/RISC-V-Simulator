@@ -18,7 +18,6 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
     fetch_ready = fetch_input["fetch_ready"]
     MEM = fetch_input["MEM"]
     decode_ready = fetch_input["decode_ready"]
-    end_fetched = fetch_input["end_fetched"]
 
     # Output from Write Back
     fetch_ready1 = write_output["fetch_ready1"]
@@ -32,7 +31,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_ready = 1
         write_output["read_pc_from_write"] = 0
 
-    if fetch_ready and end_fetched == 0:
+    if fetch_ready:
         print()
         print("FETCH")
         print("PC: ", pc)
@@ -54,7 +53,6 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             fetch_output["immFinal"] = 0
             fetch_output["instructionType"] = 0
             fetch_output["decode_ready"] = 0
-            fetch_output["end_fetched"] = 1
 
             return
 
@@ -109,7 +107,6 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_output["immFinal"] = immFinal
         fetch_output["instructionType"] = inst_type
         fetch_output["decode_ready"] = decode_ready
-        fetch_output["end_fetched"] = end_fetched
 
         register[0] = 0
 
@@ -125,7 +122,6 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_output["immFinal"] = 0
         fetch_output["instructionType"] = 0
         fetch_output["decode_ready"] = 0
-        fetch_output["end_fetched"] = end_fetched
 
         register[0] = 0
     return
@@ -145,7 +141,6 @@ def decode(decode_input, decode_output, register, codeExitFlag):
     immFinal = decode_input["immFinal"]
     instructionType = decode_input["instructionType"]
     decode_ready = decode_input["decode_ready"]
-    end_fetched = decode_input["end_fetched"]
 
     # For Code Exit
     codeExitFlag[1] = decode_ready
@@ -182,7 +177,6 @@ def decode(decode_input, decode_output, register, codeExitFlag):
         decode_output["RFWrite"] = RFWrite
         decode_output["execute_ready"] = execute_ready
         decode_output["rs2"] = rs2
-        decode_output["end_fetched"] = end_fetched
         decode_output["instructionType"] = instructionType
         decode_output["opcode"] = opcode
 
@@ -203,7 +197,6 @@ def decode(decode_input, decode_output, register, codeExitFlag):
         decode_output["RFWrite"] = 0
         decode_output["execute_ready"] = 0
         decode_output["rs2"] = 0
-        decode_output["end_fetched"] = end_fetched
         decode_output["instructionType"] = "0"
         decode_output["opcode"] = 0
 
@@ -213,6 +206,19 @@ def decode(decode_input, decode_output, register, codeExitFlag):
 
 
 def execute(execute_input, execute_output, register, codeExitFlag):
+    """
+    ALUop operation
+    0 - perform none (skip)
+    1 - add
+    2 - subtract
+    3 - and
+    4 - or
+    5 - shift left
+    6 - shift right
+    7 - xor
+    8 - set less than
+    """
+
     register[0] = 0
 
     pc = execute_input["pc"]
@@ -228,24 +234,12 @@ def execute(execute_input, execute_output, register, codeExitFlag):
     RFWrite = execute_input["RFWrite"]
     execute_ready = execute_input["execute_ready"]
     rs2 = execute_input["rs2"]
-    end_fetched = execute_input["end_fetched"]
     inst_type = execute_input["instructionType"]
     opcode = execute_input["opcode"]
 
     codeExitFlag[2] = execute_ready
 
-    """
-    ALUop operation
-    0 - perform none (skip)
-    1 - add
-    2 - subtract
-    3 - and
-    4 - or
-    5 - shift left
-    6 - shift right
-    7 - xor
-    8 - set less than
-    """
+    
     # ready variable is used to check if the instruction is to be executed or not
 
     if execute_ready:
@@ -276,7 +270,6 @@ def execute(execute_input, execute_output, register, codeExitFlag):
         execute_output["BranchTargetAddress"] = BranchTargetAddress
         execute_output["memory_ready"] = memory_ready
         execute_output["rs2"] = rs2
-        execute_output["end_fetched"] = end_fetched
         execute_output["instructionType"] = inst_type
         execute_output["opcode"] = opcode
 
@@ -296,7 +289,6 @@ def execute(execute_input, execute_output, register, codeExitFlag):
         execute_output["BranchTargetAddress"] = 0
         execute_output["memory_ready"] = 0
         execute_output["rs2"] = 0
-        execute_output["end_fetched"] = end_fetched
         execute_output["instructionType"] = "0"
         execute_output["opcode"] = 0
 
@@ -328,7 +320,6 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
     BranchTargetAddress = memory_input["BranchTargetAddress"]
     memory_ready = memory_input["memory_ready"]
     rs2 = memory_input["rs2"]
-    end_fetched = memory_input["end_fetched"]
     inst_type = memory_input["instructionType"]
     opcode = memory_input["opcode"]
 
@@ -371,7 +362,6 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
         memory_output["isBranch"] = isBranch
         memory_output["BranchTargetAddress"] = BranchTargetAddress
         memory_output["write_ready"] = write_ready
-        memory_output["end_fetched"] = end_fetched
         memory_output["instructionType"] = inst_type
         memory_output["opcode"] = opcode
 
@@ -389,7 +379,6 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag):
         memory_output["isBranch"] = 0
         memory_output["BranchTargetAddress"] = 0
         memory_output["write_ready"] = 0
-        memory_output["end_fetched"] = end_fetched
         memory_output["instructionType"] = "0"
         memory_output["opcode"] = 0
 
@@ -433,7 +422,6 @@ def Write(
     isBranch = write_input["isBranch"]
     BranchTargetAddress = write_input["BranchTargetAddress"]
     write_ready = write_input["write_ready"]
-    end_fetched = write_input["end_fetched"]
     inst_type = write_input["instructionType"]
     opcode = write_input["opcode"]
 
@@ -514,7 +502,7 @@ def Write(
             pc += 1
 
             if (
-                fetch_input["fetch_ready"] == 0 and end_fetched == 0 and (inst_type == "J" or inst_type == "B")
+                fetch_input["fetch_ready"] == 0 and (inst_type == "J" or inst_type == "B")
             ):  # ie if fetch is waiting and it is not the end
                 # out5.append(1) # this is to tell that fetch should take pc from write_back
                 write_output["read_pc_from_write"] = 1
@@ -528,15 +516,9 @@ def Write(
         register[0] = 0
 
     else:
-        if end_fetched == 1:
-            write_output["fetch_ready1"] = 0
-            write_output["read_pc_from_write"] = 0
-            write_output["pc1"] = 0
-
-        else:
-            write_output["fetch_ready1"] = 1
-            write_output["read_pc_from_write"] = 0
-            write_output["pc1"] = 0
+        write_output["fetch_ready1"] = 1
+        write_output["read_pc_from_write"] = 0
+        write_output["pc1"] = 0
         register[0] = 0
 
     return
@@ -551,7 +533,6 @@ def run_riscvsim():
         execute_ready = 0
         memory_ready = 0
         write_ready = 0
-        end_fetched = 0  # 1 -> end has been fetched
         read_pc_from_write = 0  # 1-> read pc from write
 
         pc = 0
@@ -597,11 +578,13 @@ def run_riscvsim():
          """
         ready_reg = mp.Array("i", 32, lock=False)  # Showing if rd Ready to be Read
 
+        isStalled = mp.Array("i", 1, lock=False)  # For Stalling
+
         for i in range(32):
             ready_reg[i] = 1
 
         fetch_input = manager.dict(
-            {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready, "end_fetched": end_fetched}
+            {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
         )
         decode_input = manager.dict(
             {
@@ -615,7 +598,7 @@ def run_riscvsim():
                 "immFinal": immFinal,
                 "instructionType": instructionType,
                 "decode_ready": decode_ready,
-                "end_fetched": end_fetched,
+                
             }
         )
         execute_input = manager.dict(
@@ -633,7 +616,7 @@ def run_riscvsim():
                 "RFWrite": RFWrite,
                 "execute_ready": execute_ready,
                 "rs2": rs2,
-                "end_fetched": end_fetched,
+                
                 "instructionType": instructionType,
                 "opcode": opcode,
             }
@@ -653,7 +636,7 @@ def run_riscvsim():
                 "BranchTargetAddress": BranchTargetAddress,
                 "memory_ready": memory_ready,
                 "rs2": rs2,
-                "end_fetched": end_fetched,
+                
                 "instructionType": instructionType,
                 "opcode": opcode,
             }
@@ -671,7 +654,7 @@ def run_riscvsim():
                 "BranchTargetAddress": BranchTargetAddress,
                 "write_ready": write_ready,
                 "rs2": rs2,
-                "end_fetched": end_fetched,
+                
                 "instructionType": instructionType,
                 "opcode": opcode,
             }
@@ -689,7 +672,7 @@ def run_riscvsim():
                 "immFinal": immFinal,
                 "instructionType": instructionType,
                 "decode_ready": decode_ready,
-                "end_fetched": end_fetched,
+                
             }
         )
         decode_output = manager.dict(
@@ -707,7 +690,7 @@ def run_riscvsim():
                 "RFWrite": RFWrite,
                 "execute_ready": execute_ready,
                 "rs2": rs2,
-                "end_fetched": end_fetched,
+                
                 "instructionType": instructionType,
                 "opcode": opcode,
             }
@@ -727,7 +710,7 @@ def run_riscvsim():
                 "BranchTargetAddress": BranchTargetAddress,
                 "memory_ready": memory_ready,
                 "rs2": rs2,
-                "end_fetched": end_fetched,
+                
                 "instructionType": instructionType,
                 "opcode": opcode,
             }
@@ -745,7 +728,7 @@ def run_riscvsim():
                 "BranchTargetAddress": BranchTargetAddress,
                 "write_ready": write_ready,
                 "rs2": rs2,
-                "end_fetched": end_fetched,
+                
                 "instructionType": instructionType,
                 "opcode": opcode,
             }
@@ -755,7 +738,7 @@ def run_riscvsim():
         )
 
         fetch2_input = manager.dict(
-            {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready, "end_fetched": end_fetched}
+            {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
         )
 
         # out5 = manager.list()
