@@ -328,9 +328,11 @@ def getALUop(inst_type, func3, func7):
 
 
 def print_data_mem(data_mem):
-    for i in range(0, 1000000000):
-        if data_mem[i] != 0:
-            print("data_mem[", i, "]=", data_mem[i])
+    # for i in range(0, 1000000000):
+    #     if data_mem[i] != 0:
+    #         print("data_mem[", i, "]=", data_mem[i])
+    for i in data_mem.keys():
+        print("data_mem[", i, "]=", data_mem[i])
 
 
 def reset_proc():
@@ -374,69 +376,71 @@ def printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type):  # To
     """
     if inst_type == "R":
         if func3 == 0x0 and func7 == 0x00:
-            print("ADD ", rd, " ", rs1, " ", rs2)
+            print("ADD ", rd,  rs1,  rs2)
         elif func3 == 0x0 and func7 == 0x20:
-            print("SUB ", rd, " ", rs1, " ", rs2)
+            print("SUB ", rd,  rs1,  rs2)
         elif func3 == 0x4:
-            print("XOR ", rd, " ", rs1, " ", rs2)
+            print("XOR ", rd,  rs1,  rs2)
         elif func3 == 0x6:
-            print("OR ", rd, " ", rs1, " ", rs2)
+            print("OR ", rd,  rs1,  rs2)
         elif func3 == 0x7:
-            print("AND ", rd, " ", rs1, " ", rs2)
+            print("AND ", rd,  rs1,  rs2)
         elif func3 == 0x1:
-            print("SLL ", rd, " ", rs1, " ", rs2)
+            print("SLL ", rd,  rs1,  rs2)
         elif func3 == 0x5:
-            print("SRL ", rd, " ", rs1, " ", rs2)
+            print("SRL ", rd,  rs1,  rs2)
         elif func3 == 0x5 and func7 == 0x20:
-            print("SRA ", rd, " ", rs1, " ", rs2)
+            print("SRA ", rd,  rs1,  rs2)
         elif func3 == 0x2:
-            print("SLT ", rd, " ", rs1, " ", rs2)
+            print("SLT ", rd,  rs1,  rs2)
 
     elif inst_type == "I" and opcode == 0b0010011:
         if func3 == 0x0:
-            print("ADDI ", rd, " ", rs1, " ", immFinal)
+            print("ADDI ", rd,  rs1,  immFinal)
         elif func3 == 0x7:
-            print("ANDI ", rd, " ", rs1, " ", immFinal)
+            print("ANDI ", rd,  rs1,  immFinal)
         elif func3 == 0x6:
-            print("ORI ", rd, " ", rs1, " ", immFinal)
+            print("ORI ", rd,  rs1,  immFinal)
 
     elif inst_type == "I" and opcode == 0b0000011:
         if func3 == 0x0:
-            print("LB ", rd, " ", rs1, " ", immFinal)
+            print("LB ", rd,  rs1,  immFinal)
         elif func3 == 0x1:
-            print("LH ", rd, " ", rs1, " ", immFinal)
+            print("LH ", rd,  rs1,  immFinal)
         elif func3 == 0x2:
-            print("LW ", rd, " ", rs1, " ", immFinal)
+            print("LW ", rd,  rs1,  immFinal)
 
     elif inst_type == "S":
         if func3 == 0x0:
-            print("SB ", rs1, " ", rs2, " ", immFinal)
+            print("SB ", rs1,  rs2,  immFinal)
         elif func3 == 0x1:
-            print("SH ", rs1, " ", rs2, " ", immFinal)
+            print("SH ", rs1,  rs2,  immFinal)
         elif func3 == 0x2:
-            print("SW ", rs1, " ", rs2, " ", immFinal)
+            print("SW ", rs1,  rs2,  immFinal)
 
     elif inst_type == "B":
         if func3 == 0x0:
-            print("BEQ ", rs1, " ", rs2, " ", immFinal)
+            print("BEQ ", rs1,  rs2,  immFinal)
         elif func3 == 0x1:
-            print("BNE ", rs1, " ", rs2, " ", immFinal)
+            print("BNE ", rs1,  rs2,  immFinal)
         elif func3 == 0x4:
-            print("BLT ", rs1, " ", rs2, " ", immFinal)
+            print("BLT ", rs1,  rs2,  immFinal)
         elif func3 == 0x5:
-            print("BGE ", rs1, " ", rs2, " ", immFinal)
+            print("BGE ", rs1,  rs2,  immFinal)
 
     elif inst_type == "U" and opcode == 0b0110111:
-        print("LUI ", rd, " ", immFinal)
+        print("LUI ", rd,  immFinal)
 
     elif inst_type == "U" and opcode == 0b0010111:
-        print("AUIPC ", rd, " ", immFinal)
+        print("AUIPC ", rd,  immFinal)
 
     elif inst_type == "J":
-        print("JAL ", rd, " ", immFinal)
+        print("JAL ", rd,  immFinal)
 
 
 def getALUReslt(ALUop, operand1, operand2):
+    ALUResult = 0
+
     if ALUop == 1:
         ALUResult = operand1 + operand2
     elif ALUop == 2:
