@@ -26,12 +26,14 @@ def load_program_memory(file, MEM):
     f.close()
 
 
+
                                                             #FETCH
 def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2):
     '''
         Fetch Instruction
     '''
     register[0]=0                   #X[0]=0
+
     # destructure variables
     pc, fetch_ready, MEM, decode_ready ,end_fetched= pipe1
     fetch_ready1,read_pc_from_write,pc1=extra_pipe
@@ -158,7 +160,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         immFinal = getFinalImmediate(inst_type, imm, immS ,immB, immU, immJ) 
         print("Final immediate in FETCH is: ",immFinal, " in hex: ", hex(immFinal))
         print("rd is = ", rd,"rs1 in FETCH is=",rs1,"and rs2 in FETCH is=",rs2)
-        # decode_ready = 1
+        decode_ready = 1
 
         # pipe1[0]=pc+1
        
@@ -168,11 +170,11 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
                 print("Yupp")
                 TotalCycles[0]=TotalCycles[0]-1
 
+
             decode_ready = 0
             print('"YES"')
             pipe1[1] = 1            
             pipe1[0] = pc
-        
         else:
             decode_ready = 1
             if(inst_type!='J' and inst_type!='B' and opcode!=0b1100111): 
@@ -593,6 +595,7 @@ def run_riscvsim():
 
         codeExitFlag = mp.Array('i', 5, lock=False)          #For Exiting Program
         for i in range(5):                         
+
             codeExitFlag[i] = 1
         codeExitFlag[0] = 0
 
@@ -657,8 +660,8 @@ def run_riscvsim():
 
             if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
                 print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-                print("Total no. of cycles=",TotalCycles[0])
                 break
+
 
             TotalCycles[0]+=1         #Incrementing Total Cycles
 
@@ -687,9 +690,9 @@ def run_riscvsim():
 
         print("Register: ", register[:])
         #Print data memory
-        # for i in range(0,1000000000):
-        #     if(data_mem[i]!=0):
-        #         print("data_mem[",i,"]=",data_mem[i])
+        for i in range(0,1000000000):
+            if(data_mem[i]!=0):
+                print("data_mem[",i,"]=",data_mem[i])
 
 
 
