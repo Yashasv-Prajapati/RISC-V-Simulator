@@ -1,4 +1,4 @@
-from nomultiprocessing import *
+from yash import *
 import argparse
 import sys
 
