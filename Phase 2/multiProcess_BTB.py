@@ -733,7 +733,7 @@ def run_riscvsim():
             #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
             #     print("Total no. of cycles=",TotalCycles[0])
             #     break
-
+            print("Total no. of cycles=", TotalCycles[0])
             TotalCycles[0]+=1         #Incrementing Total Cycles
 
             print("-------------------------------------------------------")
