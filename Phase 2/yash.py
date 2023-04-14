@@ -100,9 +100,9 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             # if rd != 0 and inst_type != "S" and inst_type != "B":
             #     ready_reg[rd] = 0
         
-        # as soon as you meet a register which is non zero and has valid rd, set that rd to not ready
-        if rd != 0 and inst_type != "S" and inst_type != "B":
-            ready_reg[rd] = 0
+        # # as soon as you meet a register which is non zero and has valid rd, set that rd to not ready
+        # if rd != 0 and inst_type != "S" and inst_type != "B":
+        #     ready_reg[rd] = 0
 
 
         # if both register are ready then do the following
@@ -178,15 +178,29 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg):
     codeExitFlag[1] = decode_end
 
     if not(decode_ready):
+        print("YO BITCh")
         decode_ready = 1
         return
     
     print("Ready: rd: ",rd, " rs1 " , rs1, " pc " , pc ," instr: ", inst_type)
-
+    print("lastdecodeone ", last_decode_done)
+    print("1: ", (ready_reg[rs1] == 0 and inst_type != "J"))
+    print("2: ", (inst_type != "J" and ready_reg[rs2] == 0) and (inst_type == "R" or inst_type == "S" or inst_type == "B"))
     # Check if decode is ready
-    if not(last_decode_done) and not((ready_reg[rs1] == 0 and inst_type != "J") or (inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B"))):
+    if not(last_decode_done) and not (
+            (ready_reg[rs1] == 0 and inst_type != "J") or 
+            (inst_type != "J" and ready_reg[rs2] == 0 and 
+            (inst_type == "R" or inst_type == "S" or inst_type == "B")
+            )
+        ):
         print()
         print("DECODE")
+
+
+        # as soon as you meet a register which is non zero and has valid rd, set that rd to not ready
+        if rd != 0 and inst_type != "S" and inst_type != "B":
+            ready_reg[rd] = 0
+
 
         # Get ALUop, MemOp, RFWrite, ResultSelect, isBranch
         ALUop = getALUop(instructionType, func3, func7)
