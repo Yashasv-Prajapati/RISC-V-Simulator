@@ -27,7 +27,7 @@ def load_program_memory(file, MEM):
 
 
                                                             #FETCH
-def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2,btbTable1,btbTable2):
+def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2,btbTable1,btbTable2,ExitFlag):
     '''
         Fetch Instruction
     '''
@@ -66,6 +66,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
 
         if (instruction_word == 0xfffffffb):
             codeExitFlag[0] = 1
+            ExitFlag[0]+=1
             # print("ENDDDDDDD  pc>0xfffffffb")
             for _ in range(10):
                 out1.append(0)
@@ -161,7 +162,7 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
         # decode_ready = 1
 
         # pipe1[0]=pc+1
-       
+        flag=0
         if ((ready_reg[rs1] == 0 and inst_type!='J')or ( inst_type!='J' and ready_reg[rs2] == 0 and (inst_type=='R' or inst_type=='S' or inst_type=='B'))):
             #Branch with dependency will also come inside this
             if(pipe2[-2]==1):    #if decode_ready==1
@@ -183,10 +184,13 @@ def fetch(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,To
 
             if(rd!=0 and inst_type!='S' and inst_type!='B'):
                 print("rd=0 done")
+                if(ready_reg[rd]==1 and opcode==0b1100111):
+                    print("CAME")
+                    flag=1
                 ready_reg[rd] = 0
         
         
-        if((inst_type=='B' or inst_type=='J' or opcode==0b1100111) and (ready_reg[rs1]!=0) and ready_reg[rs2]!=0):
+        if(((inst_type=='B' or inst_type=='J' or opcode==0b1100111) and (ready_reg[rs1]!=0) and ready_reg[rs2]!=0)  or flag==1 ):
             #branch without dependency
             pipe1[1]=1                          #fetch_ready=0
             extra_pipe[0]=1                     #fetch_ready from write_back=0
@@ -377,7 +381,7 @@ def execute(pipe3, out3,register, codeExitFlag,btbTable1,pipe1,out1,out2,pipe2,r
 
             else:  # Branch should be taken
                 print("HERE2")
-                if (btbTable1[pc] == 0):  # but btb said not to branch
+                if (btbTable1[pc] == 0 or btbTable2[pc]!=((int)(ALUResult/4))):  # but btb said not to branch
                     print("HERE3")
                     btbTable1[pc] = 1
                     if (opcode == 0b1100111):
@@ -666,6 +670,8 @@ def run_riscvsim():
         TotalCycles[0]=0                                     #Initially Total Cycles=0
 
         codeExitFlag = mp.Array('i', 5, lock=False)          #For Exiting Program
+        ExitFlag=mp.Array('i',1,lock=False)
+        ExitFlag[0]=0
         for i in range(5):                         
             codeExitFlag[i] = 1
         codeExitFlag[0] = 0
@@ -699,10 +705,10 @@ def run_riscvsim():
 
 
 
-        for i in range(200):
+        for i in range(350):
         
             print("Cycle No.",i+1)
-            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2,btbTable1,btbTable2))
+            p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2,btbTable1,btbTable2,ExitFlag))
             p2 =  mp.Process(target= decode, args=(pipe2, out2, register, codeExitFlag))
             p3 =  mp.Process(target= execute, args=(pipe3, out3,register, codeExitFlag,btbTable1,pipe1,out1,out2,pipe2,ready_reg,btbTable2))
             p4 =  mp.Process(target= Memory, args=(pipe4, out4, data_mem, register, codeExitFlag))
@@ -729,10 +735,10 @@ def run_riscvsim():
             print("Out 4: ", out4)
             print("Out 5: ", out5)
 
-            # if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
-            #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-            #     print("Total no. of cycles=",TotalCycles[0])
-            #     break
+            if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
+                print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+                print("Total no. of cycles=",TotalCycles[0])
+                break
             print("Total no. of cycles=", TotalCycles[0])
             TotalCycles[0]+=1         #Incrementing Total Cycles
 
