@@ -705,7 +705,7 @@ def run_riscvsim():
 
 
 
-        for i in range(350):
+        for i in range(1500):
         
             print("Cycle No.",i+1)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2,btbTable1,btbTable2,ExitFlag))
@@ -735,10 +735,10 @@ def run_riscvsim():
             print("Out 4: ", out4)
             print("Out 5: ", out5)
 
-            if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
-                print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-                print("Total no. of cycles=",TotalCycles[0])
-                break
+            # if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
+            #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+            #     print("Total no. of cycles=",TotalCycles[0])
+            #     break
             print("Total no. of cycles=", TotalCycles[0])
             TotalCycles[0]+=1         #Incrementing Total Cycles
 
