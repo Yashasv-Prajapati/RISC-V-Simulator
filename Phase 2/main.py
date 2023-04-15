@@ -1,4 +1,4 @@
-from multiProcess_BTB import *
+from multiProcess import *
 import argparse
 import sys
 

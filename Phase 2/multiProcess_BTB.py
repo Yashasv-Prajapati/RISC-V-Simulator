@@ -735,10 +735,10 @@ def run_riscvsim():
             print("Out 4: ", out4)
             print("Out 5: ", out5)
 
-            if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
-                print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-                print("Total no. of cycles=",TotalCycles[0])
-                break
+            # if(codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0):
+            #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+            #     print("Total no. of cycles=",TotalCycles[0])
+            #     break
             print("Total no. of cycles=", TotalCycles[0])
             TotalCycles[0]+=1         #Incrementing Total Cycles
 
