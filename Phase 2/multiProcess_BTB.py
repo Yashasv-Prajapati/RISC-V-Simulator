@@ -705,7 +705,7 @@ def run_riscvsim():
 
 
 
-        for i in range(350):
+        for i in range(1500):
         
             print("Cycle No.",i+1)
             p1 =  mp.Process(target= fetch, args=(pipe1, out1,extra_pipe,register, ready_reg, out_stall, codeExitFlag,TotalCycles,pipe2,btbTable1,btbTable2,ExitFlag))
