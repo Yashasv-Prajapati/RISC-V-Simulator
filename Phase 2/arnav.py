@@ -14,6 +14,7 @@ isStall = 0
 decode_ready = 0
 last_decode_done = 0
 
+
 def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag, fetch3_input):
     """
     Fetch Instruction
@@ -38,7 +39,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         pc = pc1
         fetch3_input[pc] = pc1
         fetch_ready = 1
-        fetch_output["decode_ready"]=1
+        fetch_output["decode_ready"] = 1
         write_output["read_pc_from_write"] = 0
 
     if fetch_ready:
@@ -77,13 +78,13 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         # Get final Immediate
         immFinal = getFinalImmediate(inst_type, imm, immS, immB, immU, immJ)
 
-        #Print Instruction
+        # Print Instruction
         printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
-        
+
         # set decode_ready to 1, as the current instruction can go to decode
         # decode_ready=1
         global decode_ready
-        decode_ready=1
+        decode_ready = 1
 
         # If instruction is not a branch or jump, increment pc --> Edit this for reducing 1 stall
         if (ready_reg[rs1] == 0 and inst_type != "J") or (
@@ -103,11 +104,10 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
             # if rd != 0 and inst_type != "S" and inst_type != "B":
             #     ready_reg[rd] = 0
-        
+
         # # as soon as you meet a register which is non zero and has valid rd, set that rd to not ready
         # if rd != 0 and inst_type != "S" and inst_type != "B":
         #     ready_reg[rd] = 0
-
 
         # if both register are ready then do the following
         if (
@@ -116,7 +116,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             and ready_reg[rs2] != 0
         ):
             fetch3_input["fetch_ready"] = 0
-            write_output["fetch_ready1"] = 0    
+            write_output["fetch_ready1"] = 0
 
         # Output to Decode
         fetch_output["pc"] = pc
@@ -150,7 +150,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_output["decode_end"] = 0
 
         register[0] = 0
-    
+
     return
 
 
@@ -175,13 +175,9 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
     # global decode_ready, last_decode_done
     global last_decode_done
 
-
     # For Code Exit
     codeExitFlag[1] = decode_end
 
-
-
-    
     print()
     # print("decode_ready: ", decode_ready)
     # Check if decode is ready
@@ -191,28 +187,38 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
     # problem here, this condition is creating problem in case of beq
     #  and other branch instructions, looking at the cycles, the next
     #  PC after a branch instruction gets stuck in fetch for a while.
-    #  Need to do something about it look into it, 
-    # I have tried to fix it as much as possible, still look into it 
+    #  Need to do something about it look into it,
+    # I have tried to fix it as much as possible, still look into it
     # if you can
-    if not(last_decode_done) and not (
-            (ready_reg[rs1] == 0 and inst_type != "J") or 
-            (inst_type != "J" and ready_reg[rs2] == 0 and 
-            (inst_type == "R" or inst_type == "S" or inst_type == "B")
-            )
-        ):
+    if not (last_decode_done) and not (
+        (ready_reg[rs1] == 0 and inst_type != "J")
+        or (inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B"))
+    ):
         # print("CAME HEREE", decode_ready, last_decode_done)
 
         # added this to also check for decode_ready
-        if(decode_ready and not(last_decode_done)):
-
+        if decode_ready and not (last_decode_done):
             print("DECODE")
-            print("Ready: rd: ",rd, " rs1 " , rs1, " pc " , pc ," instr: ", inst_type)
+            print("Ready: rd: ", rd, " rs1 ", rs1, " pc ", pc, " instr: ", inst_type)
             print("lastdecodeone ", last_decode_done)
             print("1: ", (ready_reg[rs1] == 0 and inst_type != "J"))
-            print("2: ", (inst_type != "J" and ready_reg[rs2] == 0) and (inst_type == "R" or inst_type == "S" or inst_type == "B"))
-            print("CONDITION: ", not(last_decode_done) and not ((ready_reg[rs1] == 0 and inst_type != "J") or (inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B"))))
-
-
+            print(
+                "2: ",
+                (inst_type != "J" and ready_reg[rs2] == 0)
+                and (inst_type == "R" or inst_type == "S" or inst_type == "B"),
+            )
+            print(
+                "CONDITION: ",
+                not (last_decode_done)
+                and not (
+                    (ready_reg[rs1] == 0 and inst_type != "J")
+                    or (
+                        inst_type != "J"
+                        and ready_reg[rs2] == 0
+                        and (inst_type == "R" or inst_type == "S" or inst_type == "B")
+                    )
+                ),
+            )
 
             # as soon as you meet a register which is non zero and has valid rd, set that rd to not ready
             if rd != 0 and inst_type != "S" and inst_type != "B":
@@ -231,8 +237,8 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
                 (inst_type == "B" or inst_type == "J" or opcode == 0b1100111)
                 and (ready_reg[rs1] != 0)
                 and ready_reg[rs2] != 0
-                ):
-                fetch_output["decode_ready"] = 0  
+            ):
+                fetch_output["decode_ready"] = 0
 
             if (ready_reg[rs1] == 0 and inst_type != "J") or (
                 inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B")
@@ -262,25 +268,25 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
 
             register[0] = 0
 
-            if (decode_end):
+            if decode_end:
                 last_decode_done = 1
 
-        # if decode_ready is not 1, then, we have to check if the 
-        # instruction type is J, U or jalr, if it is, then we have 
+        # if decode_ready is not 1, then, we have to check if the
+        # instruction type is J, U or jalr, if it is, then we have
         # to set the execute_ready to 0 because once we run the decode
-        #  for that jump instruction, in the next cycle, first that 
-        # jump instruction's execute will run, then decode will run 
-        # --> will find it's set to not ready, so will also set 
+        #  for that jump instruction, in the next cycle, first that
+        # jump instruction's execute will run, then decode will run
+        # --> will find it's set to not ready, so will also set
         # execute_ready to not ready also.
         # Tried my best to explain what I did here
         else:
             # print("HERE")
             # print("INSTRUCTIONTYPE ", instructionType)
 
-            if(instructionType != "S" or instructionType!="R" or instructionType!="I" or instructionType!="U"):
+            if instructionType != "S" or instructionType != "R" or instructionType != "I" or instructionType != "U":
                 # print("INSIDE")
                 decode_output["execute_ready"] = 0
-                if (decode_end):
+                if decode_end:
                     last_decode_done = 1
     else:
         # If decode is not ready, output 0s
@@ -302,7 +308,6 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         decode_output["rs2"] = 0
         decode_output["instructionType"] = "0"
         decode_output["opcode"] = 0
-
 
         register[0] = 0
 
@@ -343,7 +348,6 @@ def execute(execute_input, execute_output, register, codeExitFlag):
 
     codeExitFlag[2] = execute_ready
 
-    
     # ready variable is used to check if the instruction is to be executed or not
 
     if execute_ready:
@@ -564,10 +568,9 @@ def Write(
                 print("Write Back to ", ALUResult, "to R", rd)
 
             ready_reg[rd] = 1
-            
 
             # check if the instruction is jalr, or branch, or jal, then don't set fetch_ready to 1, else set to 1
-            # 
+            #
             if (
                 decode_input["instructionType"] != "J"
                 and decode_input["instructionType"] != "B"
@@ -582,21 +585,20 @@ def Write(
                 and memory_input["opcode"] != 0b1100111
                 and write_input["opcode"] != 0b1100111
             ):
-                
-                # now we want to make fetch_ready = 1 whenever 
+                # now we want to make fetch_ready = 1 whenever
                 # we know that a real register in `fetch_output` is not in use
-                # we have feeded the data of fetch into the pipe/output of 
-                # fetch and stored it there, so that we can get rid of the 
+                # we have feeded the data of fetch into the pipe/output of
+                # fetch and stored it there, so that we can get rid of the
                 # extra stall, this fetch_output == decode_input
                 DecodeRS1 = decode_input["rs1"]
                 DecodeRS2 = decode_input["rs2"]
 
                 print("DecodeRS1 ", DecodeRS1, " DecodeRS2 ", DecodeRS2)
-                if(ready_reg[DecodeRS2] and ready_reg[DecodeRS1]):
+                if ready_reg[DecodeRS2] and ready_reg[DecodeRS1]:
                     # since dependency is resolved, we can start fetch
                     print("YASSSssss")
-                    fetch3_input["fetch_ready"]=1
-                    fetch_output["decode_ready"]=1
+                    fetch3_input["fetch_ready"] = 1
+                    fetch_output["decode_ready"] = 1
 
         else:
             print("There is no Write Back")
@@ -615,7 +617,7 @@ def Write(
             pc //= 4
             write_output["read_pc_from_write"] = 1
             fetch3_input["fetch_ready"] = 1
-            fetch_output["decode_ready"]=0
+            fetch_output["decode_ready"] = 0
 
         elif isBranch == 1:
             print("BranchTargetAddress=", BranchTargetAddress)
@@ -623,32 +625,32 @@ def Write(
             pc //= 4
             write_output["read_pc_from_write"] = 1
             fetch3_input["fetch_ready"] = 1
-            fetch_output["decode_ready"]=0
-            fetch3_input["pc"]=pc
+            fetch_output["decode_ready"] = 0
+            fetch3_input["pc"] = pc
 
         else:
             pc += 1
 
             # print("Decode ready is ", fetch_output["decode_ready"])
-            
-            if (
-                fetch3_input["fetch_ready"] == 0 and (inst_type == "J" or inst_type == "B")
+
+            if fetch3_input["fetch_ready"] == 0 and (
+                inst_type == "J" or inst_type == "B"
             ):  # ie if fetch is waiting and it is not the end
                 # out5.append(1) # this is to tell that fetch should take pc from write_back
                 write_output["read_pc_from_write"] = 1
                 fetch3_input["fetch_ready"] = 1
-                fetch_output["decode_ready"]=0
+                fetch_output["decode_ready"] = 0
                 # print("HEY")
 
-            elif (inst_type == "I" and opcode == 0b0000011):
-                #Load type instruction
+            elif inst_type == "I" and opcode == 0b0000011:
+                # Load type instruction
                 print("Load type instruction")
-                fetch_output["decode_ready"]=1
+                fetch_output["decode_ready"] = 1
             else:
                 write_output["read_pc_from_write"] = 0
-            
-            # added this here, because we have to give the most updated pc 
-            # to the next fetch instead of fetching the current instruction. 
+
+            # added this here, because we have to give the most updated pc
+            # to the next fetch instead of fetching the current instruction.
             # I hope you understand what I mean ~ yashasav
             # fetch3_input["pc"]=pc
 
@@ -672,7 +674,6 @@ def Write(
 
 
 def run_riscvsim():
-
     global cycle
 
     fetch_ready = 1
@@ -729,7 +730,7 @@ def run_riscvsim():
         ready_reg.append(1)
 
     fetch_input = {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
-    decode_input = {        # if (
+    decode_input = {  # if (
         #     codeExitFlag[0] == 1
         #     and codeExitFlag[1] == 0
         #     and codeExitFlag[2] == 0
@@ -738,181 +739,184 @@ def run_riscvsim():
         # ):
         #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
         #     break
-            "pc": pc,
-            "opcode": opcode,
-            "rs1": rs1,
-            "rs2": rs2,
-            "rd": rd,
-            "func3": func3,
-            "func7": func7,
-            "immFinal": immFinal,
-            "instructionType": instructionType,
-            "decode_ready": decode_ready,
-            "decode_end" : decode_end
-        }
+        "pc": pc,
+        "opcode": opcode,
+        "rs1": rs1,
+        "rs2": rs2,
+        "rd": rd,
+        "func3": func3,
+        "func7": func7,
+        "immFinal": immFinal,
+        "instructionType": instructionType,
+        "decode_ready": decode_ready,
+        "decode_end": decode_end,
+    }
 
     execute_input = {
-            "pc": pc,
-            "ALUop": ALUop,
-            "BranchTargetResult": BranchTargetResult,
-            "ResultSelect": ResultSelect,
-            "immFinal": immFinal,
-            "operand1": operand1,
-            "operand2": operand2,
-            "rd": rd,
-            "MemOp": MemOp,
-            "isBranch": isBranch,
-            "RFWrite": RFWrite,
-            "execute_ready": execute_ready,
-            "rs2": rs2,
-            
-            "instructionType": instructionType,
-            "opcode": opcode,
-        }
-    
+        "pc": pc,
+        "ALUop": ALUop,
+        "BranchTargetResult": BranchTargetResult,
+        "ResultSelect": ResultSelect,
+        "immFinal": immFinal,
+        "operand1": operand1,
+        "operand2": operand2,
+        "rd": rd,
+        "MemOp": MemOp,
+        "isBranch": isBranch,
+        "RFWrite": RFWrite,
+        "execute_ready": execute_ready,
+        "rs2": rs2,
+        "instructionType": instructionType,
+        "opcode": opcode,
+    }
+
     memory_input = {
-            "pc": pc,
-            "MemOp": MemOp,
-            "ALUResult": ALUResult,
-            "operand2": operand2,
-            "RFWrite": RFWrite,
-            "ResultSelect": ResultSelect,
-            "rd": rd,
-            "immFinal": immFinal,
-            "ReadData": ReadData,
-            "isBranch": isBranch,
-            "BranchTargetAddress": BranchTargetAddress,
-            "memory_ready": memory_ready,
-            "rs2": rs2,
-            
-            "instructionType": instructionType,
-            "opcode": opcode,
-        }
-    
+        "pc": pc,
+        "MemOp": MemOp,
+        "ALUResult": ALUResult,
+        "operand2": operand2,
+        "RFWrite": RFWrite,
+        "ResultSelect": ResultSelect,
+        "rd": rd,
+        "immFinal": immFinal,
+        "ReadData": ReadData,
+        "isBranch": isBranch,
+        "BranchTargetAddress": BranchTargetAddress,
+        "memory_ready": memory_ready,
+        "rs2": rs2,
+        "instructionType": instructionType,
+        "opcode": opcode,
+    }
+
     write_input = {
-            "pc": pc,
-            "RFWrite": RFWrite,
-            "ResultSelect": ResultSelect,
-            "rd": rd,
-            "immFinal": immFinal,
-            "ReadData": ReadData,
-            "ALUResult": ALUResult,
-            "isBranch": isBranch,
-            "BranchTargetAddress": BranchTargetAddress,
-            "write_ready": write_ready,
-            "rs2": rs2,
-            
-            "instructionType": instructionType,
-            "opcode": opcode,
-        }
-    
+        "pc": pc,
+        "RFWrite": RFWrite,
+        "ResultSelect": ResultSelect,
+        "rd": rd,
+        "immFinal": immFinal,
+        "ReadData": ReadData,
+        "ALUResult": ALUResult,
+        "isBranch": isBranch,
+        "BranchTargetAddress": BranchTargetAddress,
+        "write_ready": write_ready,
+        "rs2": rs2,
+        "instructionType": instructionType,
+        "opcode": opcode,
+    }
 
     fetch_output = {
-            "pc": pc,
-            "opcode": opcode,
-            "rs1": rs1,
-            "rs2": rs2,
-            "rd": rd,
-            "func3": func3,
-            "func7": func7,
-            "immFinal": immFinal,
-            "instructionType": instructionType,
-            "decode_ready": decode_ready,
-            "decode_end": decode_end
-        }
-    
+        "pc": pc,
+        "opcode": opcode,
+        "rs1": rs1,
+        "rs2": rs2,
+        "rd": rd,
+        "func3": func3,
+        "func7": func7,
+        "immFinal": immFinal,
+        "instructionType": instructionType,
+        "decode_ready": decode_ready,
+        "decode_end": decode_end,
+    }
+
     decode_output = {
-            "pc": pc,
-            "ALUop": ALUop,
-            "BranchTargetResult": BranchTargetResult,
-            "ResultSelect": ResultSelect,
-            "immFinal": immFinal,
-            "operand1": operand1,
-            "operand2": operand2,
-            "rd": rd,
-            "MemOp": MemOp,
-            "isBranch": isBranch,
-            "RFWrite": RFWrite,
-            "execute_ready": execute_ready,
-            "rs2": rs2,
-            
-            "instructionType": instructionType,
-            "opcode": opcode,
-        }
-    
+        "pc": pc,
+        "ALUop": ALUop,
+        "BranchTargetResult": BranchTargetResult,
+        "ResultSelect": ResultSelect,
+        "immFinal": immFinal,
+        "operand1": operand1,
+        "operand2": operand2,
+        "rd": rd,
+        "MemOp": MemOp,
+        "isBranch": isBranch,
+        "RFWrite": RFWrite,
+        "execute_ready": execute_ready,
+        "rs2": rs2,
+        "instructionType": instructionType,
+        "opcode": opcode,
+    }
+
     execute_output = {
-            "pc": pc,
-            "MemOp": MemOp,
-            "ALUResult": ALUResult,
-            "operand2": operand2,
-            "RFWrite": RFWrite,
-            "ResultSelect": ResultSelect,
-            "rd": rd,
-            "immFinal": immFinal,
-            "ReadData": ReadData,
-            "isBranch": isBranch,
-            "BranchTargetAddress": BranchTargetAddress,
-            "memory_ready": memory_ready,
-            "rs2": rs2,
-            
-            "instructionType": instructionType,
-            "opcode": opcode,
-        }
-    
+        "pc": pc,
+        "MemOp": MemOp,
+        "ALUResult": ALUResult,
+        "operand2": operand2,
+        "RFWrite": RFWrite,
+        "ResultSelect": ResultSelect,
+        "rd": rd,
+        "immFinal": immFinal,
+        "ReadData": ReadData,
+        "isBranch": isBranch,
+        "BranchTargetAddress": BranchTargetAddress,
+        "memory_ready": memory_ready,
+        "rs2": rs2,
+        "instructionType": instructionType,
+        "opcode": opcode,
+    }
+
     memory_output = {
-            "pc": pc,
-            "RFWrite": RFWrite,
-            "ResultSelect": ResultSelect,
-            "rd": rd,
-            "immFinal": immFinal,
-            "ReadData": ReadData,
-            "ALUResult": ALUResult,
-            "isBranch": isBranch,
-            "BranchTargetAddress": BranchTargetAddress,
-            "write_ready": write_ready,
-            "rs2": rs2,
-            
-            "instructionType": instructionType,
-            "opcode": opcode,
-        }
-    
+        "pc": pc,
+        "RFWrite": RFWrite,
+        "ResultSelect": ResultSelect,
+        "rd": rd,
+        "immFinal": immFinal,
+        "ReadData": ReadData,
+        "ALUResult": ALUResult,
+        "isBranch": isBranch,
+        "BranchTargetAddress": BranchTargetAddress,
+        "write_ready": write_ready,
+        "rs2": rs2,
+        "instructionType": instructionType,
+        "opcode": opcode,
+    }
+
     write_output = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
-    
 
     fetch2_input = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
     fetch3_input = {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
 
-    while(cycle<198):
+    while cycle < 198:
         print("CYCLE: ", cycle)
-        
-        # call for every cycle 
-        if(cycle==0): # if cycle is 0, start from beginning
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
-            cycle+=1
-        elif(cycle==1): # 1 instruction
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
-            cycle+=1
-        elif(cycle==2): #2 instruction
-            execute(execute_input, execute_output, register, codeExitFlag)
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
-            cycle+=1
-        elif(cycle==3): #3 instruction
-            Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
-            execute(execute_input, execute_output, register, codeExitFlag)
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
-            cycle+=1
-        elif(cycle>=4): # 4 or more than 4 instructions, then keep looping in this fashion
-            Write(write_input, write_output, register, fetch3_input, ready_reg, decode_input, execute_input, memory_input, globalCounter, codeExitFlag, fetch_output)
-            Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
-            execute(execute_input, execute_output, register, codeExitFlag)
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
-            cycle+=1
 
-        
+        # call for every cycle
+        if cycle == 0:  # if cycle is 0, start from beginning
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
+            cycle += 1
+        elif cycle == 1:  # 1 instruction
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
+            cycle += 1
+        elif cycle == 2:  # 2 instruction
+            execute(execute_input, execute_output, register, codeExitFlag)
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
+            cycle += 1
+        elif cycle == 3:  # 3 instruction
+            Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
+            execute(execute_input, execute_output, register, codeExitFlag)
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
+            cycle += 1
+        elif cycle >= 4:  # 4 or more than 4 instructions, then keep looping in this fashion
+            Write(
+                write_input,
+                write_output,
+                register,
+                fetch3_input,
+                ready_reg,
+                decode_input,
+                execute_input,
+                memory_input,
+                globalCounter,
+                codeExitFlag,
+                fetch_output,
+            )
+            Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
+            execute(execute_input, execute_output, register, codeExitFlag)
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input)
+            cycle += 1
+
         print("register: ", register)
         print("ready: ", ready_reg)
 
@@ -948,41 +952,36 @@ def run_riscvsim():
     #     Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
     #     Write(write_input, write_output, register, fetch_input, ready_reg, decode_input, execute_input, memory_input, globalCounter, codeExitFlag, fetch_output)
 
-        # print("register: ", register)
-        # print("ready: ", ready_reg)
+    # print("register: ", register)
+    # print("ready: ", ready_reg)
 
+    # print()
+    # print("Fetch out: ", fetch_output)
+    # print("Decode 2: ", decode_output)
+    # print("Execute 3: ", execute_output)
+    # print("Out 4: ", memory_output)
+    # print("Out 5: ", write_output)
 
-        # print()
-        # print("Fetch out: ", fetch_output)
-        # print("Decode 2: ", decode_output)
-        # print("Execute 3: ", execute_output)
-        # print("Out 4: ", memory_output)
-        # print("Out 5: ", write_output)
+    # print("CodeExit: ", codeExitFlag, last_decode_done)
 
-        # print("CodeExit: ", codeExitFlag, last_decode_done)
+    # if (
+    #     codeExitFlag[0] == 1
+    #     and codeExitFlag[1] == 1
+    #     and codeExitFlag[2] == 0
+    #     and codeExitFlag[3] == 0
+    #     and codeExitFlag[4] == 1
+    #     and last_decode_done == 1
+    # ):
+    #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+    #     break
 
-        # if (
-        #     codeExitFlag[0] == 1
-        #     and codeExitFlag[1] == 1
-        #     and codeExitFlag[2] == 0
-        #     and codeExitFlag[3] == 0
-        #     and codeExitFlag[4] == 1
-        #     and last_decode_done == 1
-        # ):
-        #     print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-        #     break
+    # print("-------------------------------------------------------")
 
-        # print("-------------------------------------------------------")
-
-
-
-
-        # makeDictEqual(fetch_output, decode_input)
-        # makeDictEqual(decode_output, execute_input)
-        # makeDictEqual(execute_output, memory_input)
-        # makeDictEqual(memory_output, write_input)
-        # makeDictEqual(write_output, fetch2_input)
-
+    # makeDictEqual(fetch_output, decode_input)
+    # makeDictEqual(decode_output, execute_input)
+    # makeDictEqual(execute_output, memory_input)
+    # makeDictEqual(memory_output, write_input)
+    # makeDictEqual(write_output, fetch2_input)
 
     print("Register: ", register[:])
 
