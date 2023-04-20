@@ -1,4 +1,4 @@
-from arnav import *
+from gopal import *
 import argparse
 import sys
 
