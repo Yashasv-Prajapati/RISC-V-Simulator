@@ -875,7 +875,7 @@ def run_riscvsim():
     fetch2_input = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
     fetch3_input = {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
 
-    while cycle < 198:
+    while cycle < 100:
         print("CYCLE: ", cycle)
 
         # call for every cycle
