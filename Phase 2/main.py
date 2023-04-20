@@ -1,4 +1,4 @@
-from yash import *
+from gopal import *
 import argparse
 import sys
 
