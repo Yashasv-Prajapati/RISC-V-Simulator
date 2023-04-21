@@ -169,6 +169,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         print("\nNO FETCH READY")
         print("PC: ", pc)
         if (flush_due_to_mispredict[0]==1):
+            print("HERE1111")
             fetch_output["pc"] = 0
             fetch_output["opcode"] = 0
             fetch_output["rs1"] = 0
@@ -722,6 +723,7 @@ def Write(
                 # extra stall, this fetch_output == decode_input
                 DecodeRS1 = decode_input["rs1"]
                 DecodeRS2 = decode_input["rs2"]
+                
 
                 print("DecodeRS1 ", DecodeRS1, " DecodeRS2 ", DecodeRS2)
                 if ready_reg[DecodeRS2] and ready_reg[DecodeRS1]:

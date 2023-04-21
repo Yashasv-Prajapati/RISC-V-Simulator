@@ -1,4 +1,4 @@
-from gopal import *
+from multiProcess_BTB_DataForwarding import *
 import argparse
 import sys
 

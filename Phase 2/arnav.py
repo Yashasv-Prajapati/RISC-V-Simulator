@@ -194,7 +194,7 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         (ready_reg[rs1] == 0 and inst_type != "J")
         or (inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B"))
     ):
-        # print("CAME HEREE", decode_ready, last_decode_done)
+        print("CAME HEREE", decode_ready, last_decode_done)
 
         # added this to also check for decode_ready
         if decode_ready and not (last_decode_done):
@@ -540,6 +540,9 @@ def Write(
     # For exiting the code
     codeExitFlag[4] = write_ready
 
+    # Branch instruction with dependency
+
+
     if write_ready:
         print("WRITE BACK IS DONE, globalCounter = ", globalCounter, "#########################################")
 
@@ -567,7 +570,16 @@ def Write(
                 register[rd] = ALUResult
                 print("Write Back to ", ALUResult, "to R", rd)
 
+            branch_flag = 0
+            if decode_input['instructionType'] == 'B' and (ready_reg[decode_input['rs1']] == 0 or ready_reg[decode_input['rs2']] == 0):
+                branch_flag = 1
+
             ready_reg[rd] = 1
+
+            if decode_input['instructionType'] == 'B' and (ready_reg[decode_input['rs1']] == 1 and ready_reg[decode_input['rs2']] == 1) and branch_flag == 1:
+                fetch_output["decode_ready"] = 1
+                
+                
 
             # check if the instruction is jalr, or branch, or jal, then don't set fetch_ready to 1, else set to 1
             #
@@ -875,7 +887,7 @@ def run_riscvsim():
     fetch2_input = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
     fetch3_input = {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
 
-    while cycle < 198:
+    while (1):
         print("CYCLE: ", cycle)
 
         # call for every cycle
