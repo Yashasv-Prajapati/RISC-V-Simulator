@@ -5,7 +5,7 @@ class DCache:
     __policies = ["LRU", "FIFO", "Random"]
     __mapping = ["direct", "set-associative", "fully-associative"]
 
-    def __init__(self, blockSize, cacheSize, mapping, policyName, numberOfWays) -> None:
+    def __init__(self, blockSize:int, cacheSize:int, mapping:str, policyName:str, numberOfWays:int) -> None:
         self.cache = {}
         self.cache_size = cacheSize
         self.block_size = blockSize
@@ -27,7 +27,7 @@ class DCache:
         self.tag_arrays = np.full((numberOfWays), {}, dtype=object)
         self.blocks = np.full((numberOfWays), {}, dtype=object)
 
-    def setNumberOfWays(self, numberOfWays, mapping, cacheSize, blockSize):
+    def setNumberOfWays(self, numberOfWays:int, mapping:str, cacheSize:int, blockSize:int):
         if(mapping not in self.__mapping):
             raise Exception("Invalid Mapping")
         
@@ -38,7 +38,7 @@ class DCache:
         elif mapping == "fully-associative":
             self.number_of_ways = cacheSize/blockSize # total Blocks
         
-    def setReplacementPolicy(self, policyName):
+    def setReplacementPolicy(self, policyName:str):
         if(policyName not in self.__policies):
             raise Exception("Invalid Replacement Policy")
         
@@ -53,7 +53,7 @@ class DCache:
     def get_mapping(self):
         return self.mapping
     
-    def get_data(self,address):
+    def get_data(self,address:str):
         Tag, Index, blockOffset = self.break_address(address)
 
         if self.mapping == "direct":
@@ -85,7 +85,7 @@ class DCache:
             self.misses += 1
             return None
 
-    def break_address(self, address):
+    def break_address(self, address:str):
         # considering 32 bit address
         numberOfBlocks = self.cache_size / self.block_size
         numberOfSets = numberOfBlocks / self.number_of_ways
