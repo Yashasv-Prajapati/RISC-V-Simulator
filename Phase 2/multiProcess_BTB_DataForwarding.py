@@ -301,7 +301,7 @@ def decode(pipe2, out2, register, codeExitFlag):
         # EXECUTE
 
 
-def execute(pipe3, out3, register, codeExitFlag, btbTable1, pipe1, out1, out2, pipe2, ready_reg, btbTable2, Stats):
+def execute(pipe3, out3, register, codeExitFlag, btbTable1, pipe1, out1, out2, pipe2, ready_reg, btbTable2,Stats):
     register[0] = 0
     # destructure arguments
     pc, ALUop, BranchTargetResult, ResultSelect, immFinal, operand1, operand2, rd, MemOp, isBranch, RFWrite, execute_ready, rs2, end_fetched, inst_type, opcode = pipe3
@@ -324,12 +324,12 @@ def execute(pipe3, out3, register, codeExitFlag, btbTable1, pipe1, out1, out2, p
 
     if (execute_ready):
 
-        if (inst_type != 'U'):
-            Stats[5] += 1
+        if(inst_type!='U'):
+            Stats[5]+=1
 
-        if (inst_type == 'B' or inst_type == 'J' or opcode == 0b1100111):
-            Stats[6] += 1
-            Stats[9] += 1
+        if(inst_type=='B' or inst_type=='J' or opcode==0b1100111):
+            Stats[6]+=1
+            Stats[9]+=1
         print()
         print("EXECUTE")
         ALUResult = 0
@@ -376,7 +376,7 @@ def execute(pipe3, out3, register, codeExitFlag, btbTable1, pipe1, out1, out2, p
             print("HERE1")
             if (isBranch == 2):  # this means branch is not taken
                 if (btbTable1[pc] == 1):  # but btb said to take branch
-                    Stats[10] += 1
+                    Stats[10]+=1
                     btbTable1[pc] = 0
                     btbTable2[pc] = pc+1
                     # btbTable[pc] = [0, pc+1]
@@ -397,7 +397,7 @@ def execute(pipe3, out3, register, codeExitFlag, btbTable1, pipe1, out1, out2, p
                 print("HERE2")
                 # but btb said not to branch
                 if (btbTable1[pc] == 0 or btbTable2[pc] != ((int)(ALUResult/4))):
-                    Stats[10] += 1
+                    Stats[10]+=1
                     print("HERE3")
                     btbTable1[pc] = 1
                     if (opcode == 0b1100111):
@@ -440,7 +440,7 @@ def execute(pipe3, out3, register, codeExitFlag, btbTable1, pipe1, out1, out2, p
         # MEMORY
 
 
-def Memory(pipe4, out4, data_mem, register, codeExitFlag, Stats):
+def Memory(pipe4, out4, data_mem, register, codeExitFlag,Stats):
     register[0] = 0
     # destructure arguments
     pc, MemOp, ALUResult, operand2, RFWrite, ResultSelect, rd, immFinal, isBranch, BranchTargetAddress, mem_ready, rs2, end_fetched, inst_type, opcode = pipe4
@@ -455,12 +455,12 @@ def Memory(pipe4, out4, data_mem, register, codeExitFlag, Stats):
     '''
 
     if (mem_ready):
-
-        if (MemOp != 0):
-            Stats[4] += 1
+        
+        if(MemOp!=0):
+            Stats[4]+=1
 
         ReadData = 0
-
+       
         print("MEMORY")
 
         if (MemOp == 0):
@@ -519,7 +519,7 @@ def Memory(pipe4, out4, data_mem, register, codeExitFlag, Stats):
         # WRITE
 
 
-def Write(pipe5, out5, register, pipe1, ready_reg, pipe2, pipe3, pipe4, globalCounter, codeExitFlag, Stats):
+def Write(pipe5, out5, register, pipe1, ready_reg, pipe2, pipe3, pipe4, globalCounter, codeExitFlag,Stats):
 
     register[0] = 0
     # destructure arguments
@@ -538,8 +538,8 @@ def Write(pipe5, out5, register, pipe1, ready_reg, pipe2, pipe3, pipe4, globalCo
     '''
 
     if (write_ready):
-
-        Stats[2] += 1
+        
+        Stats[2]+=1
 
         print("WRITE BACK IS DONE, globalCounter = ",
               globalCounter[:], "#########################################")
@@ -620,7 +620,7 @@ def Write(pipe5, out5, register, pipe1, ready_reg, pipe2, pipe3, pipe4, globalCo
 
     else:
 
-        Stats[7] += 1  # Stalls++
+        Stats[7]+=1#Stalls++
         print("Stall 7 incremented!")
         if (end_fetched == 1):
             for i in range(3):
@@ -691,12 +691,12 @@ def run_riscvsim():
         btbTable2 = manager.dict()  # Contains predicted pc value
         #   0-> NT    1->T
 
-        # Stats
-        Stats = mp.Array('i', 13, lock=False)
+        #Stats
+        Stats=mp.Array('i',13,lock=False)
         for i in range(13):
-            Stats[i] = 0
+            Stats[i]=0
 
-        # Global Counter for debugging
+        #Global Counter for debugging
         globalCounter = mp.Array('i', 1, lock=False)
 
         # Count of Total No. of Cycles
@@ -750,11 +750,11 @@ def run_riscvsim():
             p2 = mp.Process(target=decode, args=(
                 pipe2, out2, register, codeExitFlag))
             p3 = mp.Process(target=execute, args=(pipe3, out3, register, codeExitFlag,
-                            btbTable1, pipe1, out1, out2, pipe2, ready_reg, btbTable2, Stats))
+                            btbTable1, pipe1, out1, out2, pipe2, ready_reg, btbTable2,Stats))
             p4 = mp.Process(target=Memory, args=(
-                pipe4, out4, data_mem, register, codeExitFlag, Stats))
+                pipe4, out4, data_mem, register, codeExitFlag,Stats))
             p5 = mp.Process(target=Write, args=(pipe5, out5, register, pipe1,
-                            ready_reg, pipe2, pipe3, pipe4, globalCounter, codeExitFlag, Stats))
+                            ready_reg, pipe2, pipe3, pipe4, globalCounter, codeExitFlag,Stats))
 
             p1.start()
             p2.start()
@@ -780,25 +780,24 @@ def run_riscvsim():
             if (codeExitFlag[0] == 1 and codeExitFlag[1] == 0 and codeExitFlag[2] == 0 and codeExitFlag[3] == 0 and codeExitFlag[4] == 0 and ExitFlag[0] >= 4):
                 print(
                     "<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-                Stats[8] = i-TotalCycles[0]
-                Stats[7] -= 5
-                Stats[7] -= Stats[8]
-                Stats[3] = TotalCycles[0]//Stats[2]
-                Stats[11] = 3*(Stats[8])
-                Stats[12] = Stats[7]-Stats[11]
+                Stats[8]=i-TotalCycles[0]
+                Stats[7]-=5
+                Stats[7]-=Stats[8]
+                Stats[3]=TotalCycles[0]//Stats[2]
+                Stats[11]=3*(Stats[8])
+                Stats[12]=Stats[7]-Stats[11]
                 print("Total no. of cycles=", TotalCycles[0])
-                print("Total Instructions Executed=", Stats[2])
-                print("CPI=", Stats[3])
-                print(
-                    "Number of Data-transfer (load and store) instructions executed=", Stats[4])
-                print("Number of ALU instructions executed=", Stats[5])
-                print("Number of Control instructions executed=", Stats[6])
-                print("Number of stalls/bubbles in the pipeline=", Stats[7])
-                print("Number of data hazards=", Stats[8])
-                print("Number of control hazards=", Stats[9])
-                print("Number of branch mispredictions=", Stats[10])
-                print("Number of stalls due to data hazards=", Stats[11])
-                print("Number of stalls due to control hazards=", Stats[12])
+                print("Total Instructions Executed=",Stats[2])
+                print("CPI=",Stats[3])
+                print("Number of Data-transfer (load and store) instructions executed=",Stats[4])
+                print("Number of ALU instructions executed=",Stats[5])
+                print("Number of Control instructions executed=",Stats[6])
+                print("Number of stalls/bubbles in the pipeline=",Stats[7])
+                print("Number of data hazards=",Stats[8])
+                print("Number of control hazards=",Stats[9])
+                print("Number of branch mispredictions=",Stats[10])
+                print("Number of stalls due to data hazards=",Stats[11])
+                print("Number of stalls due to control hazards=",Stats[12])
                 break
             print("Total no. of cycles=", TotalCycles[0])
             TotalCycles[0] += 1  # Incrementing Total Cycles

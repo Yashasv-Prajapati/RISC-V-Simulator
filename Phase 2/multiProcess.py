@@ -490,14 +490,14 @@ def Write(
             print("ALUResult=", ALUResult)
             pc = ALUResult
             pc //= 4
-            write_output["read_pc_from_write"] = 1
+            write_output["read_pc_from_write"] = 0
             fetch_input["fetch_ready"] = 1
 
         elif isBranch == 1:
             print("BranchTargetAddress=", BranchTargetAddress)
             pc = BranchTargetAddress
             pc //= 4
-            write_output["read_pc_from_write"] = 1
+            write_output["read_pc_from_write"] = 0
             fetch_input["fetch_ready"] = 1
 
         else:
@@ -507,7 +507,7 @@ def Write(
                 fetch_input["fetch_ready"] == 0 and (inst_type == "J" or inst_type == "B")
             ):  # ie if fetch is waiting and it is not the end
                 # out5.append(1) # this is to tell that fetch should take pc from write_back
-                write_output["read_pc_from_write"] = 1
+                write_output["read_pc_from_write"] = 0
                 fetch_input["fetch_ready"] = 1
 
             else:
