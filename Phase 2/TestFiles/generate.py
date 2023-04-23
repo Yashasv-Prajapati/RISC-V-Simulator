@@ -6,5 +6,7 @@ with open('input.mem', 'r') as f:
         text = hex(i)+' 0x'+line
         output.write(text)
         i += 4
+    text = hex(i) + '0x000080b3'
+    i+=4
     text=hex(i) + ' 0xfffffffb'
     output.write(text)
