@@ -64,7 +64,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             # fetch_output["func7"] = 0
             # fetch_output["immFinal"] = 0
             # fetch_output["instructionType"] = 0
-            # fetch_output["decode_ready"] = 0
+            fetch_output["decode_ready"] = 0
             fetch_output["decode_end"] = 1
 
             return
@@ -87,20 +87,17 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         decode_ready = 1
 
         # If instruction is not a branch or jump, increment pc --> Edit this for reducing 1 stall
-        if (ready_reg[rs1] == 0 and inst_type != "J") or (
-            inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B")
-        ):  # If rs1 or rs2 is not ready and instruction is R, S, or B and not J, stall
-            print("INSIDE")
+        if ((ready_reg[rs1] == 0 and inst_type != "J") or (
+            inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S")
+        )) and inst_type != "B":  # If rs1 or rs2 is not ready and instruction is R, S, or B and not J, stall
+            print("INSIDE", inst_type)
             fetch3_input["fetch_ready"] = 0
             # decode_ready=0
             fetch3_input["pc"] = pc + 1
 
-        else:
+        elif inst_type != "J" and inst_type != "B" and opcode != 0b1100111:
             print("OUTSIDE")
-            if inst_type != "J" and inst_type != "B" and opcode != 0b1100111:
-                fetch3_input["pc"] = pc + 1
-            else:
-                fetch3_input["pc"] = pc + 1
+            fetch3_input["pc"] = pc + 1
 
             # if rd != 0 and inst_type != "S" and inst_type != "B":
             #     ready_reg[rd] = 0
@@ -110,25 +107,59 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         #     ready_reg[rd] = 0
 
         # if both register are ready then do the following
+
         if (
-            (inst_type == "B" or inst_type == "J" or opcode == 0b1100111)
+            (inst_type == "J" or opcode == 0b1100111)
+            and (ready_reg[rs1] != 0)
+            and ready_reg[rs2] != 0
+        ):
+            print("JUMP TAKEN")
+            fetch3_input["fetch_ready"] = 0
+            write_output["fetch_ready1"] = 0
+            
+        #if branch instruction and both registers are ready
+        if (
+            (inst_type == "B")
             and (ready_reg[rs1] != 0)
             and ready_reg[rs2] != 0
         ):
             fetch3_input["fetch_ready"] = 1
             write_output["fetch_ready1"] = 1
             if pc in btbTable1:
+                print("BRANCH TAKEN")
                 if (btbTable1[pc] == 1):  # if branch taken
                     fetch3_input["pc"] = btbTable2[pc]
                 else:
                     fetch3_input["pc"] = pc+1  # branch not taken
             else:
-                print("YESDKDKD")
+                print("BRANCH NOT TAKEN")
                 # btbTable[pc]=[0,pc+1]
                 btbTable1[pc] = 0
                 btbTable2[pc] = pc+1
-                print("btbTable1[pc]=", btbTable1[pc],
-                      "btbTable2[pc]=", btbTable2[pc])
+                print(f"btbTable1[{pc}]=", btbTable1[pc],
+                      f"btbTable2[{pc}]=", btbTable2[pc])
+                fetch3_input["pc"] = pc+1
+
+        # if branch instruction and both registers are not ready
+        elif (
+            (inst_type == "B")
+            and (ready_reg[rs1] == 0 or ready_reg[rs2] == 0)
+        ):
+            fetch3_input["fetch_ready"] = 0
+            write_output["fetch_ready1"] = 0
+            if pc in btbTable1:
+                print("BRANCH TAKEN")
+                if (btbTable1[pc] == 1):  # if branch taken
+                    fetch3_input["pc"] = btbTable2[pc]
+                else:
+                    fetch3_input["pc"] = pc+1  # branch not taken
+            else:
+                print("BRANCH NOT TAKEN")
+                # btbTable[pc]=[0,pc+1]
+                btbTable1[pc] = 0
+                btbTable2[pc] = pc+1
+                print(f"btbTable1[{pc}]=", btbTable1[pc],
+                      f"btbTable2[{pc}]=", btbTable2[pc])
                 fetch3_input["pc"] = pc+1
 
         # Output to Decode
@@ -211,7 +242,7 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         (ready_reg[rs1] == 0 and inst_type != "J")
         or (inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B"))
     ):
-        print("CAME HEREE", decode_ready, last_decode_done)
+        # print("CAME HEREE", decode_ready, last_decode_done)
 
         # added this to also check for decode_ready
         if decode_ready and not (last_decode_done) and flush_due_to_mispredict[0]==0:
@@ -438,20 +469,22 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
             else:  # Branch should be taken
                 print("HERE2")
                 # but btb said not to branch
-                if (btbTable1[pc] == 0 or btbTable2[pc] != ((int)(ALUResult/4))):
-                    print("HERE3")
+                if (btbTable1[pc] == 0 or btbTable2[pc] != (int(ALUResult/4))):
+                    print("HERE3 PC:",pc)
                     btbTable1[pc] = 1
-                    if (opcode == 0b1100111):
-                        btbTable2[pc] = ((int)(ALUResult/4))
+                    if (opcode == 0b1100111): #JALR
+                        btbTable2[pc] = (int(ALUResult/4))
                         fetch3_input["pc"] = (int)(ALUResult/4)
                         fetch3_input["fetch_ready"] = 1
                     else:
                         print("HERE4")
-                        btbTable2[pc] = ((int)(BranchTargetAddress/4))
-                        fetch3_input["pc"] = (int)(BranchTargetAddress/4)
+                        btbTable2[pc] = (int(BranchTargetAddress/4))
+                        fetch3_input["pc"] = int(BranchTargetAddress/4)
                         fetch3_input["fetch_ready"] = 1
-                    print("out2[7]=", decode_output["rd"])
-                    ready_reg[decode_output["rd"]] = 1\
+                    print("rd=", decode_output["rd"])
+                    ready_reg[decode_output["rd"]] = 1
+
+                    print("MISPREDDICTED")
                         
                     flush_due_to_mispredict[0] = 1
                     # for i in range(13):
@@ -654,6 +687,7 @@ def Write(
         print()
         print("WRITEBACK")
 
+
         if RFWrite:
             if ResultSelect == 0:
                 register[rd] = 4 * (pc + 1)
@@ -679,6 +713,7 @@ def Write(
 
             if decode_input['instructionType'] == 'B' and (ready_reg[decode_input['rs1']] == 1 and ready_reg[decode_input['rs2']] == 1) and branch_flag == 1:
                 fetch_output["decode_ready"] = 1
+                fetch3_input["fetch_ready"] = 1
                 
                 
 
@@ -722,45 +757,48 @@ def Write(
             =2         => pc+4(default)
         """
 
-        print("Isbranch is =", isBranch)
+        # print("Isbranch is =", isBranch)
 
-        if isBranch == 0:
-            print("ALUResult=", ALUResult)
-            pc = ALUResult
-            pc //= 4
-            write_output["read_pc_from_write"] = 1
-            fetch3_input["fetch_ready"] = 1
-            fetch_output["decode_ready"] = 0
+        # if isBranch == 0:
+        #     print("ALUResult=", ALUResult)
+        #     pc = ALUResult
+        #     pc //= 4
+        #     write_output["read_pc_from_write"] = 1
+        #     fetch3_input["fetch_ready"] = 1
+        #     fetch_output["decode_ready"] = 0
 
-        elif isBranch == 1:
-            print("BranchTargetAddress=", BranchTargetAddress)
-            pc = BranchTargetAddress
-            pc //= 4
-            write_output["read_pc_from_write"] = 1
-            fetch3_input["fetch_ready"] = 1
-            fetch_output["decode_ready"] = 0
-            fetch3_input["pc"] = pc
+        # elif isBranch == 1:
+        #     print("BranchTargetAddress=", BranchTargetAddress)
+        #     pc = BranchTargetAddress
+        #     pc //= 4
+        #     write_output["read_pc_from_write"] = 0
+        #     # fetch3_input["fetch_ready"] = 1
+        #     # fetch_output["decode_ready"] = 0
+        #     fetch3_input["pc"] = pc
 
-        else:
+        # else:
+        if (inst_type != 'B'):
             pc += 1
+        else:
+            return
 
-            # print("Decode ready is ", fetch_output["decode_ready"])
+        # print("Decode ready is ", fetch_output["decode_ready"])
 
-            if fetch3_input["fetch_ready"] == 0 and (
-                inst_type == "J" or inst_type == "B"
-            ):  # ie if fetch is waiting and it is not the end
-                # out5.append(1) # this is to tell that fetch should take pc from write_back
-                write_output["read_pc_from_write"] = 1
-                fetch3_input["fetch_ready"] = 1
-                fetch_output["decode_ready"] = 0
-                # print("HEY")
+        if fetch3_input["fetch_ready"] == 0 and (
+            inst_type == "J"
+        ):  # ie if fetch is waiting and it is not the end
+            # out5.append(1) # this is to tell that fetch should take pc from write_back
+            write_output["read_pc_from_write"] = 1
+            fetch3_input["fetch_ready"] = 1
+            fetch_output["decode_ready"] = 0
+            # print("HEY")
 
-            elif inst_type == "I" and opcode == 0b0000011:
-                # Load type instruction
-                print("Load type instruction")
-                fetch_output["decode_ready"] = 1
-            else:
-                write_output["read_pc_from_write"] = 0
+        elif inst_type == "I" and opcode == 0b0000011: #Load type instruction
+            # Load type instruction
+            print("Load type instruction")
+            fetch_output["decode_ready"] = 1
+        else:
+            write_output["read_pc_from_write"] = 0
 
             # added this here, because we have to give the most updated pc
             # to the next fetch instead of fetching the current instruction.
