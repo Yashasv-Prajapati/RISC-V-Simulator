@@ -115,6 +115,17 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             fetch3_input["fetch_ready"] = 0
             write_output["fetch_ready1"] = 0
             # don't fetch next instruction if JAL
+
+        if (opcode == 0b1100111 and ready_reg[rs1] != 0): #Jalr
+            print("JUMP TAKEN Jalr")
+            fetch3_input["fetch_ready"] = 0
+            write_output["fetch_ready1"] = 0
+            # don't fetch next instruction if JALR
+
+        elif (opcode == 0b1100111 and ready_reg[rs1] == 0):
+            print("JUMP NOT TAKEN Jalr (DEPENDENCY)")
+            fetch3_input["fetch_ready"] = 0
+            write_output["fetch_ready1"] = 0
                         
 
             
@@ -312,6 +323,7 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
             decode_output["RFWrite"] = RFWrite
             decode_output["execute_ready"] = execute_ready
             decode_output["rs2"] = rs2
+            decode_output["rs1"] = rs1
             decode_output["instructionType"] = instructionType
             decode_output["opcode"] = opcode
 
@@ -355,8 +367,10 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         decode_output["RFWrite"] = 0
         decode_output["execute_ready"] = 0
         decode_output["rs2"] = 0
+        decode_output["rs1"] = 0
         decode_output["instructionType"] = "0"
         decode_output["opcode"] = 0
+        
 
         register[0] = 0
 
@@ -392,6 +406,7 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
     RFWrite = execute_input["RFWrite"]
     execute_ready = execute_input["execute_ready"]
     rs2 = execute_input["rs2"]
+    rs1 = execute_input["rs1"]
     inst_type = execute_input["instructionType"]
     opcode = execute_input["opcode"]
 
@@ -435,6 +450,13 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
             fetch3_input["fetch_ready"] = 1
             write_output["read_pc_from_write"] = 1
             write_output["pc1"] = pc + int(immFinal/4)
+
+        if (opcode == 0b1100111):
+            print("JALR IN EXECUTE", (register[rs1] + int(immFinal/4))//4)
+            fetch3_input["pc"] = (register[rs1] + int(immFinal/4))//4
+            fetch3_input["fetch_ready"] = 1
+            write_output["read_pc_from_write"] = 1
+            write_output["pc1"] = (register[rs1] + int(immFinal/4))//4
 
         if (inst_type == 'B'):
             print("HERE1")
@@ -1038,7 +1060,7 @@ def run_riscvsim():
     
     btbTable1={}
     btbTable2={}
-    while (1):
+    while (cycle<2000):
         print("CYCLE: ", cycle)
 
         # call for every cycle
