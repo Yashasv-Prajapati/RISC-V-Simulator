@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 class DCache:
-    __policies = ["LRU", "FIFO", "Random"]
+    __policies = ["LRU", "FIFO", "Random", "LFU"]
     __mapping = ["direct", "set-associative", "fully-associative"]
 
     def __init__(self, blockSize:int, cacheSize:int, mapping:str, policyName:str, numberOfWays:int) -> None:
@@ -59,6 +59,8 @@ class DCache:
         if self.mapping == "direct":
             if self.tag_arrays[0].get(Index, -1) == Tag: # found in cache
                 self.hits += 1
+                # using block offset to get data from block
+                
                 return self.blocks[0][Index]
             else:
                 self.misses += 1
