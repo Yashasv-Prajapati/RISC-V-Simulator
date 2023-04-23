@@ -109,13 +109,14 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         # if both register are ready then do the following
 
         if (
-            (inst_type == "J" or opcode == 0b1100111)
-            and (ready_reg[rs1] != 0)
-            and ready_reg[rs2] != 0
+            (inst_type == "J") #Jal and Jalr
         ):
-            print("JUMP TAKEN")
+            print("JUMP TAKEN Jal")
             fetch3_input["fetch_ready"] = 0
             write_output["fetch_ready1"] = 0
+            # don't fetch next instruction if JAL
+                        
+
             
         #if branch instruction and both registers are ready
         if (
@@ -242,7 +243,7 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         (ready_reg[rs1] == 0 and inst_type != "J")
         or (inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B"))
     ):
-        # print("CAME HEREE", decode_ready, last_decode_done)
+        print("CAME HEREE", decode_ready, last_decode_done)
 
         # added this to also check for decode_ready
         if decode_ready and not (last_decode_done) and flush_due_to_mispredict[0]==0:
@@ -362,7 +363,7 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
     return
 
 
-def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2,fetch3_input,ready_reg,decode_output,flush_due_to_mispredict,fetch_output):
+def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2,fetch3_input,ready_reg,decode_output,flush_due_to_mispredict,fetch_output, write_output):
     """
     ALUop operation
     0 - perform none (skip)
@@ -428,7 +429,14 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
         execute_output["instructionType"] = inst_type
         execute_output["opcode"] = opcode
 
-        if (inst_type == 'B' or inst_type == 'J' or opcode == 0b1100111):
+        if (inst_type == 'J'):
+            print("JAL IN EXECUTE", pc + int(immFinal/4))
+            fetch3_input["pc"] = pc + int(immFinal/4)
+            fetch3_input["fetch_ready"] = 1
+            write_output["read_pc_from_write"] = 1
+            write_output["pc1"] = pc + int(immFinal/4)
+
+        if (inst_type == 'B'):
             print("HERE1")
             if (isBranch == 2):  # this means branch is not taken
                 if (btbTable1[pc] == 1):  # but btb said to take branch
@@ -474,7 +482,7 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
                     btbTable1[pc] = 1
                     if (opcode == 0b1100111): #JALR
                         btbTable2[pc] = (int(ALUResult/4))
-                        fetch3_input["pc"] = (int)(ALUResult/4)
+                        fetch3_input["pc"] = int(ALUResult/4)
                         fetch3_input["fetch_ready"] = 1
                     else:
                         print("HERE4")
@@ -1042,13 +1050,13 @@ def run_riscvsim():
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict)
             cycle += 1
         elif cycle == 2:  # 2 instruction
-            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output)
+            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output, write_output)
             decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict)
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict)
             cycle += 1
         elif cycle == 3:  # 3 instruction
             Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
-            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output)
+            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output, write_output)
             decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict)
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict)
             cycle += 1
@@ -1067,7 +1075,7 @@ def run_riscvsim():
                 fetch_output,
             )
             Memory(memory_input, memory_output, data_mem, register, codeExitFlag)
-            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output)
+            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output, write_output)
             decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict)
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict)
             cycle += 1
