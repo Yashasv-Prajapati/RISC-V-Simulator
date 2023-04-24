@@ -361,18 +361,22 @@ def op2selectMUX(inst_type, rs1, rs2, imm_final, register, data_forwarding):
     Op2SelectMUX
     """
     # global operand1, operand2
-    if data_forwarding.get(rs1) is not None:
-        print("DATA IS FORWARDING!!!")
+    if data_forwarding.get(rs1) is not None and inst_type!='U' and inst_type!='J':
+        print("DATA IS FORWARDING in rs1!!!")
+        print("operand1=data_forwarding[rs1]")
         operand1 = data_forwarding[rs1]
     else:
+        print("operand1=register[rs1]")
         operand1 = register[rs1]
-    if data_forwarding.get(rs2) is not None:
-        print("DATA IS FORWARDING!!!")
+    if data_forwarding.get(rs2) is not None and inst_type!='I' and inst_type!='U'and inst_type!='J' and inst_type!='S':
+        print("DATA IS FORWARDING in rs2!!!")
         operand2 = data_forwarding[rs2]
     else:
         if inst_type == "S" or inst_type == "I":
+            print("operand2=imm_final")
             operand2 = imm_final
         else:
+            print("operand2=register[rs2]")
             operand2 = register[rs2]
 
     return operand1, operand2
