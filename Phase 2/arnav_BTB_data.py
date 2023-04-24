@@ -35,6 +35,8 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
     read_pc_from_write = write_output["read_pc_from_write"]
     pc1 = write_output["pc1"]
 
+    # print("BITCHES HERE: ", write_output["read_pc_from_write"])
+
     # Check if pc is to be read from write back
     if read_pc_from_write == 1:
         print("Read PC FROM WRITEBACK")
@@ -107,7 +109,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             
             
             print("INSIDE", inst_type)
-            fetch3_input["fetch_ready"] = 0
+            fetch3_input["fetch_ready"] = 1
             # decode_ready=0
             fetch3_input["pc"] = pc + 1
 
@@ -129,8 +131,15 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             (inst_type == "J") #Jal
         ):
             print("JUMP TAKEN Jal")
-            fetch3_input["fetch_ready"] = 0
-            write_output["fetch_ready1"] = 0
+            # write_output["fetch_ready1"] = 1
+            # write_output["read_pc_from_write"] = 1
+            # write_output["pc1"] = pc + (immFinal//4)
+            print("JUMP to ", pc + (immFinal//4))
+            fetch3_input["fetch_ready"] = 1
+            fetch3_input["pc"] = pc + (immFinal//4)
+            # fetch3_input["fetch_ready"] = 0
+
+            # write_output["fetch_ready1"] = 0
             # don't fetch next instruction if JAL
 
         #JALR
@@ -520,10 +529,10 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
 
         if (inst_type == 'J'):
             print("JAL IN EXECUTE", pc + int(immFinal/4))
-            fetch3_input["pc"] = pc + int(immFinal/4)
-            fetch3_input["fetch_ready"] = 1
-            write_output["read_pc_from_write"] = 1
-            write_output["pc1"] = pc + int(immFinal/4)
+            # fetch3_input["pc"] = pc + int(immFinal/4)
+            # fetch3_input["fetch_ready"] = 1
+            # write_output["read_pc_from_write"] = 1
+            # write_output["pc1"] = pc + int(immFinal/4)
 
         if (opcode == 0b1100111):
             print("JALR IN EXECUTE", (register[rs1] + int(immFinal/4))//4)
@@ -909,7 +918,8 @@ def Write(
             print("Load type instruction")
             fetch_output["decode_ready"] = 1
         else:
-            write_output["read_pc_from_write"] = 0
+            pass
+            # write_output["read_pc_from_write"] = 0
 
             # added this here, because we have to give the most updated pc
             # to the next fetch instead of fetching the current instruction.
@@ -925,7 +935,7 @@ def Write(
         print("\nNO WRITE READY")
         write_output["fetch_ready1"] = 1
         # fetch_output["decode_ready"]=1
-        write_output["read_pc_from_write"] = 0
+        # write_output["read_pc_from_write"] = 0
         write_output["pc1"] = 0
         register[0] = 0
 
@@ -1203,6 +1213,7 @@ def run_riscvsim():
             break
 
         print("-------------------------------------------------------")
+        # print("Write_output: ", write_output)
         ready_reg[0] = 1
         register[0] = 0
         makeDictEqual(fetch_output, decode_input)
