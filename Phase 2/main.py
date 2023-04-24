@@ -1,4 +1,4 @@
-from arnav_BTB_data import *
+from gopal import *
 import argparse
 import sys
 

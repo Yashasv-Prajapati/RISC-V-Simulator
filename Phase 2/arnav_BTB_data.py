@@ -17,7 +17,7 @@ fetch_next_forwarding_flag = 0
 fetch_next_forwarding_flag2 = 0
 
 
-def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag, fetch3_input, btbTable1, btbTable2,flush_due_to_mispredict, data_forwarding):
+def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag, fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding):
     """
     Fetch Instruction
     """
@@ -46,7 +46,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         fetch_output["decode_ready"] = 1
         write_output["read_pc_from_write"] = 0
 
-    print("Fetch next forwarding flag: ",fetch_next_forwarding_flag)
+    print("Fetch next forwarding flag: ", fetch_next_forwarding_flag)
 
     if fetch_next_forwarding_flag2:
         fetch_ready = 1
@@ -86,7 +86,8 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             return
 
         # Split instructions from instruction word
-        opcode, rs1, rs2, rd, func3, func7, imm, immS, immB, immU, immJ = splitInstruction(instruction_word)
+        opcode, rs1, rs2, rd, func3, func7, imm, immS, immB, immU, immJ = splitInstruction(
+            instruction_word)
 
         # Get Instruction Type
         inst_type = getInstructionType(opcode)
@@ -104,10 +105,10 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
         # If instruction is not a branch or jump, increment pc --> Edit this for reducing 1 stall
         if ((ready_reg[rs1] == 0 and inst_type != "J") or (
-            inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S")
+            inst_type != "J" and ready_reg[rs2] == 0 and (
+                inst_type == "R" or inst_type == "S")
         )) and inst_type != "B":  # If rs1 or rs2 is not ready and instruction is R, S, or B and not J, stall
-            
-            
+
             print("INSIDE", inst_type)
             fetch3_input["fetch_ready"] = 1
             # decode_ready=0
@@ -126,9 +127,9 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
         # if both register are ready then do the following
 
-        #JAL
+        # JAL
         if (
-            (inst_type == "J") #Jal
+            (inst_type == "J")  # Jal
         ):
             print("JUMP TAKEN Jal")
             # write_output["fetch_ready1"] = 1
@@ -142,22 +143,20 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
             # write_output["fetch_ready1"] = 0
             # don't fetch next instruction if JAL
 
-        #JALR
-        if (opcode == 0b1100111 and ready_reg[rs1] != 0): #Jalr
+        # JALR
+        if (opcode == 0b1100111 and ready_reg[rs1] != 0):  # Jalr
             print("JUMP TAKEN Jalr")
             fetch3_input["fetch_ready"] = 0
             write_output["fetch_ready1"] = 0
             # don't fetch next instruction if JALR
 
-        #Not complete yet
+        # Not complete yet
         elif (opcode == 0b1100111 and ready_reg[rs1] == 0):
             print("JUMP NOT TAKEN Jalr (DEPENDENCY)")
             fetch3_input["fetch_ready"] = 0
             write_output["fetch_ready1"] = 0
-                        
 
-            
-        #if branch instruction and both registers are ready
+        # if branch instruction and both registers are ready
         if (
             (inst_type == "B")
             and (ready_reg[rs1] != 0)
@@ -221,7 +220,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         # If fetch is not ready, output 0s
         print("\nNO FETCH READY")
         print("PC: ", pc)
-        if (flush_due_to_mispredict[0]==1):
+        if (flush_due_to_mispredict[0] == 1):
             print("HERE1111")
             fetch_output["pc"] = 0
             fetch_output["opcode"] = 0
@@ -274,11 +273,11 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         fetch_input["fetch_ready"] = 1
         ready_reg[rs1] = 1
         ready_reg[rs2] = 1
-        
+
         # decode_ready = 1
         fetch_output["decode_ready"] = 1
         decode_ready = 1
-    
+
     # # Double Dependency
     # if fetch_ready == 0 and (ready_reg[rs1] == 0 or ready_reg[rs2] == 0) and (inst_type == "R" or inst_type == "I" or inst_type == "U" or inst_type == "B"):
     #     if (ready_reg[rs1] == 1 or data_forwarding.get(rs1) is not None) and (ready_reg[rs2] == 1 or data_forwarding.get(rs2) is not None):
@@ -286,7 +285,7 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
     #         fetch_input["fetch_ready"] = 0
     #         ready_reg[rs1] = 1
     #         ready_reg[rs2] = 1
-            
+
     #         # decode_ready = 1
     #         fetch_output["decode_ready"] = 1
     #         decode_ready = 0
@@ -295,7 +294,6 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
     if codeExitFlag[0] == 1:
         print("CODE EXIT")
         decode_ready = 0
-
 
         # fetch_next_forwarding_flag = 1
 
@@ -306,13 +304,11 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
     #         fetch_input["fetch_ready"] = 0
     #         ready_reg[rs1] = 1
     #         ready_reg[rs2] = 1
-            
+
     #         # decode_ready = 1
     #         fetch_output["decode_ready"] = 1
     #         decode_ready = 0
     #         fetch_next_forwarding_flag = 1
-
-    
 
     print()
     # print("decode_ready: ", decode_ready)
@@ -333,9 +329,10 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         print("CAME HEREE", decode_ready, last_decode_done)
 
         # added this to also check for decode_ready
-        if decode_ready and not (last_decode_done) and flush_due_to_mispredict[0]==0:
+        if decode_ready and not (last_decode_done) and flush_due_to_mispredict[0] == 0:
             print("DECODE")
-            print("Ready: rd: ", rd, " rs1 ", rs1, " pc ", pc, " instr: ", inst_type)
+            print("Ready: rd: ", rd, " rs1 ", rs1,
+                  " pc ", pc, " instr: ", inst_type)
             print("lastdecodeone ", last_decode_done)
             print("1: ", (ready_reg[rs1] == 0 and inst_type != "J"))
             print(
@@ -363,11 +360,14 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
 
             # Get ALUop, MemOp, RFWrite, ResultSelect, isBranch
             ALUop = getALUop(instructionType, func3, func7)
-            operand1, operand2 = op2selectMUX(instructionType, rs1, rs2, immFinal, register, data_forwarding)   
-            BranchTargetSelect = BranchTargetSelectMUX(instructionType, immFinal)
+            operand1, operand2 = op2selectMUX(
+                instructionType, rs1, rs2, immFinal, register, data_forwarding)
+            BranchTargetSelect = BranchTargetSelectMUX(
+                instructionType, immFinal)
             MemOp = getMemOp(instructionType, opcode)
             RFWrite, ResultSelect = ResultSelectMUX(opcode, instructionType)
-            isBranch = isBranchInstruction(opcode, instructionType, func3, operand1, operand2)
+            isBranch = isBranchInstruction(
+                opcode, instructionType, func3, operand1, operand2)
 
             if (
                 (inst_type == "B" or inst_type == "J" or opcode == 0b1100111)
@@ -377,7 +377,8 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
                 fetch_output["decode_ready"] = 0
 
             if (ready_reg[rs1] == 0 and inst_type != "J") or (
-                inst_type != "J" and ready_reg[rs2] == 0 and (inst_type == "R" or inst_type == "S" or inst_type == "B")
+                inst_type != "J" and ready_reg[rs2] == 0 and (
+                    inst_type == "R" or inst_type == "S" or inst_type == "B")
             ):  # If rs1 or rs2 is not ready and instruction is R, S, or B and not J, stall
                 print("INSIDE")
                 fetch_output["decode_ready"] = 0
@@ -446,14 +447,13 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         decode_output["rs1"] = 0
         decode_output["instructionType"] = "0"
         decode_output["opcode"] = 0
-        
 
         register[0] = 0
 
     return
 
 
-def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2,fetch3_input,ready_reg,decode_output,flush_due_to_mispredict,fetch_output, write_output, data_forwarding):
+def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding):
     """
     ALUop operation
     0 - perform none (skip)
@@ -583,9 +583,9 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
                 print("HERE2")
                 # but btb said not to branch
                 if (btbTable1[pc] == 0 or btbTable2[pc] != (int(ALUResult/4))):
-                    print("HERE3 PC:",pc)
+                    print("HERE3 PC:", pc)
                     btbTable1[pc] = 1
-                    if (opcode == 0b1100111): #JALR
+                    if (opcode == 0b1100111):  # JALR
                         btbTable2[pc] = (int(ALUResult/4))
                         fetch3_input["pc"] = int(ALUResult/4)
                         fetch3_input["fetch_ready"] = 1
@@ -598,7 +598,7 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
                     ready_reg[decode_output["rd"]] = 1
 
                     print("MISPREDDICTED")
-                        
+
                     flush_due_to_mispredict[0] = 1
                     # for i in range(13):
                     #     out2[i] = 0
@@ -692,11 +692,13 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
             ReadData = ALUResult
         elif MemOp == 1:
             # Store
-            print("data_mem[", ALUResult, "]=register[", rs2, "]=", register[rs2])
+            print("data_mem[", ALUResult, "]=register[",
+                  rs2, "]=", register[rs2])
             data_mem[ALUResult] = register[rs2]
             ReadData = data_mem[ALUResult]
 
-            print("There is a Store Operation to be done to memory and operand2=", operand2)
+            print(
+                "There is a Store Operation to be done to memory and operand2=", operand2)
 
         elif MemOp == 2:
             ReadData = data_mem.get(ALUResult, 0)
@@ -793,9 +795,9 @@ def Write(
 
     # Branch instruction with dependency
 
-
     if write_ready:
-        print("WRITE BACK IS DONE, globalCounter = ", globalCounter, "#########################################")
+        print("WRITE BACK IS DONE, globalCounter = ", globalCounter,
+              "#########################################")
 
         globalCounter += 1
 
@@ -803,7 +805,6 @@ def Write(
 
         print()
         print("WRITEBACK")
-
 
         if RFWrite:
             if ResultSelect == 0:
@@ -834,8 +835,6 @@ def Write(
             if decode_input['instructionType'] == 'B' and (ready_reg[decode_input['rs1']] == 1 and ready_reg[decode_input['rs2']] == 1) and branch_flag == 1:
                 fetch_output["decode_ready"] = 1
                 fetch3_input["fetch_ready"] = 1
-                
-                
 
             # check if the instruction is jalr, or branch, or jal, then don't set fetch_ready to 1, else set to 1
             #
@@ -913,7 +912,7 @@ def Write(
             fetch_output["decode_ready"] = 0
             # print("HEY")
 
-        elif inst_type == "I" and opcode == 0b0000011: #Load type instruction
+        elif inst_type == "I" and opcode == 0b0000011:  # Load type instruction
             # Load type instruction
             print("Load type instruction")
             fetch_output["decode_ready"] = 1
@@ -980,9 +979,9 @@ def run_riscvsim():
     decode_end = 0
 
     globalCounter = 0
-    
+
     codeExitFlag = [0, 1, 1, 1, 1]
-    flush_due_to_mispredict=[0]
+    flush_due_to_mispredict = [0]
 
     # register = mp.Array("i", 32, lock=False)  # All 32 Registers
     # data_mem = mp.Array("i", 1000000000, lock=False)  # Data Memory as Array
@@ -1003,7 +1002,8 @@ def run_riscvsim():
     for i in range(32):
         ready_reg.append(1)
 
-    fetch_input = {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
+    fetch_input = {"pc": pc, "fetch_ready": fetch_ready,
+                   "MEM": MEM, "decode_ready": decode_ready}
     decode_input = {  # if (
         #     codeExitFlag[0] == 1
         #     and codeExitFlag[1] == 0
@@ -1144,35 +1144,48 @@ def run_riscvsim():
         "opcode": opcode,
     }
 
-    write_output = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
+    write_output = {"fetch_ready1": fetch_ready1,
+                    "read_pc_from_write": read_pc_from_write, "pc1": pc1}
 
-    fetch2_input = {"fetch_ready1": fetch_ready1, "read_pc_from_write": read_pc_from_write, "pc1": pc1}
-    fetch3_input = {"pc": pc, "fetch_ready": fetch_ready, "MEM": MEM, "decode_ready": decode_ready}
+    fetch2_input = {"fetch_ready1": fetch_ready1,
+                    "read_pc_from_write": read_pc_from_write, "pc1": pc1}
+    fetch3_input = {"pc": pc, "fetch_ready": fetch_ready,
+                    "MEM": MEM, "decode_ready": decode_ready}
 
     fetch_next_forwarding_flag = 0
-    btbTable1={}
-    btbTable2={}
+    btbTable1 = {}
+    btbTable2 = {}
     while (1):
         print("CYCLE: ", cycle)
 
         # call for every cycle
         if cycle == 0:  # if cycle is 0, start from beginning
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict, data_forwarding)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
+                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding)
             cycle += 1
         elif cycle == 1:  # 1 instruction
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict, data_forwarding)
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
+                   fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
+                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding)
             cycle += 1
         elif cycle == 2:  # 2 instruction
-            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output, write_output, data_forwarding)
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict, data_forwarding)
+            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
+                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding)
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
+                   fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
+                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding)
             cycle += 1
         elif cycle == 3:  # 3 instruction
-            Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_forwarding)
-            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output, write_output, data_forwarding)
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict, data_forwarding)
+            Memory(memory_input, memory_output, data_mem,
+                   register, codeExitFlag, data_forwarding)
+            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
+                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding)
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
+                   fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
+                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding)
             cycle += 1
         elif cycle >= 4:  # 4 or more than 4 instructions, then keep looping in this fashion
             Write(
@@ -1189,10 +1202,14 @@ def run_riscvsim():
                 fetch_output,
                 data_forwarding
             )
-            Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_forwarding)
-            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict,fetch_output, write_output, data_forwarding)
-            decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
-            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag, fetch3_input,btbTable1,btbTable2,flush_due_to_mispredict, data_forwarding)
+            Memory(memory_input, memory_output, data_mem,
+                   register, codeExitFlag, data_forwarding)
+            execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
+                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding)
+            decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
+                   fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding)
+            fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
+                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding)
             cycle += 1
 
         print("register: ", register)
@@ -1209,7 +1226,8 @@ def run_riscvsim():
             and codeExitFlag[4] == 0
             and last_decode_done == 1
         ):
-            print("<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
+            print(
+                "<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
             break
 
         print("-------------------------------------------------------")
