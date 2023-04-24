@@ -356,16 +356,24 @@ def load_program_memory(file, MEM):
     f.close()
 
 
-def op2selectMUX(inst_type, rs1, rs2, imm_final, register):
+def op2selectMUX(inst_type, rs1, rs2, imm_final, register, data_forwarding):
     """
     Op2SelectMUX
     """
     # global operand1, operand2
-    operand1 = register[rs1]
-    if inst_type == "S" or inst_type == "I":
-        operand2 = imm_final
+    if data_forwarding.get(rs1) is not None:
+        print("DATA IS FORWARDING!!!")
+        operand1 = data_forwarding[rs1]
     else:
-        operand2 = register[rs2]
+        operand1 = register[rs1]
+    if data_forwarding.get(rs2) is not None:
+        print("DATA IS FORWARDING!!!")
+        operand2 = data_forwarding[rs2]
+    else:
+        if inst_type == "S" or inst_type == "I":
+            operand2 = imm_final
+        else:
+            operand2 = register[rs2]
 
     return operand1, operand2
 
