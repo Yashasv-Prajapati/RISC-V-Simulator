@@ -1,4 +1,4 @@
-from arnav_BTB import *
+from arnav_BTB_data import *
 import argparse
 import sys
 
