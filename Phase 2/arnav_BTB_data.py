@@ -259,19 +259,49 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
 
     fetch_ready = fetch_input["fetch_ready"]
 
+    # if data already in forwarding table, then don't stall
+    if (ready_reg[rs1] == 1 or data_forwarding.get(rs1) is not None) and (ready_reg[rs2] == 1 or data_forwarding.get(rs2) is not None):
+        print("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+        fetch_input["fetch_ready"] = 1
+        ready_reg[rs1] = 1
+        ready_reg[rs2] = 1
+        
+        # decode_ready = 1
+        fetch_output["decode_ready"] = 1
+        decode_ready = 1
     
-
-    if fetch_ready == 0 and (ready_reg[rs1] == 0 or ready_reg[rs2] == 0):
-        if (ready_reg[rs1] == 1 or data_forwarding.get(rs1) is not None) and (ready_reg[rs2] == 1 or data_forwarding.get(rs2) is not None):
-            print("Hey there")
-            fetch_input["fetch_ready"] = 0
-            ready_reg[rs1] = 1
-            ready_reg[rs2] = 1
+    # # Double Dependency
+    # if fetch_ready == 0 and (ready_reg[rs1] == 0 or ready_reg[rs2] == 0) and (inst_type == "R" or inst_type == "I" or inst_type == "U" or inst_type == "B"):
+    #     if (ready_reg[rs1] == 1 or data_forwarding.get(rs1) is not None) and (ready_reg[rs2] == 1 or data_forwarding.get(rs2) is not None):
+    #         print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+    #         fetch_input["fetch_ready"] = 0
+    #         ready_reg[rs1] = 1
+    #         ready_reg[rs2] = 1
             
-            # decode_ready = 1
-            fetch_output["decode_ready"] = 1
-            decode_ready = 0
-            fetch_next_forwarding_flag = 1
+    #         # decode_ready = 1
+    #         fetch_output["decode_ready"] = 1
+    #         decode_ready = 0
+    #         fetch_next_forwarding_flag = 1
+
+    if codeExitFlag[0] == 1:
+        print("CODE EXIT")
+        decode_ready = 0
+
+
+        # fetch_next_forwarding_flag = 1
+
+    # Triple Dependency
+    # if fetch_ready == 0 and (ready_reg[rs1] == 0 or ready_reg[rs2] == 0) and (inst_type == "R" or inst_type == "I" or inst_type == "U" or inst_type == "B"):
+    #     if (ready_reg[rs1] == 1 or data_forwarding.get(rs1) is not None) and (ready_reg[rs2] == 1 or data_forwarding.get(rs2) is not None):
+    #         print("Hey there")
+    #         fetch_input["fetch_ready"] = 0
+    #         ready_reg[rs1] = 1
+    #         ready_reg[rs2] = 1
+            
+    #         # decode_ready = 1
+    #         fetch_output["decode_ready"] = 1
+    #         decode_ready = 0
+    #         fetch_next_forwarding_flag = 1
 
     
 
