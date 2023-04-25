@@ -1,3 +1,4 @@
+   
 import math
 import numpy as np
 
@@ -110,13 +111,13 @@ class DCache:
         # return data from main memory, considering main memory to be a dictionary
         return data_mem.get(address, 0)
         
-    def set_data(self, address:int, func3:int):
+    def data(self, address:int, func3:int):
         '''
         This function is used to set data from the cache
         It will set it to the main memory 
 
         address: the address of the data
-        func3: depending on type of store instruction
+        func3: depending on type of store data
             if func3 == 0b000 -> sb
             if func3 == 0b001 -> sh
             if func3 == 0b010 -> sw
@@ -133,7 +134,7 @@ class DCache:
         if the data is not in the cache then it will get it from the main memory
 
         address: the address of the data
-        func3: depending on type of load instruction
+        func3: depending on type of load data
             if func3 == 0b000 / 0 -> lb
             if func3 == 0b001 / 1 -> lh
             if func3 == 0b010 / 2 -> lw
@@ -280,3 +281,26 @@ class DCache:
 
         return Tag, Index, blockOffset
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
