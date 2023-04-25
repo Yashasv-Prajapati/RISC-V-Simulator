@@ -1,0 +1,223 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>RISC-V Simulator</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="html.design">
+<!-- description -->
+<meta name="description" content="Login Form - Responsive Template">
+<!-- <link rel="shortcut icon" href="images2/favicon.png"> -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href={% static 'polls/css/bootstrap.min.css' %}>
+<!-- Material Design Icons CSS -->
+<link rel="stylesheet" href={% static 'polls/css/materialdesignicons.css' %}>
+<!-- Bootstrap Checkbox CSS -->
+<link rel="stylesheet" href={% static 'polls/css/awesome-bootstrap-checkbox.css' %}>
+<!-- Rippler CSS -->
+<link rel="stylesheet" href={% static 'polls/css/rippler.min.css' %}>
+<!-- Style CSS -->
+<link rel="stylesheet" href={% static 'polls/css/style.css' %}>
+<!-- Responsive  CSS -->
+<link rel="stylesheet" href={% static 'polls/css/responsive.css' %}>
+</head>
+<body style="background-color:#A6D0DD">
+
+<div class = "container" style="margin-top:2rem;margin-bottom:4rem">
+    <div class = "row">
+        <div class = "col-md-3"></div>
+        <div class = "col-md-6 text-center">
+            <!-- <p style="color:white">hello</p> -->
+            <div class = "row">
+                <div class = "col-md-3">
+                    <button type="button" id="prevBtn" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Prev</button>
+                </div>
+                <div class = "col-md-3">
+                    <button type="button" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Run</button>
+                </div>
+                <div class = "col-md-3">
+                    <button type="button" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Reset</button>
+                </div>
+                <div class = "col-md-3">
+                    <button type="button" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Next</button>
+                </div>
+            <!-- <button type="button" class="btn btn-primary btn-lg btn-block">Prev</button>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Run</button>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Reset</button>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Next</button> -->
+            </div>
+        </div>
+        <div class = "col-md-3"></div>
+    </div>
+</div>
+
+<div class = "container-fluid" style="margin-top:3rem">
+    <div class = "row">
+        <!-- <div class="col-md-1"></div> -->
+        <div class = "col-md-2"></div>
+        <div class = "col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>Registers</h4>
+            <p>
+                X0: 0<br>
+                X1: 0<br>
+                X2: 0<br>
+                X3: 0<br>
+                X4: 0<br>
+                X5: 0<br>
+                X6: 0<br>
+                X7: 0<br>
+                X8: 0<br>
+                X9: 0<br>
+                X10: 0<br>
+                X11: 0<br>
+                X12: 0<br>
+                X13: 0<br>
+                X14: 0<br>
+                X15: 0<br>
+                X16: 0<br>
+                X17: 0<br>
+                X18: 0<br>
+                X19: 0<br>
+                X20: 0<br>
+                X21: 0<br>
+                X22: 0<br>
+                X23: 0<br>
+                X24: 0<br>
+                X25: 0<br>
+                X26: 0<br>
+                X27: 0<br>
+                X28: 0<br>
+                X29: 0<br>
+                X30: 0<br>
+                X31: 0<br>
+
+            </p>
+        </div>
+        <div class = "col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>Memory</h4>
+            mem
+        </div>
+        <div class = "col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>BTB</h4>
+            bbb
+        </div>
+        <div class="col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>Stats</h4>
+            yoo
+        </div>
+        <div class = "col-md-2"></div>
+    </div>
+</div>
+
+<div class="container" m>
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-2" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Fetch
+        </div>
+        <div class="col-md-2" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Decode
+        </div>
+        <div class="col-md-2" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Execute
+        </div>
+        <div class="col-md-2" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Memory
+        </div>
+        <div class="col-md-2" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Writeback
+        </div>
+    </div>
+</div>
+<!--
+<div class="container py-2">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-6 login-form mx-auto">
+                    <div class="card">
+						
+                        <div class="card-header">
+                            <h4 class="mb-0">Dog's Data Base</h4>
+                        </div>
+                        <div class="card-body" id="sneha">
+
+							
+                        </div>
+                       
+						<div class="card-footer">
+							<div class="copy-text">Created with <i class="fa fa-heart"></i> by <a href="https://www.iitrpr.ac.in/">AWS IIT Ropar</a></div>
+						</div>
+                    </div>
+                   
+                </div>
+            </div>
+           
+        </div>
+        
+    </div>
+
+    
+</div>
+-->
+<!--/container-->
+<script>
+    // var _current_item = $('.single_content').length
+    // console.log(_current_item);
+    const loadBtn = document.getElementById('prevBtn');
+
+    function loadmorePost() {
+        console.log("I know bitch");
+        $.ajax({
+            url: '{% url "load" %}',
+            type: 'GET',
+            data: {
+                "hello":1234
+            },
+            success: function (data)
+            {
+                console.log(data);
+            },
+            /*
+            success: function (response) {
+                const data = response.posts
+                spinner.classList.add('not-visible')
+                data.map(post => {
+                    console.log(post.title);
+                    content_container.innerHTML += `<div class="single_content border border-success mt-2 pl-2">
+                                                        <h3>${post.title}</h3>
+                                                        <p>${post.desc}</p>
+                                                    </div>`
+                })
+                if (_current_item == total) {
+                    alert.classList.remove('not-visible');
+                } else {
+                    loadBtn.classList.remove('not-visible');
+                }
+            },
+            */
+            error: function (err) {
+                console.log(err);
+            },
+        });
+    }
+    loadBtn.addEventListener('click', () => {
+        loadmorePost()
+    });
+</script>
+
+<!-- jquery latest version -->
+<script src={% static 'polls/js/jquery.min.js' %}></script>
+<!-- popper.min.js -->
+<script src={% static 'polls/js/popper.min.js' %}></script>    
+<!-- bootstrap js -->
+<script src={% static 'polls/js/bootstrap.min.js' %}></script>
+<!-- Jquery Rippler js -->
+<!-- "static/polls/js/jquery.rippler.min.js" -->
+<script src={% static 'polls/js/jquery.rippler.min.js' %}></script>	
+<!-- script js -->
+</body>
+</html>

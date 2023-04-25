@@ -1,0 +1,330 @@
+lui x8, 0x00001 #Random seed
+
+lui x4, 0x10002 #Stack pointer to arr
+lui x14, 0x10001 #Unsorted array
+
+add x10, x0, x4 #copy of Initial Stack pointer, passed as an argument to mergeSort
+
+addi x3, x0, 10 #Numbers
+
+lui x18, 0x10006 #address of temp arrays
+lui x19, 0x10007
+
+lui x20, 0x10009 #just another address
+
+main:
+	add x6, x0, x0
+	L1:
+		jal x1, random
+        addi x6, x6, 1
+        blt x6, x3, L1 #here
+    
+    add x11, x0, x3 #Argument to mergeSort
+    add x12, x0, x0 #Argument to mergeSort
+    jal x1, mergeSort
+    jal x1, exit
+    
+mergeSort: #(SortedArray, 0, N - 1) stored at x10, x12, x11 arr, l, r
+#	void mergeSort(int arr[],
+#			int l, int r)
+#{
+#	if (l < r)
+#	{
+#		// Same as (l+r)/2, but avoids
+#		// overflow for large l and h
+#		int m = l + (r - l) / 2;
+#
+#		// Sort first and second halves
+#		mergeSort(arr, l, m);
+#		mergeSort(arr, m + 1, r);
+#
+#		merge(arr, l, m, r);
+#	}
+#}
+	
+    addi x2, x2, -16 #here3
+    sw x1, 12(x2)
+    sw x13, 8(x2)
+    sw x11, 4(x2)
+    sw x12, 0(x2)
+    
+	blt x12, x11, L2
+    
+    addi x2, x2, 16 # i am here
+    jalr x0, 0(x1)
+    
+    L2:
+		add x13, x0, x11 # Compute m
+        sub x13, x13, x12
+        srli x13, x13, 1
+        add x13, x13, x12
+        sw x13, 8(x2) #Store m
+        
+       	add x11, x0, x13 #Adjusting the parameters x11 = m
+        
+        
+        jal x1, mergeSort #Call MergeSort this
+        
+        #recalling the params
+        lw x12, 0(x2)
+        lw x11, 4(x2)
+        lw x13, 8(x2)
+        lw x1, 12(x2)
+        
+        addi x13, x13, 1 #m+1
+        add x12, x13, x0
+        
+        #add x12, x5, x0 #Adjusting the parameters
+        #add x11, x7, x0
+        
+        jal x1, mergeSort #Call MergeSort that
+        
+        lw x12, 0(x2)
+        lw x11, 4(x2)
+        lw x13, 8(x2)
+        lw x1, 12(x2)
+        
+        #Adjusting the parameters
+        #addi x5, x5, -1 # m = m-1
+        #add x12, x28, x0
+        #add x11, x7, x0
+        
+        jal x1, merge
+        
+        lw x12, 0(x2)
+        lw x11, 4(x2)
+        lw x13, 8(x2)
+        lw x1, 12(x2)
+        
+        addi x2, x2, 16
+        
+        jalr x0, 0(x1)
+        
+        
+        #jal 
+
+merge:
+	add x0, x0, x0 #here 54 
+    #correct till here :)
+    
+    #push x10, x18, x19 into x20
+    addi x20, x20, -12
+    sw x19, 8(x20) #R
+    sw x18, 4(x20) #L
+    sw x10, 0(x20) #Arr
+    
+    #create copies of these
+    add x5, x0, x10 #Arr
+    add x6, x0, x18 #L
+    add x7, x0, x19 #R
+
+    #x12 is l
+    #x11 is r
+    #x13 is m
+    
+    #int i, j, k;
+    #int n1 = m - l + 1; #x28
+    #int n2 = r - m; #x29
+    
+    sub x28, x13, x12 #n1
+    addi x28, x28, 1
+    
+    sub x29, x11, x13 #n2
+  
+    #/* create temp arrays */
+    #int L[n1], R[n2]; x18 and x19
+    
+    #sub x18, x18, x28
+    #sub x19, x19, x29
+  
+    #/* Copy data to temp arrays L[] and R[] */
+    #for (i = 0; i < n1; i++) i=x30
+    #    L[i] = arr[l + i];
+    #for (j = 0; j < n2; j++)
+    #    R[j] = arr[m + 1 + j];
+    
+    addi x30, x0, 0 #i
+    
+    add x23, x12, x0 #make l + i
+    add x23, x23, x23
+    add x23, x23, x23
+    sub x5, x5, x23
+    
+    #x5 is pointing to arr
+    #sub x6, x6, x28 #make space in L
+    
+    for1:        
+        
+        lw x24, 0(x5) # x24 = arr[l + i]
+        sw x24, 0(x6) #L[i] = x24
+        
+        addi x6, x6, -4
+        addi x5, x5, -4
+        
+    	addi x30, x30, 1
+    	blt x30, x28, for1 #FORRR
+    	
+    add x6, x0, x18 #here 60
+    add x5, x0, x10
+    
+    ########################    
+    addi x30, x0, 0 #i
+    
+    add x23, x13, x0 #make l + i
+    addi x23, x23, 1
+    add x23, x23, x23
+    add x23, x23, x23
+    sub x5, x5, x23
+    
+    for2:        
+        
+        lw x24, 0(x5) # x24 = arr[l + i]
+        sw x24, 0(x7) #L[i] = x24
+        
+        addi x7, x7, -4
+        addi x5, x5, -4
+        
+    	addi x30, x30, 1
+    	blt x30, x29, for2 #FOREVER
+    	
+    add x7, x0, x19 #here 677
+    add x5, x0, x10
+    
+    #correct till here
+  
+    #/* Merge the temp arrays back into arr[l..r]*/
+    #i = 0; // Initial index of first subarray x30
+    #j = 0; // Initial index of second subarray x31
+    #k = l; // Initial index of merged subarray x22
+    #while (i < n1 && j < n2) { # n1 in x28, n2 in x29
+    #    if (L[i] <= R[j]) { x23, x24 x24 >= x23
+    #        arr[k] = L[i];
+    #        i++;
+    #    }
+    #    else {
+    #        arr[k] = R[j];
+    #        j++;
+    #    }
+    #    k++;
+    #}
+    #x6 is L
+    #x7 is R
+    
+    add x30, x0, x0 #i 
+    add x31, x0, x0 #j
+    #add x22, x0, x12 #k
+    
+    add x23, x12, x0 #make l + i
+    add x23, x23, x23
+    add x23, x23, x23
+    sub x5, x5, x23
+    
+    add x0, x0, x0 #Reached heecsacvd
+    
+    add x0, x0, x0 #Before while
+    
+    while:
+    	bge x30, x28, endwhile
+        bge x31, x29, endwhile
+        
+    	lw x22, 0(x5) #arr[k]
+    	lw x23, 0(x6) #L[i]
+        lw x24, 0(x7) #R[j]
+        
+        add x0, x0, x0 #break here
+        
+        bge x24, x23, if1
+        
+        sw x24, 0(x5)
+        addi x7, x7, -4
+        addi x31, x31, 1
+        bge x0, x0, endif
+        
+        if1:
+        	sw x23, 0(x5)
+            addi x6, x6, -4
+            addi x30, x30, 1
+            
+        endif:
+        	addi x5, x5, -4
+        
+        
+        blt x30, x28, while
+        blt x31, x29, while
+        
+    endwhile:
+    
+    add x0, x0, x0 #After while
+    
+        
+    #no resetting
+    #add x7, x0, x19 #here 677
+    #add x5, x0, x10
+    #add x6, x0, x18 #here 60
+  
+    #/* Copy the remaining elements of L[], if there
+    #are any */
+    #while (i < n1) {
+    #    arr[k] = L[i];
+    #    i++;
+    #    k++;
+    #}
+    
+    while2:
+    	bge x30, x28, breakwhile2
+        
+    	lw x23, 0(x6)
+        sw x23, 0(x5)
+        
+        addi x6, x6, -4
+        addi x5, x5, -4
+        
+        addi x30, x30, 1
+        blt x30, x28, while2
+    
+    breakwhile2:
+  
+    #/* Copy the remaining elements of R[], if there
+    #are any */
+    #while (j < n2) {
+    #    arr[k] = R[j];
+    #    j++;
+    #    k++;
+    #}
+    
+    while3:
+    	bge x31, x29, breakwhile3
+        
+    	lw x23, 0(x7)
+        sw x23, 0(x5)
+        
+        addi x7, x7, -4
+        addi x5, x5, -4
+        
+        addi x31, x31, 1
+        blt x31, x29, while3
+        
+    breakwhile3:
+        
+    add x0, x0, x0 #Reached heerr
+    
+    
+    lw x10, 0(x20)
+    lw x18, 4(x20)
+    lw x19, 8(x20)
+    
+    jalr x0, 0(x1)
+
+add x0, x0, x0 #here2
+
+random:
+	addi x8, x8, -10
+    sw x8, 0(x4)
+    addi x4, x4, -4
+    sw x8, 0(x14)
+    addi x14, x14, -4
+   	jalr x0, x1, 0
+    
+exit:
+	add x0, x0, x0
+    
