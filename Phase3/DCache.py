@@ -1,11 +1,12 @@
    
 import math
 import numpy as np
+import random
 
 data_mem = np.zeros((2**32), dtype='uint8') # main memory
 
 class DCache:
-    __policies = ["LRU", "FIFO", "Random", "LFU"]
+    __policies = ["LRU", "FIFO", "random", "LFU"]
     __mapping = ["direct", "set-associative", "fully-associative"]
 
     def __init__(self, blockSize:int, cacheSize:int, mapping:str, policyName:str, numberOfWays:int) -> None:
@@ -29,9 +30,6 @@ class DCache:
         # set replacement policy
         self.setReplacementPolicy(policyName)
 
-        
-
-
         # LRU policy
         # number of ways x 3, 3 is for the Valid bit, status bit and tag bit
         self.LRU = np.zeros((self.number_of_ways), dtype='uint32')
@@ -40,11 +38,10 @@ class DCache:
         self.FIFO = np.zeros((self.number_of_ways), dtype='uint32')
 
         # LFU policy
-        # self.LFU = np.zeros((numberOfWays,2), dtype='uint32')
         self.LFU = {}
 
         # Random policy
-        self.Random = np.zeros((self.number_of_ways), dtype='uint32')
+        # self.Random = np.zeros((self.number_of_ways), dtype='uint32')
 
         self.cache_access = {} # dictionary to store all the cache accesses
         self.mct = {} # miss classification table
@@ -138,22 +135,82 @@ class DCache:
     
         return dataFromMain        
     
+    def writeByte(self, address:int, data:int, wayNumber:int):
+        '''
+        This function is used to write a byte in the cache
+        the byte is written in the cache
+
+        address: the address of the byte
+        data: the byte to be written - 1 byte - expected data to be in range 0-255
+        '''
+
+        if(data<0 or data>255):
+            raise Exception("Invalid data, expected data to be in range 0-255 but got "+str(data))
+        
+        _, Index, blockOffset = self.break_address(address)
+        
+
+        # set this data on this address
+        self.data_cache[wayNumber][Index][blockOffset] = data
+
+
+
+
     def write_data(self, address:int, data:int, func3:int):
         '''
         This function is used to write data in the cache
         first the data is written in the cache then subsequently in the main memory at that particular address
 
+        Using Write through policy
+
         address: the address of the data
-        data: the data to be written
+        data: the data to be written - 1/2/4 bytes
         func3: depending on type of store data
             if func3 == 0b000 / 0 -> sb
             if func3 == 0b001 / 1 -> sh
             if func3 == 0b010 / 2 -> sw
         '''
 
+        # check for possible errors
+        if(func3 not in [0,1,2]):
+            raise Exception("Invalid func3, expected 0, 1 or 2 but got "+str(func3))
+
+        if(data<0 or data>2**31-1):
+            raise Exception(f"Invalid data, expected data to be in range 0-{2**31 -1} but got "+str(data))
+
+        if(self.mapping not in self.__mapping):
+            raise Exception("Invalid Mapping, expected direct, set-associative or fully-associative but got "+self.mapping)
+
         Tag, Index, blockOffset = self.break_address(address)
 
-        
+        dataInBinary = bin(data)[2:].zfill(32) # converting data to a 32 bit binary string
+
+        if(self.mapping=="direct"):
+            #  match the tag with the tag array
+            if(self.tag_arrays[0].get(Index, -1) == Tag): # found in cache
+                for _ in range(2**func3): # writing data in the cache either a byte, half word or a word
+                    self.writeByte(address, int(dataInBinary[blockOffset*8:blockOffset*8+8], 2), 0)
+                    address += 1
+            
+        elif(self.mapping=="set-associative"):
+            for i in range(len(self.tag_arrays)):
+                if(self.tag_arrays[0].get(Index,-1)==Tag):
+                    for _ in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[blockOffset*8:blockOffset*8+8], 2), i)
+                        address += 1
+                    break
+            
+        elif(self.mapping=="fully-associative"):
+            for i in range(len(self.tag_arrays)):
+                if(self.tag_arrays[0].get(Index,-1)==Tag):
+                    for _ in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[blockOffset*8:blockOffset*8+8], 2), i)
+                        address += 1
+                    break
+            
+
+        # writing the data to main memory after this
+        self.WriteDataInMain(address, data)
     
     def get_data(self,address:int, func3:int):
 
@@ -250,8 +307,9 @@ class DCache:
                     wayNum = FIFOWay
                     self.FIFO.append(FIFOWay) # append it to the end of the queue
                 elif(self.replacement_policy=='random'):
-                    pass
                     # apply the easiet policy here
+                    # simply choose a random number between 0 to number_of_ways - 1
+                    wayNum = random.randint(0, self.number_of_ways-1)
                     
                 elif(self.replacement_policy=='LFU'):
                     # apply the LFU policy here
@@ -325,8 +383,9 @@ class DCache:
                     wayNum = FIFOWay
                     self.FIFO.append(FIFOWay) # append it to the end of the queue
                 elif(self.replacement_policy=='random'):
-                    pass
                     # apply the easiet policy here
+                    # simply choose a random number between 0 to number_of_ways - 1
+                    wayNum = random.randint(0, self.number_of_ways-1)
                     
                 elif(self.replacement_policy=='LFU'):
                     # apply the LFU policy here
@@ -360,8 +419,6 @@ class DCache:
 
         
 
-            return None
-
     def break_address(self, address:int):
         # considering 32 bit address
         address = bin(address)[2:].zfill(32) # converting to binary and padding with zeros to make it 32 bits
@@ -393,11 +450,11 @@ class DCache:
     
 
 if __name__ =='__main__':
-    L1 = DCache(32, 32, "direct", "LRU", 0)
-    L1.WriteDataInMain(0, 2**31-1)
+    L1 = DCache(32, 256, "direct", "LFU", 0)
+    L1.WriteDataInMain(0, 100000000)
 
     data = L1.get_data(0, 2)
-    print(data)
+    print("Data: ",data)
 
 
 
