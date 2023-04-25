@@ -1,5 +1,5 @@
 add x2, x0, x0
-lui x2, 0x10008
+lui x2, 0x18
 beq x0, x0, main
 addN:
 addi x2, x2, -12
