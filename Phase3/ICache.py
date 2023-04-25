@@ -17,6 +17,7 @@ class ICache:
         self.misses = 0
         self.cache_access = 0
 
+
         # set number_of_ways
         self.setNumberOfWays(numberOfWays, mapping, cacheSize, blockSize)
 

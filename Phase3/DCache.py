@@ -20,6 +20,20 @@ class DCache:
         self.capacity_misses = 0
         self.conflict_misses = 0
 
+
+        # LRU policy
+        # number of ways x 3, 3 is for the Valid bit, status bit and tag bit
+        self.LRU = np.zeros((numberOfWays), dtype='uint32')
+
+        # FIFO policy
+        self.FIFO = np.zeros((numberOfWays), dtype='uint32')
+
+        # LFU policy
+        self.LFU = np.zeros((numberOfWays,2), dtype='uint32')
+
+        # Random policy
+        self.Random = np.zeros((numberOfWays), dtype='uint32')
+
         self.cache_access = {} # dictionary to store all the cache accesses
         self.mct = {} # miss classification table
 
@@ -60,17 +74,19 @@ class DCache:
         address: the address of the byte
         '''
         Tag, Index, blockOffset = self.break_address(address)
+        # TotalSets = self.cache_size//(self.block_size*self.number_of_ways)
         
-        if(self.tag_arrays[wayNumber].get(Index, -1)==-1):
-            self.cold_misses += 1
 
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
-            self.hits += 1
             # using block offset to get data from block
             return self.data_cache[wayNumber][Index][blockOffset]
         
-        else: # handle miss
-            self.misses += 1
+        else: # handle miss, by getting data from main memory
+
+            # check if there was something in the cache at that index
+            if(self.tag_arrays[wayNumber].get(Index, -1)!=-1): # if there was something, then add that tag to MCT and then evict it
+                self.mct[self.tag_arrays[wayNumber][Index]] = True
+            
             # update tag array
             self.tag_arrays[wayNumber][Index] = Tag
 
@@ -107,6 +123,9 @@ class DCache:
         '''
         # add data here
     
+    def LRU():
+        pass
+    
     def get_data(self,address:int, func3:int):
 
         '''
@@ -134,9 +153,15 @@ class DCache:
             if(self.tag_arrays[0].get(Index, -1)==-1): # cold miss
                 self.cold_misses += 1
             elif(self.tag_arrays[0].get(Index, -1)!=Tag): # if tag != -1 and tag != Tag -> conflict miss or capacity miss
-                # either a conflict or capacity miss
-                pass
-
+                # so we look into the MCT to find out if it's a conflict or capacity miss
+                if(Tag in self.mct): # if tag is there in MCT, so it was once in the cache -> conflict miss
+                    self.conflict_misses += 1
+                else: # capacity miss
+                    self.capacity_misses += 1
+            
+            # else the data is present in the cache -> hit
+            self.hits += 1
+            # check type of load instruction
             if(func3==0): # lb
                 return self.readByte(address, 0)
             
@@ -153,15 +178,79 @@ class DCache:
                 return int(DataFound,2)
             
         elif self.mapping == "set-associative":
-            # search in all of tag arrays -> n if n is the number of ways
+
+            # check type of miss
+            ColdMiss = True
+            CapacityORConflict = False
+            wayNum = None
+
+            # look into all the ways to find the data
             for i in range(len(self.tag_arrays)):
-                if self.tag_arrays[i].get(Index,-1) == Tag: # found in cache
-                    self.hits += 1
-                    return self.blocks[i][Index][blockOffset]
+                if(self.tag_arrays[i].get(Index, -1)==Tag): # hit
+                    ColdMiss = False
+                    CapacityORConflict = False
+                    wayNum = i # way number where data is found
+                    self.hits =+ 1 # increment hits
+                    break
+                if(self.tag_arrays[i].get(Index, -1)==-1): # cold miss
+                    ColdMiss = True # not a cold miss
+                    CapacityORConflict = False # not a capacity miss
+                    wayNum = i # way number where data is to be stored
+                    break
+                else: # either capacity miss or conflict miss
+                    CapacityORConflict = True
+
+
+            # ---------------------------------------------------------------
+            if(ColdMiss): # if cold miss
+                self.cold_misses += 1
+            elif(CapacityORConflict): # either conflict miss or capacity miss
+                
+                # check if replacement policy is valid
+                if(self.replacement_policy not in self.__policies):
+                    raise ValueError("Invalid replacement policy")
+                
+                # evict according to given policy
+                if(self.replacement_policy=="LRU"):
+                    LRUWay = self.LRU.pop(-1) # get the least recently used way
+                    wayNum = LRUWay # way number where data is to be replaced from and return the updated data
+                    self.LRU.insert(0,LRUWay) # insert it at the start to make it the most recently used
+                elif(self.replacement_policy=='FIFO'):
+                    pass
+                    FIFOWay = self.FIFO.pop(0) # get the first entry in the queue
+                    wayNum = FIFOWay
+                    self.FIFO.append(FIFOWay) # append it to the end of the queue
+                elif(self.replacement_policy=='random'):
+                    pass
+                    # apply the easiet policy here
+                elif(self.replacement_policy=='LFU'):
+                    pass
+
+
+                if(Tag in self.mct):
+                    self.conflict_misses += 1
+                else:
+                    self.capacity_misses += 1
+            # ---------------------------------------------------------------
+            # once you know the wayNumber, now go to that way and get data from there
+            # check type of load instruction
+            if(func3==0): # lb
+                return self.readByte(address, wayNum)
             
-            # not found in cache so get data from main memory
-            self.misses += 1
-            return None # this to be changed
+            elif(func3==1): # lh
+                for _ in range(2):
+                    DataFound.append(bin(self.readByte(address, wayNum))[2:].zfill(8)) # convert to binary and pad with zeros
+                    address+=1 # increment address by 1 to get new address
+                return int(DataFound,2)
+            
+            elif(func3==2): # lw
+                for _ in range(4):
+                    DataFound.append(bin(self.readByte(address, wayNum))[2:].zfill(8)) # convert to binary and pad with zeros
+                    address += 1 # increment address by 1 to get new address
+                return int(DataFound,2)
+            else:
+                raise ValueError("Invalid func3 value, expected 0,1 or 2 but got "+str(func3)+" instead")
+
         
         elif self.mapping == "fully-associative":
             for i in range(len(self.tag_arrays)):

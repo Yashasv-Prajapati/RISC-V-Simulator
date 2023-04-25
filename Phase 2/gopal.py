@@ -1147,7 +1147,7 @@ def run_riscvsim():
     btbTable1 = {}
     btbTable2 = {}
     t=0
-    while (t<26):
+    while (1):
         print("CYCLE: ", cycle)
         # t+=1
         # call for every cycle
