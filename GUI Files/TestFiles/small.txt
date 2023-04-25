@@ -1,0 +1,14 @@
+lui x2, 0x18
+beq x0, x0, main
+addN: addi x2, x2, -12
+sw x1, 0(x2)        
+beq x10, x0, end   
+add x9, x9, x10
+addi x10, x10, -1  
+jal x1, addN  
+end: lw x1, 0(x2)
+addi x2, x2, 12    
+add x10, x9, x0
+jalr x1            
+main: addi x10, x0,1
+jal x1,addN

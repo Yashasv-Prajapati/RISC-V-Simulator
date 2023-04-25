@@ -1,0 +1,4 @@
+lui x4, 0x102
+addi x8, x0, 69
+sw x8, 0(x4)
+lw x5, 0(x4)
