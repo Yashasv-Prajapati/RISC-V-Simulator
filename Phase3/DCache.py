@@ -32,8 +32,8 @@ class DCache:
         # total tag arrays -> number of ways and each array is a dictionary 
         self.tag_arrays = np.full((numberOfWays), {}, dtype=object)
 
-        # number of data arrays = number of ways. each array has <number of blocks> rows and <block size> columns
-        self.data_cache = np.full((numberOfWays, cacheSize//blockSize, blockSize), 0, dtype='uint8')
+        # number of instruction arrays = number of ways. each array has <number of blocks> rows and <block size> columns
+        self.instruction_cache = np.full((numberOfWays, cacheSize//blockSize, blockSize), 0, dtype='uint8')
 
     def setNumberOfWays(self, numberOfWays:int, mapping:str, cacheSize:int, blockSize:int):
         if(mapping not in self.__mapping):
@@ -66,54 +66,54 @@ class DCache:
 
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             self.hits += 1
-            # using block offset to get data from block
-            return self.data_cache[wayNumber][Index][blockOffset]
+            # using block offset to get instruction from block
+            return self.instruction_cache[wayNumber][Index][blockOffset]
         
         else: # handle miss
             self.misses += 1
             # update tag array
             self.tag_arrays[wayNumber][Index] = Tag
 
-            # get data from main memory
-            dataFromMain = self.getFromMain(address)
+            # get instruction from main memory
+            instructionFromMain = self.getFromMain(address)
             
-            # set data in cache  
-            # converting dataReceived to a 256 bit binary string
-            dataInBinary = bin(dataFromMain)[2:].zfill(256) # data of form '100010001...' -> 256 bits
+            # set instruction in cache  
+            # converting instructionReceived to a 256 bit binary string
+            instructionInBinary = bin(instructionFromMain)[2:].zfill(256) # instruction of form '100010001...' -> 256 bits
             
             # now storing each byte in the cache
             for i in range(32):
-                self.data_cache[wayNumber][Index][i] = int(dataInBinary[i*8:i*8+8],2)
+                self.instruction_cache[wayNumber][Index][i] = int(instructionInBinary[i*8:i*8+8],2)
 
-            return self.data_cache[wayNumber][Index][blockOffset]
+            return self.instruction_cache[wayNumber][Index][blockOffset]
 
     def getFromMain(self, address:int):
         '''
-        This function is used to get data from the main memory
+        This function is used to get instruction from the main memory
         '''
-        # return data from main memory, considering main memory to be a dictionary
-        return data_mem.get(address, 0)
+        # return instruction from main memory, considering main memory to be a dictionary
+        return instruction_mem.get(address, 0)
         
-    def set_data(self, address:int, func3:int):
+    def instruction(self, address:int, func3:int):
         '''
-        This function is used to set data from the cache
+        This function is used to set instruction from the cache
         It will set it to the main memory 
 
-        address: the address of the data
+        address: the address of the instruction
         func3: depending on type of store instruction
             if func3 == 0b000 -> sb
             if func3 == 0b001 -> sh
             if func3 == 0b010 -> sw
         '''
-        # add data here
+        # add instruction here
     
-    def get_data(self,address:int, func3:int):
+    def get_instruction(self,address:int, func3:int):
 
         '''
-        This function is used to get data from the cache
-        if the data is not in the cache then it will get it from the main memory
+        This function is used to get instruction from the cache
+        if the instruction is not in the cache then it will get it from the main memory
 
-        address: the address of the data
+        address: the address of the instruction
         func3: depending on type of load instruction
             if func3 == 0b000 / 0 -> lb
             if func3 == 0b001 / 1 -> lh
@@ -122,8 +122,8 @@ class DCache:
 
         Tag, Index, blockOffset = self.break_address(address)
         
-        # requested data in binary
-        DataFound = ""
+        # requested instruction in binary
+        InstructionFound = ""
 
         # storing all the cache accesses in a dictionary using its address as key
         self.cache_access[address] = True
@@ -142,15 +142,15 @@ class DCache:
             
             elif(func3==1): # lh
                 for i in range(2):
-                    DataFound.append(bin(self.readByte(address, 0))[2:].zfill(8)) # convert to binary and pad with zeros
+                    InstructionFound.append(bin(self.readByte(address, 0))[2:].zfill(8)) # convert to binary and pad with zeros
                     address+=1 # increment address by 1 to get new address
-                return int(DataFound,2)
+                return int(InstructionFound,2)
             
             elif(func3==2): # lw
                 for i in range(4):
-                    DataFound.append(bin(self.readByte(address, 0))[2:].zfill(8)) # convert to binary and pad with zeros
+                    InstructionFound.append(bin(self.readByte(address, 0))[2:].zfill(8)) # convert to binary and pad with zeros
                     address += 1 # increment address by 1 to get new address
-                return int(DataFound,2)
+                return int(InstructionFound,2)
             
         elif self.mapping == "set-associative":
             # search in all of tag arrays -> n if n is the number of ways
@@ -159,7 +159,7 @@ class DCache:
                     self.hits += 1
                     return self.blocks[i][Index][blockOffset]
             
-            # not found in cache so get data from main memory
+            # not found in cache so get instruction from main memory
             self.misses += 1
             return None # this to be changed
         
