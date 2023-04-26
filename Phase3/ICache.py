@@ -516,7 +516,7 @@ class ICache:
         if cache miss, return 0
         else return None
         '''
-        return self.cacheHitORMiss
+        return self.readHitOrMiss
 
     def load_program_memory(self,file, MEM):
         """
@@ -544,32 +544,32 @@ class ICache:
 
 
 
-if __name__ =='__main__':
+# if __name__ =='__main__':
     
-    file = "Phase 2/TestFiles/output.mem"
-    L1 = ICache(32, 256, "direct", "LFU", 0)
+#     file = "Phase 2/TestFiles/output.mem"
+#     L1 = ICache(32, 256, "direct", "LFU", 0)
 
-    L1.load_program_memory(file, MEM)
+#     L1.load_program_memory(file, MEM)
 
 
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(56, 2)
-    print(data)
-    data = L1.get_data(567, 0)
-    print(data)
-    print()
-    L1.printStats()
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(56, 2)
+#     print(data)
+#     data = L1.get_data(567, 0)
+#     print(data)
+#     print()
+#     L1.printStats()
 
 
 

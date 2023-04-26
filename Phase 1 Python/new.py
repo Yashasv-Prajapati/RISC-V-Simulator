@@ -9,10 +9,6 @@ MEM = [0]*4000
 # data memory
 data_mem = {}
 
-# knobs
-# knob1 = int(input()) # 0 -> no pipeline 1 -> pipeline
-# knob2 = int(input()) # 0 -> no forwarding 1 -> forwarding
-
 
 def reset_proc():
     pass
@@ -564,8 +560,11 @@ class data_path:
         instruction = bin(instruction)[2:] # convert to binary and [2:] to remove 0b
         return instruction
 
-if(1):
-    # load_program_memory('TestFiles/output.mem', MEM)
+
+def run_riscvsim():
+    '''
+        Run Riscv Simulator
+    '''
     non_pipeline = data_path()
     non_pipeline.pc = 0
     

@@ -584,27 +584,27 @@ class DCache:
 
         return self.writeHitORMiss
 
-if __name__ =='__main__':
-    L1 = DCache(32, 256, "set-associative", "LFU", 4)
-    L1.write_data(0, 345, 1)
+# if __name__ =='__main__':
+#     L1 = DCache(32, 256, "set-associative", "LFU", 4)
+#     L1.write_data(0, 345, 1)
 
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(56, 2)
-    print(data)
-    data = L1.get_data(567, 0)
-    print(data)
-    L1.printStats()
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(56, 2)
+#     print(data)
+#     data = L1.get_data(567, 0)
+#     print(data)
+#     L1.printStats()
 
 
 

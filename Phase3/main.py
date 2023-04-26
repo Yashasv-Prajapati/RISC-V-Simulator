@@ -1,14 +1,14 @@
-from multiProcess_BTB import *
+from Phase3_DataForwarding import *
 import argparse
 import sys
 
 
 def init():
     parser = argparse.ArgumentParser(
-                    prog='RISC V Simulator',
-                    description='This program Simulates the RISC V Architecture computer',
-                    epilog='Text at the bottom of help')
-    
+        prog='RISC V Simulator',
+        description='This program Simulates the RISC V Architecture computer',
+        epilog='Text at the bottom of help')
+
     parser.add_argument('--file', help='filename')
 
     args = parser.parse_args()
@@ -16,10 +16,9 @@ def init():
     if args.file:
         # print(args.file)
 
-        reset_proc()
+        # reset_proc()
         load_program_memory(args.file, MEM)
         run_riscvsim()
-
 
     else:
         print("Incorrect number of arguments. Please invoke the simulator \n\t./myRISCVSim <input mem file>")
