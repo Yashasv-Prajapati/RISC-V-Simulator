@@ -10,7 +10,6 @@ def init():
         epilog='Text at the bottom of help')
 
     parser.add_argument('--file', help='filename')
-    parser.add_argument('--knob1',)
 
     args = parser.parse_args()
 
