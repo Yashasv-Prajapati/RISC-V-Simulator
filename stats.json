@@ -1,0 +1,10 @@
+{
+    "total_hits": 5,
+    "total_misses": 1,
+    "total_cold_misses": 1,
+    "total_capacity_misses": 0,
+    "total_conflict_misses": 0,
+    "hit_rate": 0.8333333333333334,
+    "miss_rate": 0.16666666666666666,
+    "number_of_access": 6
+}

@@ -1,9 +1,10 @@
-   
 import math
 import numpy as np
 import random
+import json
 
-data_mem = np.zeros((2**32), dtype='uint8') # main memory
+# data_mem = np.zeros((2**32), dtype='uint8') # main memory
+data_mem = {3456:567899, 4566: 456764, 545:563657} # main memory
 
 class DCache:
     __policies = ["LRU", "FIFO", "random", "LFU"]
@@ -23,6 +24,9 @@ class DCache:
         self.cold_misses = 0
         self.capacity_misses = 0
         self.conflict_misses = 0
+
+        self.readHitOrMiss = None # 0 for miss, 1 for hit
+        self.writeHitOrMiss = None # 0 for miss, 1 for hit
 
         # set number_of_ways
         self.setNumberOfWays(numberOfWays, mapping, cacheSize, blockSize)
@@ -45,7 +49,6 @@ class DCache:
 
         self.cache_access = {} # dictionary to store all the cache accesses
         self.mct = {} # miss classification table
-
 
         # total tag arrays -> number of ways and each array is a dictionary 
         self.tag_arrays = np.full((self.number_of_ways), {}, dtype=object)
@@ -102,7 +105,7 @@ class DCache:
             for i in range(self.block_size):
                 self.data_cache[wayNumber][Index][i] = int(binaryDataFromMain[i*8:i*8+8],2)
             
-            print("Data in cache: ", self.data_cache[wayNumber][Index])
+            print("Data in cache block: ", self.data_cache[wayNumber][Index])
             
             return self.data_cache[wayNumber][Index][blockOffset]
 
@@ -111,13 +114,10 @@ class DCache:
         This function is used to set data in the main memory
         Considering data to be of 32 bits/4 Bytes or max value of int to be 2^31 - 1
         '''
-        dataInBinary = bin(data)[2:].zfill(32) # converting data to a 32 bit binary string
-        # set data in main memory
-        for i in range(4):
-            data_mem[address+i] = int(dataInBinary[i*8:i*8+8],2)
-        
-       
 
+        data_mem[address] = data
+          
+       
     def getFromMain(self, address:int):
         '''
         This function is used to get data from the main memory
@@ -128,12 +128,19 @@ class DCache:
         '''
         # return data from main memory, considering main memory to be a dictionary
         # we have to take blocksize amount of bytes from main memory
-        dataFromMain = ''
+
+        dataBytes = ""
+
         for i in range(self.block_size):
-            dataFromMain += bin(data_mem[address+i])[2:].zfill(8) # taking 8 bits/1byte at a time 
-        
-    
-        return dataFromMain        
+            AddressInDataDict = address - (address%4) # address of the first byte of the block
+
+            dataFromMem = data_mem.get(AddressInDataDict,0) # get 4byte int from the dictionary or else get 0 of 32 bits
+            dataInBinary = bin(dataFromMem)[2:].zfill(32) # converting data to a 32 bit binary string
+            dataBytes += dataInBinary[8*(address%4):8*(address%4)+8]
+            
+            address += 1 # update address, go to next byte
+
+        return dataBytes      
     
     def writeByte(self, address:int, data:int, wayNumber:int):
         '''
@@ -152,8 +159,6 @@ class DCache:
 
         # set this data on this address
         self.data_cache[wayNumber][Index][blockOffset] = data
-
-
 
 
     def write_data(self, address:int, data:int, func3:int):
@@ -191,6 +196,7 @@ class DCache:
                 for _ in range(2**func3): # writing data in the cache either a byte, half word or a word
                     self.writeByte(address, int(dataInBinary[blockOffset*8:blockOffset*8+8], 2), 0)
                     address += 1
+                    break
             
         elif(self.mapping=="set-associative"):
             for i in range(len(self.tag_arrays)):
@@ -211,6 +217,7 @@ class DCache:
 
         # writing the data to main memory after this
         self.WriteDataInMain(address, data)
+        self.writeHitOrMiss = 1 # cache miss
     
     def get_data(self,address:int, func3:int):
 
@@ -238,15 +245,21 @@ class DCache:
             # check type of miss
             if(self.tag_arrays[0].get(Index, -1)==-1): # cold miss
                 self.cold_misses += 1
+                
+                self.readHitOrMiss = 0 # cache miss
             elif(self.tag_arrays[0].get(Index, -1)!=Tag): # if tag != -1 and tag != Tag -> conflict miss or capacity miss
                 # so we look into the MCT to find out if it's a conflict or capacity miss
+                
+                self.readHitOrMiss = 0 # cache miss
+                
                 if(Tag in self.mct): # if tag is there in MCT, so it was once in the cache -> conflict miss
                     self.conflict_misses += 1
                 else: # capacity miss
                     self.capacity_misses += 1
             else:
                 # else the data is present in the cache -> hit
-                self.hits += 1
+                self.hits += 1 
+                self.readHitOrMiss=1 # cache hit
 
             # check type of load instruction
             if(func3==0): # lb
@@ -291,8 +304,11 @@ class DCache:
             # ---------------------------------------------------------------
             if(ColdMiss): # if cold miss
                 self.cold_misses += 1
+                self.readHitOrMiss=0 # cache miss
             elif(CapacityORConflict): # either conflict miss or capacity miss
-                
+
+                self.readHitOrMiss=0 # cache miss
+
                 # check if replacement policy is valid
                 if(self.replacement_policy not in self.__policies):
                     raise ValueError("Invalid replacement policy")
@@ -321,6 +337,9 @@ class DCache:
                     self.conflict_misses += 1
                 else:
                     self.capacity_misses += 1
+            else: # hit
+                self.hits += 1
+                self.readHitOrMiss = 1 # cache hit
             # ---------------------------------------------------------------
             # once you know the wayNumber, now go to that way and get data from there
             # check type of load instruction
@@ -447,14 +466,71 @@ class DCache:
             blockOffset = int(address[TagBitsNum+IndexBitsNum:TagBitsNum+IndexBitsNum+blockOffsetBitsNum],2)
 
         return Tag, Index, blockOffset
+
+    def showAccessTable(self):
+        print("Access Table: ", self.cache_access)
+
+    def printStats(self):
+        print("Total hits: ", self.hits)
+        print("Total cold misses: ", self.cold_misses)
+        print("Total capacity misses: ", self.capacity_misses)
+        print("Total conflict misses: ", self.conflict_misses)
+        print("Total misses: ", self.cold_misses + self.capacity_misses + self.conflict_misses)
+        print("Hit rate: ", self.hits/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
+        print("Miss rate: ", (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
+        print("Number of Access: ", self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
+        # saving all this stats in a json file
+        file = open("Phase3/stats/stats.json", "w")
+        StatDict = {
+            "total_hits": self.hits,
+            "total_misses": self.cold_misses + self.capacity_misses + self.conflict_misses,
+            "total_cold_misses": self.cold_misses,
+            "total_capacity_misses": self.capacity_misses,
+            "total_conflict_misses": self.conflict_misses,
+            "hit_rate": self.hits/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses),
+            "miss_rate": (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses),
+            "number_of_access": self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses
+        }
+        json.dump(StatDict, file, indent=4)
+        file.close()
+
+    def getCacheHitOrMiss(self):
+        '''
+        if cache hit, return 1
+        if cache miss, return 0
+        else return None
+        '''
+        return self.cacheHitORMiss
     
+    def getWriteHitOrMiss(self):
+        '''
+        if cache hit, return 1
+        if cache miss, return 0
+        else return None
+        '''
+        return self.writeHitORMiss
 
 if __name__ =='__main__':
     L1 = DCache(32, 256, "direct", "LFU", 0)
-    L1.WriteDataInMain(0, 100000000)
+    L1.write_data(0, 345, 1)
 
     data = L1.get_data(0, 2)
-    print("Data: ",data)
+    print(data)
+    data = L1.get_data(0, 2)
+    print(data)
+    data = L1.get_data(0, 2)
+    print(data)
+    data = L1.get_data(0, 2)
+    print(data)
+    data = L1.get_data(0, 2)
+    print(data)
+    data = L1.get_data(0, 2)
+    print(data)
+    data = L1.get_data(56, 2)
+    print(data)
+    data = L1.get_data(567, 0)
+    print(data)
+    L1.printStats()
 
 
 
