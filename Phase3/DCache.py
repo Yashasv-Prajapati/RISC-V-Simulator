@@ -4,11 +4,16 @@ import random
 import json
 
 # data_mem = np.zeros((2**32), dtype='uint8') # main memory
-data_mem = {3456:567899, 4566: 456764, 545:563657} # main memory
+data_mem = {} # main memory
 
 class DCache:
     __policies = ["LRU", "FIFO", "random", "LFU"]
     __mapping = ["direct", "set-associative", "fully-associative"]
+
+    __JSONArr = []
+    __VictimBlocks = []
+    __SetAccessed = []
+    __CacheContent = []
 
     def __init__(self, blockSize:int, cacheSize:int, mapping:str, policyName:str, numberOfWays:int) -> None:
         self.cache = {}
@@ -52,7 +57,6 @@ class DCache:
 
         # total tag arrays -> number of ways and each array is a dictionary 
         self.tag_arrays = np.full((self.number_of_ways), {}, dtype=object)
-
         # number of data arrays = number of ways. each array has <number of blocks> rows and <block size> columns
         self.data_cache = np.full((self.number_of_ways, cacheSize//blockSize, blockSize), 0, dtype='uint8')
 
@@ -83,12 +87,14 @@ class DCache:
         Tag, Index, blockOffset = self.break_address(address)
         # TotalSets = self.cache_size//(self.block_size*self.number_of_ways)
         
-
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             # using block offset to get data from block
             return self.data_cache[wayNumber][Index][blockOffset]
         
         else: # handle miss, by getting data from main memory
+            
+            # add the victim block 
+            self.__VictimBlocks.append({"wayNum":wayNumber, "Index":Index})
 
             # check if there was something in the cache at that index
             if(self.tag_arrays[wayNumber].get(Index, -1)!=-1): # if there was something, then add that tag to MCT and then evict it
@@ -117,7 +123,6 @@ class DCache:
 
         data_mem[address] = data
           
-       
     def getFromMain(self, address:int):
         '''
         This function is used to get data from the main memory
@@ -159,7 +164,6 @@ class DCache:
 
         # set this data on this address
         self.data_cache[wayNumber][Index][blockOffset] = data
-
 
     def write_data(self, address:int, data:int, func3:int):
         '''
@@ -231,9 +235,23 @@ class DCache:
             if func3 == 0b001 / 1 -> lh
             if func3 == 0b010 / 2 -> lw
         '''
+        
+        # the content of all the sets of the cache
+        cacheContent = {}
+        for i in range(self.number_of_ways):
+            for j in range(len(self.tag_arrays[i])):
+                if(self.tag_arrays[i].get(j, -1)!=-1):
+                    cacheContent["wayNum"] = i
+                    cacheContent["Index"]=j
+                    cacheContent["Blocks"] = self.data_cache[i][j].tolist()
+        
+        self.__CacheContent.append(cacheContent)
 
         Tag, Index, blockOffset = self.break_address(address)
-        
+
+        JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
+        self.__JSONArr.append(JSONDict)
+
         # requested data in binary
         DataFound = ""
 
@@ -278,6 +296,13 @@ class DCache:
                 return int(DataFound,2)
             
         elif self.mapping == "set-associative":
+            
+            # check for possible errors
+            if(self.number_of_ways%2!=0 and self.number_of_ways==0):
+                raise Exception("Invalid number of ways, expected number of ways to be even but got "+str(self.number_of_ways))
+            
+            # set that is accessed is same as the index
+            self.__SetAccessed.append({"set":Index})
 
             # check type of miss
             ColdMiss = True
@@ -299,7 +324,8 @@ class DCache:
                     break
                 else: # either capacity miss or conflict miss
                     CapacityORConflict = True
-
+                    ColdMiss = False
+            
 
             # ---------------------------------------------------------------
             if(ColdMiss): # if cold miss
@@ -340,6 +366,19 @@ class DCache:
             else: # hit
                 self.hits += 1
                 self.readHitOrMiss = 1 # cache hit
+
+                if(self.replacement_policy=="LRU"):
+                    self.LRU.append(wayNum) # append it to the end of the List
+                elif(self.replacement_policy=='FIFO'):
+                    self.FIFO.append(wayNum) # append it to the end of the queue
+                elif(self.replacement_policy=='random'):
+                    pass
+                elif(self.replacement_policy=='LFU'):
+                    if(wayNum in self.LFU):
+                        self.LFU[wayNum] += 1
+                    else:
+                        self.LFU[wayNum] = 1
+            
             # ---------------------------------------------------------------
             # once you know the wayNumber, now go to that way and get data from there
             # check type of load instruction
@@ -416,6 +455,21 @@ class DCache:
                     self.conflict_misses += 1
                 else:
                     self.capacity_misses += 1
+            else: # hit
+                self.hits += 1
+                self.readHitOrMiss = 1 # cache hit
+
+                if(self.replacement_policy=="LRU"):
+                    self.LRU.append(wayNum) # append it to the end of the List
+                elif(self.replacement_policy=='FIFO'):
+                    self.FIFO.append(wayNum) # append it to the end of the queue
+                elif(self.replacement_policy=='random'):
+                    pass
+                elif(self.replacement_policy=='LFU'):
+                    if(wayNum in self.LFU):
+                        self.LFU[wayNum] += 1
+                    else:
+                        self.LFU[wayNum] = 1
             # ---------------------------------------------------------------
             # once you know the wayNumber, now go to that way and get data from there
             # check type of load instruction
@@ -435,8 +489,6 @@ class DCache:
                 return int(DataFound,2)
             else:
                 raise ValueError("Invalid func3 value, expected 0, 1 or 2 but got "+str(func3)+" instead")
-
-        
 
     def break_address(self, address:int):
         # considering 32 bit address
@@ -491,7 +543,28 @@ class DCache:
             "miss_rate": (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses),
             "number_of_access": self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses
         }
+        # saving the stats in a json file
         json.dump(StatDict, file, indent=4)
+        file.close()
+
+        # Stores Split of Tag Index and Block Offset
+        file = open("Phase3/stats/JSONArr.json", "w")
+        json.dump(self.__JSONArr, file, indent=4)
+        file.close()
+
+        # stores the victim blocks
+        file = open("Phase3/stats/VictimBlocks.json", "w")
+        json.dump(self.__VictimBlocks, file, indent=4)
+        file.close()
+        
+        # stores the sets accessed
+        file = open("Phase3/stats/SetsAccessed.json", "w")
+        json.dump(self.__SetAccessed, file, indent=4)
+        file.close()
+
+        # stores the cache content
+        file = open("Phase3/stats/CacheContent.json", "w")
+        json.dump(self.__CacheContent, file, indent=4)
         file.close()
 
     def getCacheHitOrMiss(self):
@@ -508,10 +581,11 @@ class DCache:
         if cache miss, return 0
         else return None
         '''
+
         return self.writeHitORMiss
 
 if __name__ =='__main__':
-    L1 = DCache(32, 256, "direct", "LFU", 0)
+    L1 = DCache(32, 256, "set-associative", "LFU", 4)
     L1.write_data(0, 345, 1)
 
     data = L1.get_data(0, 2)
