@@ -357,30 +357,18 @@ def load_program_memory(file, MEM):
     f.close()
 
 
-def op2selectMUX(inst_type, rs1, rs2, imm_final, register, data_forwarding):
+def op2selectMUX(inst_type, rs1, rs2, imm_final, register):
     """
     Op2SelectMUX
     """
     # global operand1, operand2
-    if data_forwarding.get(rs1) is not None and inst_type != 'U' and inst_type != 'J':
-        print("DATA IS FORWARDING in rs1!!!")
-        print("operand1=data_forwarding[rs1]")
-        operand1 = data_forwarding[rs1]
+    operand1 = register[rs1]
+    if inst_type == "S" or inst_type == "I":
+        operand2 = imm_final
     else:
-        print("operand1=register[rs1]")
-        operand1 = register[rs1]
-    if data_forwarding.get(rs2) is not None and inst_type != 'I' and inst_type != 'U' and inst_type != 'J' and inst_type != 'S':
-        print("DATA IS FORWARDING in rs2!!!")
-        operand2 = data_forwarding[rs2]
-    else:
-        if inst_type == "S" or inst_type == "I":
-            print("operand2=imm_final")
-            operand2 = imm_final
-        else:
-            print("operand2=register[rs2]")
-            operand2 = register[rs2]
+        operand2 = register[rs2]
 
-    return operand1, operand2
+    return operand1,operand2
 
 
 def printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type):  # To be Completed
@@ -431,8 +419,8 @@ def printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type):  # To
         elif func3 == 0x2:
             print("SW ", rs1,  rs2,  immFinal)
 
-    elif inst_type=="I" and opcode==0b1100111:
-        print("JALR ",rd,rs1,immFinal)
+    elif inst_type == "I" and opcode == 0b1100111:
+        print("JALR ", rd, rs1, immFinal)
 
     elif inst_type == "B":
         if func3 == 0x0:
@@ -458,78 +446,74 @@ def Instruction_Details(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
     """
     Returns Instruction Details as string
     """
-    if(rd==0 and rs1==0 and rs2==0):
+    if (rd == 0 and rs1 == 0 and rs2 == 0):
         return "STALL"
-    
-    
+
     elif inst_type == "R":
         if func3 == 0x0 and func7 == 0x00:
-            return "ADD X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "ADD X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
         elif func3 == 0x0 and func7 == 0x20:
-            return "SUB X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "SUB X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
         elif func3 == 0x4:
-            return "XOR X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "XOR X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
         elif func3 == 0x6:
-            return "OR X"+str(rd)+" X"+ str(rs1)+ " X"+str(rs2)
+            return "OR X"+str(rd)+" X" + str(rs1) + " X"+str(rs2)
         elif func3 == 0x7:
-            return "AND X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "AND X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
         elif func3 == 0x1:
-            return "SLL X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "SLL X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
         elif func3 == 0x5:
-            return "SRL X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "SRL X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
         elif func3 == 0x5 and func7 == 0x20:
-            return "SRA X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "SRA X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
         elif func3 == 0x2:
-            return "SLT X"+ str(rd)+" X"+  str(rs1)+" X"+str(rs2)
+            return "SLT X" + str(rd)+" X" + str(rs1)+" X"+str(rs2)
 
     elif inst_type == "I" and opcode == 0b0010011:
         if func3 == 0x0:
-            return "ADDI X"+ str(rd)+" X"+  str(rs1)+" " +str(immFinal)
+            return "ADDI X" + str(rd)+" X" + str(rs1)+" " + str(immFinal)
         elif func3 == 0x7:
-            return "ANDI X"+ str(rd)+" X"+  str(rs1)+" " +str(immFinal)
+            return "ANDI X" + str(rd)+" X" + str(rs1)+" " + str(immFinal)
         elif func3 == 0x6:
-            return "ORI X"+ str(rd)+" X"+  str(rs1)+" " +str(immFinal)
+            return "ORI X" + str(rd)+" X" + str(rs1)+" " + str(immFinal)
 
     elif inst_type == "I" and opcode == 0b0000011:
         if func3 == 0x0:
-            return "LB X"+ str(rd)+" X"+  str(rs1)+ " " + str(immFinal)
+            return "LB X" + str(rd)+" X" + str(rs1) + " " + str(immFinal)
         elif func3 == 0x1:
-            return "LH X"+ str(rd)+" X"+  str(rs1)+ " " + str(immFinal)
+            return "LH X" + str(rd)+" X" + str(rs1) + " " + str(immFinal)
         elif func3 == 0x2:
-            return "LW X"+ str(rd)+" X"+  str(rs1)+ " " + str(immFinal)
+            return "LW X" + str(rd)+" X" + str(rs1) + " " + str(immFinal)
 
     elif inst_type == "S":
         if func3 == 0x0:
-            return "SB X"+ str(rs1)+" X"+ str( rs2)+ " "+ str( immFinal)
+            return "SB X" + str(rs1)+" X" + str(rs2) + " " + str(immFinal)
         elif func3 == 0x1:
-            return "SH X"+ str(rs1)+" X"+ str( rs2)+ " "+ str( immFinal)
+            return "SH X" + str(rs1)+" X" + str(rs2) + " " + str(immFinal)
         elif func3 == 0x2:
-            return "SW X"+ str(rs1)+" X"+ str( rs2)+ " "+ str( immFinal)
+            return "SW X" + str(rs1)+" X" + str(rs2) + " " + str(immFinal)
 
     elif inst_type == "I" and opcode == 0b1100111:
-        return "JALR X" + str(rd)+ " X"+ str(rs1)+" "+str(immFinal)
+        return "JALR X" + str(rd) + " X" + str(rs1)+" "+str(immFinal)
 
     elif inst_type == "B":
         if func3 == 0x0:
-            return "BEQ X"+ str(rs1)+" X"+  str(rs2)+" " + str(immFinal)
+            return "BEQ X" + str(rs1)+" X" + str(rs2)+" " + str(immFinal)
         elif func3 == 0x1:
-            return "BNE X"+ str(rs1)+" X"+  str(rs2)+" " + str(immFinal)
+            return "BNE X" + str(rs1)+" X" + str(rs2)+" " + str(immFinal)
         elif func3 == 0x4:
-            return "BLT X"+ str(rs1)+" X"+  str(rs2)+" " + str(immFinal)
+            return "BLT X" + str(rs1)+" X" + str(rs2)+" " + str(immFinal)
         elif func3 == 0x5:
-            return "BGE X"+ str(rs1)+" X"+  str(rs2)+" " + str(immFinal)
+            return "BGE X" + str(rs1)+" X" + str(rs2)+" " + str(immFinal)
 
     elif inst_type == "U" and opcode == 0b0110111:
-        return "LUI X"+ str(rd) + " "+ str( immFinal)
+        return "LUI X" + str(rd) + " " + str(immFinal)
 
     elif inst_type == "U" and opcode == 0b0010111:
-        return "AUIPC X"+ str(rd)+ " "+str(immFinal)
+        return "AUIPC X" + str(rd) + " "+str(immFinal)
 
     elif inst_type == "J":
-        return "JAL X"+str( rd)+" "+  str(immFinal)
-
-
-
+        return "JAL X"+str(rd)+" " + str(immFinal)
 
 
 def getALUReslt(ALUop, operand1, operand2):
