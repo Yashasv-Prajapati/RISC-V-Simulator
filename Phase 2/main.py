@@ -1,4 +1,5 @@
-from gopal import *
+# from gopal import *
+from new import *
 import argparse
 import sys
 
