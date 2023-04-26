@@ -5,7 +5,8 @@ import json
 
 # MEM = np.zeros((2**32), dtype='uint8') # main memory
 # MEM = {3456:567899, 4566: 456764, 545:563657} # main memory
-MEM = [0]*4000
+# MEM = [0]*4000
+MEM = np.zeros((2**12), dtype='uint8') # instruction memory 12 bit address
 
 class ICache:
     __policies = ["LRU", "FIFO", "random", "LFU"]
@@ -104,14 +105,15 @@ class ICache:
             
             # update tag array
             self.tag_arrays[wayNumber][Index] = Tag
+            print("NEW TAG SET IS: ", self.tag_arrays[wayNumber])
 
-            # get data from main memory
-            binaryDataFromMain = self.getFromMain(address)
+            # get data from instruction memory - considering 4 bytes of data
+            binaryInstructionsFromMain = self.getFromMain(address)
             
             # set data in cache  
             # converting dataReceived to a 256 bit binary string
             for i in range(self.block_size):
-                self.instruction_cache[wayNumber][Index][i] = int(binaryDataFromMain[i*8:i*8+8],2)
+                self.instruction_cache[wayNumber][Index][i] = int(binaryInstructionsFromMain[i*8:i*8+8],2)
             
             print("Data in cache block: ", self.instruction_cache[wayNumber][Index])
             
@@ -136,18 +138,13 @@ class ICache:
         # return data from main memory, considering main memory to be a dictionary
         # we have to take blocksize amount of bytes from main memory
 
+        # My instruction memory is MEM
+
         dataBytes = ""
-
         for i in range(self.block_size):
-            AddressInDataDict = address - (address%4) # address of the first byte of the block
+            dataBytes += bin(MEM[address+i])[2:].zfill(8)                
 
-            dataFromMem = MEM[AddressInDataDict] # get 4byte int from the dictionary or else get 0 of 32 bits
-            dataInBinary = bin(dataFromMem)[2:].zfill(32) # converting data to a 32 bit binary string
-            dataBytes += dataInBinary[8*(address%4):8*(address%4)+8]
-            
-            address += 1 # update address, go to next byte
-
-        return dataBytes      
+        return dataBytes     
     
     def writeByte(self, address:int, data:int, wayNumber:int):
         '''
@@ -174,12 +171,11 @@ class ICache:
         if the data is not in the cache then it will get it from the main memory
 
         address: the address of the data
-        func3: depending on type of load data
-            if func3 == 0b000 / 0 -> lb
-            if func3 == 0b001 / 1 -> lh
-            if func3 == 0b010 / 2 -> lw
+        func3: always 2
         '''
-        
+
+        func3 = 2
+
         # the content of all the sets of the cache
         cacheContent = {}
         for i in range(self.number_of_ways):
@@ -192,6 +188,7 @@ class ICache:
         self.__CacheContent.append(cacheContent)
 
         Tag, Index, blockOffset = self.break_address(address)
+        print("Tag: ", Tag, "Index: ", Index, "blockOffset: ", blockOffset)
 
         JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
         self.__JSONArr.append(JSONDict)
@@ -207,7 +204,7 @@ class ICache:
             # check type of miss
             if(self.tag_arrays[0].get(Index, -1)==-1): # cold miss
                 self.cold_misses += 1
-                
+                print("HERE COLD MISS ")
                 self.readHitOrMiss = 0 # cache miss
             elif(self.tag_arrays[0].get(Index, -1)!=Tag): # if tag != -1 and tag != Tag -> conflict miss or capacity miss
                 # so we look into the MCT to find out if it's a conflict or capacity miss
@@ -220,24 +217,19 @@ class ICache:
                     self.capacity_misses += 1
             else:
                 # else the data is present in the cache -> hit
+                print("HERE HIT")
                 self.hits += 1 
                 self.readHitOrMiss=1 # cache hit
 
-            # check type of load instruction
-            if(func3==0): # lb
-                return self.readByte(address, 0)
-            
-            elif(func3==1): # lh
-                for i in range(2):
-                    DataFound += bin(self.readByte(address, 0))[2:].zfill(8) # convert to binary and pad with zeros
-                    address+=1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            
-            elif(func3==2): # lw
-                for i in range(4):
-                    DataFound += bin(self.readByte(address, 0))[2:].zfill(8) # convert to binary and pad with zeros
-                    address += 1 # increment address by 1 to get new address
-                return int(DataFound,2)
+            # lw
+            print("VALUE OF FUNC3: ", func3)
+
+            # get 4 bytes from cache
+
+            for i in range(4):
+                DataFound += bin(self.readByte(address, 0))[2:].zfill(8) # convert to binary and pad with zeros
+                address += 1 # increment address by 1 to get new address
+            return int(DataFound,2)
             
         elif self.mapping == "set-associative":
             
@@ -326,23 +318,13 @@ class ICache:
             # ---------------------------------------------------------------
             # once you know the wayNumber, now go to that way and get data from there
             # check type of load instruction
-            if(func3==0): # lb
-                return self.readByte(address, wayNum)
             
-            elif(func3==1): # lh
-                for _ in range(2):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address+=1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            
-            elif(func3==2): # lw
-                for _ in range(4):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address += 1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            else:
-                raise ValueError("Invalid func3 value, expected 0, 1 or 2 but got "+str(func3)+" instead")
-
+            # lw
+            for _ in range(4):
+                DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
+                address += 1 # increment address by 1 to get new address
+            return int(DataFound,2)
+        
         
         elif self.mapping == "fully-associative":
             # check type of miss
@@ -417,33 +399,23 @@ class ICache:
             # ---------------------------------------------------------------
             # once you know the wayNumber, now go to that way and get data from there
             # check type of load instruction
-            if(func3==0): # lb
-                return self.readByte(address, wayNum)
             
-            elif(func3==1): # lh
-                for _ in range(2):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address+=1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            
-            elif(func3==2): # lw
-                for _ in range(4):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address += 1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            else:
-                raise ValueError("Invalid func3 value, expected 0, 1 or 2 but got "+str(func3)+" instead")
-
+            # lw
+            for _ in range(4):
+                DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
+                address += 1 # increment address by 1 to get new address
+            return int(DataFound,2)
+        
     def break_address(self, address:int):
-        # considering 32 bit address
-        address = bin(address)[2:].zfill(32) # converting to binary and padding with zeros to make it 32 bits
+        # considering 12 bit address
+        address = bin(address)[2:].zfill(12) # converting to binary and padding with zeros to make it 32 bits
         numberOfBlocks = self.cache_size / self.block_size
         numberOfSets = numberOfBlocks / self.number_of_ways
         
         # Calculating the number of bits for tag, index and block offset
         IndexBitsNum = int(math.log(numberOfSets, 2))
         blockOffsetBitsNum = int(math.log(self.block_size, 2))
-        TagBitsNum = int(32 - IndexBitsNum - blockOffsetBitsNum) # remaining bits are tag bits
+        TagBitsNum = int(12 - IndexBitsNum - blockOffsetBitsNum) # remaining bits are tag bits
 
         # Calculating the tag, index and block offset
         if(address[0:TagBitsNum]==""):

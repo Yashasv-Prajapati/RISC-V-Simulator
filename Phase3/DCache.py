@@ -41,11 +41,12 @@ class DCache:
 
         # LRU policy
         # number of ways x 3, 3 is for the Valid bit, status bit and tag bit
-        self.LRU = np.zeros((self.number_of_ways), dtype='uint32')
+        # self.LRU = np.zeros((self.number_of_ways), dtype='uint32')
+        self.LRU = [0]*self.number_of_ways
 
         # FIFO policy
-        self.FIFO = np.zeros((self.number_of_ways), dtype='uint32')
-
+        # self.FIFO = np.zeros((self.number_of_ways), dtype='uint32')
+        self.FIFO = [0]*self.number_of_ways
         # LFU policy
         self.LFU = {}
 
@@ -85,10 +86,12 @@ class DCache:
         address: the address of the byte
         '''
         Tag, Index, blockOffset = self.break_address(address)
+        print("BLOCK OFFSET: ", blockOffset)
         # TotalSets = self.cache_size//(self.block_size*self.number_of_ways)
         
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             # using block offset to get data from block
+            print("IN TAG")
             return self.data_cache[wayNumber][Index][blockOffset]
         
         else: # handle miss, by getting data from main memory
@@ -103,16 +106,28 @@ class DCache:
             # update tag array
             self.tag_arrays[wayNumber][Index] = Tag
 
-            # get data from main memory
-            binaryDataFromMain = self.getFromMain(address)
             
             # set data in cache  
             # converting dataReceived to a 256 bit binary string
+            tempAddress = address
+
+            # how many bits to make 0 -> log2(block_size)
+            bitsToMakeZero = int(math.log2(self.block_size))
+            tempAddress = bin(tempAddress)[2:].zfill(32)
+            tempAddress = tempAddress[:-bitsToMakeZero] + '0'*bitsToMakeZero
+            tempAddress = int(tempAddress, 2)
+
+            # get data from main memory
+            binaryDataFromMain = self.getFromMain(tempAddress)
+
             for i in range(self.block_size):
-                self.data_cache[wayNumber][Index][i] = int(binaryDataFromMain[i*8:i*8+8],2)
+                _, tempIndex, tempBO = self.break_address(tempAddress)
+                
+                self.data_cache[wayNumber][tempIndex][tempBO] = int(binaryDataFromMain[i*8:i*8+8],2)
+                tempAddress += 1
             
             print("Data in cache block: ", self.data_cache[wayNumber][Index])
-            
+            print("DATACACHE: ", self.data_cache[wayNumber][Index][3])
             return self.data_cache[wayNumber][Index][blockOffset]
 
     def WriteDataInMain(self, address:int, data:int):
@@ -121,7 +136,12 @@ class DCache:
         Considering data to be of 32 bits/4 Bytes or max value of int to be 2^31 - 1
         '''
 
-        data_mem[address] = data
+        data_mem[int(address)] = data
+        # now considering the instruction is of 4 bytes, we can write it to the memory
+        # dataInBinary = bin(data)[2:].zfill(32)
+        # for i in range(4):
+        #     data_mem[int(address)+i] = int(dataInBinary[8*i:8*i+8],2) # writing byte by byte
+        
           
     def getFromMain(self, address:int):
         '''
@@ -145,7 +165,13 @@ class DCache:
             
             address += 1 # update address, go to next byte
 
-        return dataBytes      
+        return dataBytes   
+
+        # dataBytes = ""
+        # for i in range(self.block_size):
+        #     dataBytes += bin(data_mem[address+i])[2:].zfill(8)                
+
+        # return dataBytes     
     
     def writeByte(self, address:int, data:int, wayNumber:int):
         '''
@@ -192,29 +218,53 @@ class DCache:
 
         Tag, Index, blockOffset = self.break_address(address)
 
-        dataInBinary = bin(data)[2:].zfill(32) # converting data to a 32 bit binary string
-
+        # dataInBinary = bin(data)[2:].zfill(32) # converting data to a 32 bit binary string
+        print("Data IS: ", data)
+        print("BLOCKOFFSET", blockOffset)
+        print("FUNC3: ", func3)
+        print("INDEX: ", Index)
         if(self.mapping=="direct"):
             #  match the tag with the tag array
             if(self.tag_arrays[0].get(Index, -1) == Tag): # found in cache
-                for _ in range(2**func3): # writing data in the cache either a byte, half word or a word
-                    self.writeByte(address, int(dataInBinary[blockOffset*8:blockOffset*8+8], 2), 0)
+                if(func3==0):
+                    dataInBinary = bin(data)[2:].zfill(8) # converting data to a 8 bit binary string
+                elif(func3==1):
+                    dataInBinary = bin(data)[2:].zfill(16)
+                elif(func3==2):
+                    dataInBinary = bin(data)[2:].zfill(32)
+
+                for i in range(2**func3): # writing data in the cache either a byte, half word or a word
+                    print("dataInBinary bhai: ", dataInBinary[i*8:i*8+8])
+                    self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), 0)
                     address += 1
-                    break
             
         elif(self.mapping=="set-associative"):
             for i in range(len(self.tag_arrays)):
                 if(self.tag_arrays[0].get(Index,-1)==Tag):
-                    for _ in range(2**func3):
-                        self.writeByte(address, int(dataInBinary[blockOffset*8:blockOffset*8+8], 2), i)
+                    if(func3==0):
+                        dataInBinary = bin(data)[2:].zfill(8) # converting data to a 8 bit binary string
+                    elif(func3==1):
+                        dataInBinary = bin(data)[2:].zfill(16)
+                    elif(func3==2):
+                        dataInBinary = bin(data)[2:].zfill(32)
+
+                    for i in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), i)
                         address += 1
                     break
             
         elif(self.mapping=="fully-associative"):
             for i in range(len(self.tag_arrays)):
                 if(self.tag_arrays[0].get(Index,-1)==Tag):
-                    for _ in range(2**func3):
-                        self.writeByte(address, int(dataInBinary[blockOffset*8:blockOffset*8+8], 2), i)
+                    if(func3==0):
+                        dataInBinary = bin(data)[2:].zfill(8) # converting data to a 8 bit binary string
+                    elif(func3==1):
+                        dataInBinary = bin(data)[2:].zfill(16)
+                    elif(func3==2):
+                        dataInBinary = bin(data)[2:].zfill(32)
+
+                    for i in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), i)
                         address += 1
                     break
             
@@ -224,6 +274,8 @@ class DCache:
         self.writeHitOrMiss = 1 # cache miss
     
     def get_data(self,address:int, func3:int):
+
+        print("ADDRESS: ", address)
 
         '''
         This function is used to get data from the cache
@@ -248,7 +300,7 @@ class DCache:
         self.__CacheContent.append(cacheContent)
 
         Tag, Index, blockOffset = self.break_address(address)
-
+        print("TAG: ", Tag, "INDEX: ", Index, "BLOCKOFFSET: ", blockOffset)
         JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
         self.__JSONArr.append(JSONDict)
 
@@ -293,6 +345,7 @@ class DCache:
                 for i in range(4):
                     DataFound += bin(self.readByte(address, 0))[2:].zfill(8) # convert to binary and pad with zeros
                     address += 1 # increment address by 1 to get new address
+                print("DataFound: ", DataFound)
                 return int(DataFound,2)
             
         elif self.mapping == "set-associative":
@@ -573,7 +626,7 @@ class DCache:
         if cache miss, return 0
         else return None
         '''
-        return self.cacheHitORMiss
+        return self.readHitOrMiss
     
     def getWriteHitOrMiss(self):
         '''
@@ -582,7 +635,7 @@ class DCache:
         else return None
         '''
 
-        return self.writeHitORMiss
+        return self.writeHitOrMiss
 
 # if __name__ =='__main__':
 #     L1 = DCache(32, 256, "set-associative", "LFU", 4)

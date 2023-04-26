@@ -1,3 +1,5 @@
+import sys
+
 def makeDictEqual(dict1, dict2):
     """Make 2 dictionaries equal"""
     for key in dict1:
@@ -8,9 +10,13 @@ def write_word(address, instruction, MEM):
     """
     Write Word
     """
-    index = address / 4
-    MEM[int(index)] = instruction
+    index = address
 
+    # now considering the instruction is of 4 bytes, we can write it to the memory
+    dataInBinary = bin(instruction)[2:].zfill(32)
+    for i in range(4):
+        MEM[int(index)+i] = int(dataInBinary[8*i:8*i+8],2) # writing byte by byte
+    
 
 def read_word(address, MEM):
     """

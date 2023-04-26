@@ -1,4 +1,4 @@
-
+import sys
 import multiprocessing as mp
 from multiprocessing import Manager
 import json
@@ -12,8 +12,10 @@ cycle = 0
 
 # MEM = [0] * 4000
 
-L1 = DCache(32, 256, "direct", "LRU", 1)
+
+L1 = DCache(4, 256, "set-associative", "LRU", 4)
 iCache = ICache(4, 4096, "direct", "LRU", 1)
+
 
 
 isStall = 0
@@ -49,15 +51,7 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
         # global instruction_word
         # instruction_word = read_word(pc, MEM)
-
-        instruction_word=iCache.get_data(pc*4,0)
-        check = iCache.getCacheHitOrMiss()
-        global cycle
-        # if check==0:
-        #     #1 Stall
-        #     cycle += 1
-            
-
+        instruction_word = iCache.get_data(pc*4, 2)
         print("Instruction Word", hex(instruction_word))
 
         # End of program
@@ -604,7 +598,7 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
             else:  # Branch should be taken
                 print("HERE2")
                 # but btb said not to branch
-                if (btbTable1[pc] == 0 or ((btbTable2[pc] != (int(ALUResult/4))) and opcode == 0b1100111)):
+                if (btbTable1[pc] == 0 or ((btbTable2[pc] != (int(ALUResult/4))) and opcode==0b1100111)):
                     Stats[10] += 1
                     Stats[7] += 2
                     print("HERE3 PC:", pc)
@@ -699,7 +693,7 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
     return
 
 
-def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_forwarding, Stats, Cycle_dict_printing):
+def Memory(memory_input, memory_output, register, codeExitFlag, data_forwarding, Stats, Cycle_dict_printing):
     """
     MemOp operation
     0 - Do nothing (skip)
@@ -735,6 +729,7 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
         ReadData = 0
         print()
         print("MEMORY")
+        
 
         Cycle_dict_printing["MEMORY"] = Instruction_Details(opcode,
                                                             immFinal, rs1, rs2, rd, func3, func7, inst_type)
@@ -746,15 +741,10 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
             # Store
             print("data_mem[", ALUResult, "]=register[",
                   rs2, "]=", register[rs2])
-            # data_mem[ALUResult] = register[rs2]
+            data_mem[ALUResult] = register[rs2]
             # ReadData = data_mem[ALUResult]
-            
-            
-            
             L1.write_data(ALUResult,register[rs2],func3)
             check=L1.getWriteHitOrMiss()
-            #20 Stalls
-
 
             Stats[4] += 1
 
@@ -763,18 +753,12 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
 
         elif MemOp == 2:
             # ReadData = data_mem.get(ALUResult, 0)
-            
             ReadData=L1.get_data(ALUResult,func3)
             print("DATA GOT FROM L1 CACHE IS", ReadData, "and func3 is ", func3)
             check=L1.getCacheHitOrMiss()
-            # global cycle
-            # if(check==0):
-            #     cycle += 20
 
             Stats[4] += 1
 
-
-    
             print("There is a Read Operation to be done from memory")
             print("ReadData=data_mem[", ALUResult, "]")
 
@@ -1049,7 +1033,6 @@ def Write(
 
 
 def run_riscvsim():
-    
     global cycle
 
     fetch_ready = 1
@@ -1094,7 +1077,7 @@ def run_riscvsim():
     Data_out_Data_mem = []  # List of datamem
     Data_out_Stats = []  # List of Stats
     Data_out_printing = []  # List of printing Statements
-    Data_out_BTB = []  # List of BTB
+    Data_out_BTB=[]#List of BTB
 
     # register = mp.Array("i", 32, lock=False)  # All 32 Registers
     # data_mem = mp.Array("i", 1000000000, lock=False)  # Data Memory as Array
@@ -1287,13 +1270,12 @@ def run_riscvsim():
     btbTable1 = {}
     btbTable2 = {}
     t = 0
-    while (t < 50):
+    while (t<50):
 
         print()
         print("CYCLE: ", cycle)
-
         print("DATAMEM: ", data_mem)
-        # print(L1.data_cache)
+        print("DATACACHE:", L1.data_cache)
         # t+=1
         # call for every cycle
         Cycle_dict_printing = {}
@@ -1321,7 +1303,7 @@ def run_riscvsim():
             Load_Casing_Dependency_Detected[0] = 0
             cycle += 1
         elif cycle == 3:  # 3 instruction
-            Memory(memory_input, memory_output, data_mem,
+            Memory(memory_input, memory_output,
                    register, codeExitFlag, data_forwarding, Stats, Cycle_dict_printing)
             execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
                     ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input, Stats, Cycle_dict_printing)
@@ -1351,7 +1333,7 @@ def run_riscvsim():
                 data_forwarding,
                 Stats, Cycle_dict_printing
             )
-            Memory(memory_input, memory_output, data_mem,
+            Memory(memory_input, memory_output,
                    register, codeExitFlag, data_forwarding, Stats, Cycle_dict_printing)
             execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
                     ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input, Stats, Cycle_dict_printing)
@@ -1372,7 +1354,7 @@ def run_riscvsim():
         #                            GUI
         Cycle_dict_register = {}
         Cycle_dict_Data_mem = {}
-        Cycle_dict_BTB = {}
+        Cycle_dict_BTB={}
         # Registers
         for i in range(32):
             string_register_name = "X[" + str(i)+"]"
@@ -1389,8 +1371,8 @@ def run_riscvsim():
         #               MEMORY
         #               BTB
         for i in btbTable1.keys():
-            Cycle_dict_BTB[i] = btbTable1[i]
-
+            Cycle_dict_BTB[i]=btbTable1[i]
+           
         Data_out_BTB.append(Cycle_dict_BTB)
         Data_out_register.append(Cycle_dict_register)
         Data_out_Data_mem.append(Cycle_dict_Data_mem)
@@ -1430,9 +1412,6 @@ def run_riscvsim():
             print("Number of branch mispredictions=", Stats[10])
             print("Number of stalls due to data hazards=", Stats[11])
             print("Number of stalls due to control hazards=", Stats[12])
-
-            print("<<<<<<<<<---------------------CACHE STATS------------------->>>>>>>>>>>>")
-            iCache.printStats()
             break
 
         print("-------------------------------------------------------")
@@ -1445,7 +1424,6 @@ def run_riscvsim():
         makeDictEqual(memory_output, write_input)
         makeDictEqual(write_output, fetch2_input)
         makeDictEqual(fetch3_input, fetch_input)
-
 
     # for i in range(100):
     #     print("Cycle No.", i + 1)
@@ -1520,9 +1498,9 @@ def run_riscvsim():
     pathName = "./ResultFiles/DataForwarding/data_out_printing.json"
     with open(pathName, "w") as outfile:
         json.dump(Data_out_printing, outfile)
-    pathName = "./ResultFiles/DataForwarding/data_out_Stats.json"
-    with open(pathName, "w") as outfile:
-        json.dump(Data_out_Stats, outfile)
-    pathName = "./ResultFiles/DataForwarding/data_out_btb.json"
-    with open(pathName, "w") as outfile:
-        json.dump(Data_out_BTB, outfile)
+    pathName="./ResultFiles/DataForwarding/data_out_Stats.json"
+    with open(pathName,"w") as outfile:
+        json.dump(Data_out_Stats,outfile)
+    pathName="./ResultFiles/DataForwarding/data_out_btb.json"
+    with open(pathName,"w") as outfile:
+        json.dump(Data_out_BTB,outfile)
