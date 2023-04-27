@@ -1,0 +1,5 @@
+Information Related to Sizes:
+1. Considering 2^32, the size of the memory space, so the number of bits required to address a memory location is 32.
+2. We need the address of that block we are accessing
+3. Cache and Tag Array are both dictionary
+4. Considering 1 word is 4 bytes, so the number of bits required to address a word is 2. So, number of words = blocksize/wordsize = blocksize/4
