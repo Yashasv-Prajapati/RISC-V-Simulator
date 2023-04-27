@@ -431,8 +431,8 @@ def printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type):  # To
         elif func3 == 0x2:
             print("SW ", rs1,  rs2,  immFinal)
 
-    elif inst_type=="I" and opcode==0b1100011:
-        print("JAL ",rd,rs1,immFinal)
+    elif inst_type=="I" and opcode==0b1100111:
+        print("JALR ",rd,rs1,immFinal)
 
     elif inst_type == "B":
         if func3 == 0x0:
@@ -506,7 +506,7 @@ def Instruction_Details(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
         elif func3 == 0x2:
             return "SW X"+ str(rs1)+" X"+ str( rs2)+ " "+ str( immFinal)
 
-    elif inst_type == "I" and opcode == 0b1100011:
+    elif inst_type == "I" and opcode == 0b1100111:
         return "JALR X" + str(rd)+ " X"+ str(rs1)+" "+str(immFinal)
 
     elif inst_type == "B":

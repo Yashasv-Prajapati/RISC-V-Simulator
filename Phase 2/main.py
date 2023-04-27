@@ -7,6 +7,7 @@ from multiProcess_BTB import *
 import argparse
 import sys
 
+
 def init():
     parser = argparse.ArgumentParser(
                     prog='RISC V Simulator',
@@ -28,6 +29,7 @@ def init():
     else:
         print("Incorrect number of arguments. Please invoke the simulator \n\t./myRISCVSim <input mem file>")
         sys.exit(0)
+
 
 if __name__ == '__main__':
     init()

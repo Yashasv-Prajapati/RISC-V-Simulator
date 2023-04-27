@@ -565,7 +565,11 @@ class data_path:
         return instruction
 
 if(1):
+<<<<<<< HEAD
     load_program_memory('TestFiles/MergeSort.mem', MEM)
+=======
+    # load_program_memory('TestFiles/output.mem', MEM)
+>>>>>>> refs/remotes/origin/main
     non_pipeline = data_path()
     non_pipeline.pc = 0
     
@@ -575,4 +579,9 @@ if(1):
         non_pipeline.execute()
         non_pipeline.memory()
         non_pipeline.write()
+<<<<<<< HEAD
         print("--------------------------------------------")
+=======
+        print("--------------------------------------------")
+    
+>>>>>>> refs/remotes/origin/main

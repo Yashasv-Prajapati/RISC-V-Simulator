@@ -1,0 +1,50 @@
+[
+  { "FETCH": "ADDI X1 X0 69" },
+  { "DECODE": "ADDI X1 X0 69", "FETCH": "ADDI X2 X1 74" },
+  { "EXECUTE": "ADDI X1 X0 69", "DECODE": "STALL", "FETCH": "STALL" },
+  {
+    "MEMORY": "ADDI X1 X0 69",
+    "EXECUTE": "STALL",
+    "DECODE": "STALL",
+    "FETCH": "STALL"
+  },
+  {
+    "WRITE": "ADDI X1 X0 69",
+    "MEMORY": "STALL",
+    "EXECUTE": "STALL",
+    "DECODE": "STALL",
+    "FETCH": "STALL"
+  },
+  {
+    "WRITE": "STALL",
+    "MEMORY": "STALL",
+    "EXECUTE": "STALL",
+    "DECODE": "ADDI X2 X1 74",
+    "FETCH": "STALL"
+  },
+  {
+    "WRITE": "STALL",
+    "MEMORY": "STALL",
+    "EXECUTE": "ADDI X2 X1 74",
+    "DECODE": "STALL"
+  },
+  {
+    "WRITE": "STALL",
+    "MEMORY": "ADDI X2 X1 74",
+    "EXECUTE": "STALL",
+    "DECODE": "STALL"
+  },
+  {
+    "WRITE": "ADDI X2 X1 74",
+    "MEMORY": "STALL",
+    "EXECUTE": "STALL",
+    "DECODE": "STALL"
+  },
+  {
+    "WRITE": "STALL",
+    "MEMORY": "STALL",
+    "EXECUTE": "STALL",
+    "DECODE": "STALL"
+  },
+  { "WRITE": "STALL", "MEMORY": "STALL", "EXECUTE": "STALL", "DECODE": "STALL" }
+]

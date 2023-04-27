@@ -18,7 +18,7 @@ fetch_next_forwarding_flag = 0
 fetch_next_forwarding_flag2 = 0
 
 
-def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag, fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding,Cycle_dict_printing):
+def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExitFlag, fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing):
     """
     Fetch Instruction
     """
@@ -66,7 +66,8 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
         # Print Instruction
         printDetails(opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
-        Cycle_dict_printing["FETCH"]=Instruction_Details(opcode,immFinal,rs1,rs2,rd,func3,func7,inst_type)
+        Cycle_dict_printing["FETCH"] = Instruction_Details(
+            opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
         # set decode_ready to 1, as the current instruction can go to decode
         # decode_ready=1
         global decode_ready
@@ -205,13 +206,13 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
 
         flush_due_to_mispredict[0] = 0
         fetch_output["decode_end"] = 0
-        Cycle_dict_printing["FETCH"]="STALL"
+        Cycle_dict_printing["FETCH"] = "STALL"
         register[0] = 0
 
     return
 
 
-def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding,Cycle_dict_printing):
+def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding, Cycle_dict_printing):
     register[0] = 0
 
     # Read Inputs from decode
@@ -323,8 +324,8 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
                 ),
             )
 
-
-            Cycle_dict_printing["DECODE"]=Instruction_Details(opcode,immFinal,rs1,rs2,rd,func3,func7,inst_type) 
+            Cycle_dict_printing["DECODE"] = Instruction_Details(
+                opcode, immFinal, rs1, rs2, rd, func3, func7, inst_type)
             # as soon as you meet a register which is non zero and has valid rd, set that rd to not ready
             if rd != 0 and inst_type != "S" and inst_type != "B":
                 print("DOING NOT READY")
@@ -375,10 +376,9 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
             decode_output["rs1"] = rs1
             decode_output["instructionType"] = instructionType
             decode_output["opcode"] = opcode
-            decode_output["rs1"]=rs1
-            decode_output["func3"]=func3
-            decode_output["func7"]=func7
-
+            decode_output["rs1"] = rs1
+            decode_output["func3"] = func3
+            decode_output["func7"] = func7
 
             register[0] = 0
 
@@ -424,17 +424,16 @@ def decode(decode_input, decode_output, register, codeExitFlag, ready_reg, fetch
         decode_output["instructionType"] = "0"
         decode_output["opcode"] = 0
         decode_output["rs1"] = 0
-        decode_output["func3"]=0
-        decode_output["func7"]=0
+        decode_output["func3"] = 0
+        decode_output["func7"] = 0
 
-
-        Cycle_dict_printing["DECODE"]="STALL"
+        Cycle_dict_printing["DECODE"] = "STALL"
         register[0] = 0
 
     return
 
 
-def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input,Stats,Cycle_dict_printing):
+def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input, ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input, Stats, Cycle_dict_printing):
     """
     ALUop operation
     0 - perform none (skip)
@@ -466,9 +465,9 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
     rs1 = execute_input["rs1"]
     inst_type = execute_input["instructionType"]
     opcode = execute_input["opcode"]
-    rs1=execute_input["rs1"]
-    func3=execute_input["func3"]
-    func7=execute_input["func7"]
+    rs1 = execute_input["rs1"]
+    func3 = execute_input["func3"]
+    func7 = execute_input["func7"]
 
     codeExitFlag[2] = execute_ready
 
@@ -478,14 +477,12 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
         print()
         print("EXECUTE")
 
-
         if (inst_type != 'U'):
             Stats[5] += 1
 
         if (inst_type == 'B' or inst_type == 'J' or opcode == 0b1100111):
             Stats[6] += 1
             Stats[9] += 1
-
 
         # get ALUResult
         ALUResult = getALUReslt(ALUop, operand1, operand2)
@@ -497,10 +494,8 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
         # Get memory_ready
         memory_ready = 1
 
-
         Cycle_dict_printing["EXECUTE"] = Instruction_Details(opcode,
-            immFinal, rs1, rs2, rd, func3, func7, inst_type)
-
+                                                             immFinal, rs1, rs2, rd, func3, func7, inst_type)
 
         # Output to Memory
         execute_output["pc"] = pc
@@ -517,10 +512,9 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
         execute_output["rs2"] = rs2
         execute_output["instructionType"] = inst_type
         execute_output["opcode"] = opcode
-        execute_output["rs1"]=rs1
-        execute_output["func3"]=func3
-        execute_output["func7"]=func7
-
+        execute_output["rs1"] = rs1
+        execute_output["func3"] = func3
+        execute_output["func7"] = func7
 
         if (inst_type == 'R' or inst_type == 'I' and opcode != 0b0000011):
             print("data_forwarding[rd]=ALUResult")
@@ -552,8 +546,8 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
             print("HERE1")
             if (isBranch == 2):  # this means branch is not taken
                 if (btbTable1[pc] == 1):  # but btb said to take branch
-                    Stats[10]+=1
-                    Stats[7]+=2
+                    Stats[10] += 1
+                    Stats[7] += 2
                     btbTable1[pc] = 0
                     btbTable2[pc] = pc+1
                     # btbTable[pc] = [0, pc+1]
@@ -585,8 +579,7 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
                     decode_output["func3"] = 0
                     decode_output["func7"] = 0
 
-                    Cycle_dict_printing["DECODE"]="STALL"
-
+                    Cycle_dict_printing["DECODE"] = "STALL"
 
                     ready_reg[fetch_output["rd"]] = 1
                     # for i in range(10):
@@ -597,9 +590,9 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
             else:  # Branch should be taken
                 print("HERE2")
                 # but btb said not to branch
-                if (btbTable1[pc] == 0 or btbTable2[pc] != (int(ALUResult/4))):
-                    Stats[10]+=1
-                    Stats[7]+=2
+                if (btbTable1[pc] == 0 or ((btbTable2[pc] != (int(ALUResult/4))) and opcode==0b1100111)):
+                    Stats[10] += 1
+                    Stats[7] += 2
                     print("HERE3 PC:", pc)
                     btbTable1[pc] = 1
                     if (opcode == 0b1100111):  # JALR
@@ -644,8 +637,6 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
 
                     Cycle_dict_printing["DECODE"] = "STALL"
 
-
-
                     # for i in range(10):
                     #     out1[i] = 0
                     # out1[10] = end_fetched
@@ -657,12 +648,11 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
             print("HEREEEE")
             if (decode_input["rs1"] == rd or decode_input["rs2"] == rd):
                 print("Load_Casing_Dependency_Detected")
-                Stats[8]+=1
-                Stats[7]+=1
+                Stats[8] += 1
+                Stats[7] += 1
                 Load_Casing_Dependency_Detected[0] = 1
                 execute_input["execute_ready"] = 0
                 decode_output["execute_ready"] = 0
-        
 
         register[0] = 0
 
@@ -688,15 +678,14 @@ def execute(execute_input, execute_output, register, codeExitFlag, btbTable1, bt
         execute_output["func3"] = func3
         execute_output["func7"] = func7
 
-        Cycle_dict_printing["EXECUTE"]="STALL"
-
+        Cycle_dict_printing["EXECUTE"] = "STALL"
 
         register[0] = 0
 
     return
 
 
-def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_forwarding,Stats,Cycle_dict_printing):
+def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_forwarding, Stats, Cycle_dict_printing):
     """
     MemOp operation
     0 - Do nothing (skip)
@@ -721,9 +710,9 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
     rs2 = memory_input["rs2"]
     inst_type = memory_input["instructionType"]
     opcode = memory_input["opcode"]
-    rs1=memory_input["rs1"]
-    func3=memory_input["func3"]
-    func7=memory_input["func7"]
+    rs1 = memory_input["rs1"]
+    func3 = memory_input["func3"]
+    func7 = memory_input["func7"]
 
     # For exiting the code
     codeExitFlag[3] = memory_ready
@@ -734,9 +723,8 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
         print("MEMORY")
 
         Cycle_dict_printing["MEMORY"] = Instruction_Details(opcode,
-            immFinal, rs1, rs2, rd, func3, func7, inst_type)
+                                                            immFinal, rs1, rs2, rd, func3, func7, inst_type)
 
-        
         if MemOp == 0:
             print("There is no Memory Operation")
             ReadData = ALUResult
@@ -747,7 +735,7 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
             data_mem[ALUResult] = register[rs2]
             ReadData = data_mem[ALUResult]
 
-            Stats[4]+=1
+            Stats[4] += 1
 
             print(
                 "There is a Store Operation to be done to memory and operand2=", operand2)
@@ -755,7 +743,7 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
         elif MemOp == 2:
             ReadData = data_mem.get(ALUResult, 0)
 
-            Stats[4]+=1
+            Stats[4] += 1
 
             print("There is a Read Operation to be done from memory")
             print("ReadData=data_mem[", ALUResult, "]")
@@ -782,10 +770,10 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
         memory_output["write_ready"] = write_ready
         memory_output["instructionType"] = inst_type
         memory_output["opcode"] = opcode
-        memory_output["rs1"]=rs1
-        memory_output["func3"]=func3
-        memory_output["func7"]=func7
-        memory_output["rs2"]=rs2
+        memory_output["rs1"] = rs1
+        memory_output["func3"] = func3
+        memory_output["func7"] = func7
+        memory_output["rs2"] = rs2
 
         register[0] = 0
 
@@ -808,9 +796,9 @@ def Memory(memory_input, memory_output, data_mem, register, codeExitFlag, data_f
         memory_output["rs1"] = 0
         memory_output["func3"] = 0
         memory_output["func7"] = 0
-        memory_output["rs2"]=   0
+        memory_output["rs2"] = 0
 
-        Cycle_dict_printing["MEMORY"]="STALL"
+        Cycle_dict_printing["MEMORY"] = "STALL"
 
         register[0] = 0
 
@@ -858,10 +846,10 @@ def Write(
     write_ready = write_input["write_ready"]
     inst_type = write_input["instructionType"]
     opcode = write_input["opcode"]
-    rs1=write_input["rs1"]
-    rs2=write_input["rs2"]
-    func3=write_input["func3"]
-    func7=write_input["func7"]
+    rs1 = write_input["rs1"]
+    rs2 = write_input["rs2"]
+    func3 = write_input["func3"]
+    func7 = write_input["func7"]
 
     # For exiting the code
     codeExitFlag[4] = write_ready
@@ -873,15 +861,14 @@ def Write(
               "#########################################")
 
         Cycle_dict_printing["WRITE"] = Instruction_Details(opcode,
-            immFinal, rs1, rs2, rd, func3, func7, inst_type)
+                                                           immFinal, rs1, rs2, rd, func3, func7, inst_type)
 
-        if(inst_type=='R' and rd==0 and RFWrite==1 and ALUResult==0):
-            
-            Stats[2]-=1
-            Stats[5]-=1
+        if (inst_type == 'R' and rd == 0 and RFWrite == 1 and ALUResult == 0):
 
+            Stats[2] -= 1
+            Stats[5] -= 1
 
-        Stats[2]+=1
+        Stats[2] += 1
 
         globalCounter += 1
 
@@ -1017,8 +1004,7 @@ def Write(
 
     else:
 
-        
-        Cycle_dict_printing["WRITE"]="STALL"
+        Cycle_dict_printing["WRITE"] = "STALL"
         print("\nNO WRITE READY")
         write_output["fetch_ready1"] = 1
         # fetch_output["decode_ready"]=1
@@ -1071,14 +1057,13 @@ def run_riscvsim():
     codeExitFlag = [0, 1, 1, 1, 1]
     flush_due_to_mispredict = [0]
     Load_Casing_Dependency_Detected = [0]
-    Stats=[0] * 13
-    
+    Stats = [0] * 13
 
-    Data_out_register=[]#List of dictionaries
-    Data_out_Data_mem=[]#List of datamem
-    Data_out_Stats=[]#List of Stats
-    Data_out_printing=[]#List of printing Statements
-
+    Data_out_register = []  # List of dictionaries
+    Data_out_Data_mem = []  # List of datamem
+    Data_out_Stats = []  # List of Stats
+    Data_out_printing = []  # List of printing Statements
+    Data_out_BTB=[]#List of BTB
 
     # register = mp.Array("i", 32, lock=False)  # All 32 Registers
     # data_mem = mp.Array("i", 1000000000, lock=False)  # Data Memory as Array
@@ -1139,9 +1124,9 @@ def run_riscvsim():
         "rs2": rs2,
         "instructionType": instructionType,
         "opcode": opcode,
-        "rs1":rs1,
-        "func3":func3,
-        "func7":func7,
+        "rs1": rs1,
+        "func3": func3,
+        "func7": func7,
     }
 
     memory_input = {
@@ -1160,9 +1145,9 @@ def run_riscvsim():
         "rs2": rs2,
         "instructionType": instructionType,
         "opcode": opcode,
-        "rs1":rs1,
-        "func3":func3,
-        "func7":func7,
+        "rs1": rs1,
+        "func3": func3,
+        "func7": func7,
     }
 
     write_input = {
@@ -1179,9 +1164,9 @@ def run_riscvsim():
         "rs2": rs2,
         "instructionType": instructionType,
         "opcode": opcode,
-        "rs1":rs1,
-        "func3":func3,
-        "func7":func7,
+        "rs1": rs1,
+        "func3": func3,
+        "func7": func7,
     }
 
     fetch_output = {
@@ -1214,9 +1199,9 @@ def run_riscvsim():
         "rs2": rs2,
         "instructionType": instructionType,
         "opcode": opcode,
-        "rs1":rs1,
-        "func3":func3,
-        "func7":func7,
+        "rs1": rs1,
+        "func3": func3,
+        "func7": func7,
     }
 
     execute_output = {
@@ -1235,9 +1220,9 @@ def run_riscvsim():
         "rs2": rs2,
         "instructionType": instructionType,
         "opcode": opcode,
-        "rs1":rs1,
-        "func3":func3,
-        "func7":func7,
+        "rs1": rs1,
+        "func3": func3,
+        "func7": func7,
     }
 
     memory_output = {
@@ -1254,9 +1239,9 @@ def run_riscvsim():
         "rs2": rs2,
         "instructionType": instructionType,
         "opcode": opcode,
-        "rs1":rs1,
-        "func3":func3,
-        "func7":func7,
+        "rs1": rs1,
+        "func3": func3,
+        "func7": func7,
     }
 
     write_output = {"fetch_ready1": fetch_ready1,
@@ -1271,46 +1256,46 @@ def run_riscvsim():
     btbTable1 = {}
     btbTable2 = {}
     t = 0
-    while (1):
+    while (t<50):
 
         print()
         print("CYCLE: ", cycle)
         # t+=1
         # call for every cycle
-        Cycle_dict_printing={}
+        Cycle_dict_printing = {}
         if cycle == 0:  # if cycle is 0, start from beginning
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
-                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding,Cycle_dict_printing)
+                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing)
             cycle += 1
         elif cycle == 1:  # 1 instruction
             decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
-                   fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding,Cycle_dict_printing)
+                   fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding, Cycle_dict_printing)
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
-                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding,Cycle_dict_printing)
+                  fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing)
             cycle += 1
         elif cycle == 2:  # 2 instruction
             execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
-                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input,Stats,Cycle_dict_printing)
+                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input, Stats, Cycle_dict_printing)
             if (Load_Casing_Dependency_Detected[0] == 0):
                 decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
-                       fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding,Cycle_dict_printing)
+                       fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding, Cycle_dict_printing)
                 fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
-                      fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding,Cycle_dict_printing)
+                      fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing)
             else:
-                Cycle_dict_printing["DECODE"]="STALL"
-                Cycle_dict_printing["FETCH"]="STALL"
+                Cycle_dict_printing["DECODE"] = "STALL"
+                Cycle_dict_printing["FETCH"] = "STALL"
             Load_Casing_Dependency_Detected[0] = 0
             cycle += 1
         elif cycle == 3:  # 3 instruction
             Memory(memory_input, memory_output, data_mem,
-                   register, codeExitFlag, data_forwarding,Stats,Cycle_dict_printing)
+                   register, codeExitFlag, data_forwarding, Stats, Cycle_dict_printing)
             execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
-                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input,Stats,Cycle_dict_printing)
+                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input, Stats, Cycle_dict_printing)
             if (Load_Casing_Dependency_Detected[0] == 0):
                 decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
-                       fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding,Cycle_dict_printing)
+                       fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding, Cycle_dict_printing)
                 fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
-                      fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding,Cycle_dict_printing)
+                      fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing)
             else:
                 Cycle_dict_printing["DECODE"] = "STALL"
                 Cycle_dict_printing["FETCH"] = "STALL"
@@ -1330,17 +1315,17 @@ def run_riscvsim():
                 codeExitFlag,
                 fetch_output,
                 data_forwarding,
-                Stats,Cycle_dict_printing
+                Stats, Cycle_dict_printing
             )
             Memory(memory_input, memory_output, data_mem,
-                   register, codeExitFlag, data_forwarding,Stats,Cycle_dict_printing)
+                   register, codeExitFlag, data_forwarding, Stats, Cycle_dict_printing)
             execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
-                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input,Stats,Cycle_dict_printing)
+                    ready_reg, decode_output, flush_due_to_mispredict, fetch_output, write_output, data_forwarding, Load_Casing_Dependency_Detected, decode_input, Stats, Cycle_dict_printing)
             if (Load_Casing_Dependency_Detected[0] == 0):
                 decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
-                       fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding,Cycle_dict_printing)
+                       fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding, Cycle_dict_printing)
                 fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
-                      fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding,Cycle_dict_printing)
+                      fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing)
             else:
                 Cycle_dict_printing["DECODE"] = "STALL"
                 Cycle_dict_printing["FETCH"] = "STALL"
@@ -1350,47 +1335,33 @@ def run_riscvsim():
         print("register: ", register)
         print("ready: ", ready_reg)
 
-
         #                            GUI
         Cycle_dict_register = {}
-        Cycle_dict_Data_mem={}
-        #Registers
+        Cycle_dict_Data_mem = {}
+        Cycle_dict_BTB={}
+        # Registers
         for i in range(32):
-            string_register_name="X["+ str(i)+"]"
-            Cycle_dict_register[string_register_name]=register[i]
-        #Data mem
+            string_register_name = "X[" + str(i)+"]"
+            Cycle_dict_register[string_register_name] = register[i]
+        # Data mem
         for i in data_mem.keys():
-            string_data_mem="data_mem["+ str(i)+ "]"
-            Cycle_dict_Data_mem[string_data_mem]=data_mem[i]
-        #Printing
+            string_data_mem = "data_mem[" + str(i) + "]"
+            Cycle_dict_Data_mem[string_data_mem] = data_mem[i]
+        # Printing
         Data_out_printing.append(Cycle_dict_printing)
         #               FETCH
         #               DECODE
         #               EXECUTE
         #               MEMORY
-        
-        
-        
-        
-        
-        
+        #               BTB
+        for i in btbTable1.keys():
+            Cycle_dict_BTB[i]=btbTable1[i]
+           
+        Data_out_BTB.append(Cycle_dict_BTB)
         Data_out_register.append(Cycle_dict_register)
         Data_out_Data_mem.append(Cycle_dict_Data_mem)
 
-
-
-
-
-
-        
-
-        # 
-
-
-
-
-
-
+        #
 
         print("Code Exit Flag: ", codeExitFlag)
         print("Last Decode Done: ", last_decode_done)
@@ -1405,13 +1376,13 @@ def run_riscvsim():
         ):
             print(
                 "<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-            Stats[1]=cycle-2
-            Stats[2]-=2
-            Stats[5]-=1
+            Stats[1] = cycle-2
+            Stats[2] -= 2
+            Stats[5] -= 1
             # Stats[7]-=1
-            Stats[3] = Stats[1]//Stats[2]
-            Stats[11]=Stats[8]
-            Stats[12]=Stats[7]-Stats[11]
+            Stats[3] = float(Stats[1]/Stats[2])
+            Stats[11] = Stats[8]
+            Stats[12] = Stats[7]-Stats[11]
             print("Total no. of cycles=", Stats[1])
             print("Total Instructions Executed=", Stats[2])
             print("CPI=", Stats[3])
@@ -1483,35 +1454,37 @@ def run_riscvsim():
     # Print data memory
     # print("Data Memory: ", data_mem)
     print_data_mem(data_mem)
-    
 
-
-    #Stats
-    stat_dict={}
-    stat_dict["Total no. of cycles"]= Stats[1]
-    stat_dict["Total Instructions Executed"]= Stats[2]
-    stat_dict["CPI"] =Stats[3]
+    # Stats
+    stat_dict = {}
+    stat_dict["Total no. of cycles"] = Stats[1]
+    stat_dict["Total Instructions Executed"] = Stats[2]
+    stat_dict["CPI"] = Stats[3]
     stat_dict[
-        "Number of Data-transfer (load and store) instructions executed"]= Stats[4]
-    stat_dict["Number of ALU instructions executed"]=Stats[5]
-    stat_dict["Number of Control instructions executed"]= Stats[6]
-    stat_dict["Number of stalls/bubbles in the pipeline"]=Stats[7]
-    stat_dict["Number of data hazards"]= Stats[8]
-    stat_dict["Number of control hazards"]= Stats[9]
-    stat_dict["Number of branch mispredictions"]= Stats[10]
-    stat_dict["Number of stalls due to data hazards"]= Stats[11]
-    stat_dict["Number of stalls due to control hazards"]= Stats[12]
+        "Number of Data-transfer (load and store) instructions executed"] = Stats[4]
+    stat_dict["Number of ALU instructions executed"] = Stats[5]
+    stat_dict["Number of Control instructions executed"] = Stats[6]
+    stat_dict["Number of stalls/bubbles in the pipeline"] = Stats[7]
+    stat_dict["Number of data hazards"] = Stats[8]
+    stat_dict["Number of control hazards"] = Stats[9]
+    stat_dict["Number of branch mispredictions"] = Stats[10]
+    stat_dict["Number of stalls due to data hazards"] = Stats[11]
+    stat_dict["Number of stalls due to control hazards"] = Stats[12]
     Data_out_Stats.append(stat_dict)
 
-
     #  Writing Data_out
-    pathName="./ResultFiles/data_out_Data_mem.json"
-    with open(pathName,"w") as outfile:
-        json.dump(Data_out_Data_mem,outfile)
-    pathName="./ResultFiles/data_out_register.json"
-    with open(pathName,"w") as outfile:
-        json.dump(Data_out_register,outfile)
+    pathName = "./ResultFiles/data_out_Data_mem.json"
+    with open(pathName, "w") as outfile:
+        json.dump(Data_out_Data_mem, outfile)
+    pathName = "./ResultFiles/data_out_register.json"
+    with open(pathName, "w") as outfile:
+        json.dump(Data_out_register, outfile)
     pathName = "./ResultFiles/data_out_printing.json"
     with open(pathName, "w") as outfile:
         json.dump(Data_out_printing, outfile)
-    
+    pathName="./ResultFiles/data_out_Stats.json"
+    with open(pathName,"w") as outfile:
+        json.dump(Data_out_Stats,outfile)
+    pathName="./ResultFiles/data_out_btb.json"
+    with open(pathName,"w") as outfile:
+        json.dump(Data_out_BTB,outfile)

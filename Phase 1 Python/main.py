@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 #from myRISCVSim import *
 from pipeline import *
+=======
+from new import *
+>>>>>>> refs/remotes/origin/main
 import argparse
 import sys
 
@@ -17,7 +21,7 @@ def init():
         print(args.file)
 
         reset_proc()
-        load_program_memory(args.file)
+        load_program_memory(args.file, MEM)
         run_riscvsim()
 
 

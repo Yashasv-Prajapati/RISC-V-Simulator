@@ -5,11 +5,17 @@ import json
 
 # MEM = np.zeros((2**32), dtype='uint8') # main memory
 # MEM = {3456:567899, 4566: 456764, 545:563657} # main memory
-MEM = [0]*4000
+# MEM = [0]*4000
+MEM = np.zeros((2**12), dtype='uint8') # instruction memory 12 bit address
 
 class ICache:
     __policies = ["LRU", "FIFO", "random", "LFU"]
     __mapping = ["direct", "set-associative", "fully-associative"]
+
+    __JSONArr = []
+    __VictimBlocks = []
+    __SetAccessed = []
+    __CacheContent = []
 
     def __init__(self, blockSize:int, cacheSize:int, mapping:str, policyName:str, numberOfWays:int) -> None:
         self.cache = {}
@@ -90,25 +96,28 @@ class ICache:
         
         else: # handle miss, by getting data from main memory
 
+            # add the victim block 
+            self.__VictimBlocks.append({"wayNum":wayNumber, "Index":Index})
+
             # check if there was something in the cache at that index
             if(self.tag_arrays[wayNumber].get(Index, -1)!=-1): # if there was something, then add that tag to MCT and then evict it
                 self.mct[self.tag_arrays[wayNumber][Index]] = True
             
             # update tag array
             self.tag_arrays[wayNumber][Index] = Tag
+            print("NEW TAG SET IS: ", self.tag_arrays[wayNumber])
 
-            # get data from main memory
-            binaryDataFromMain = self.getFromMain(address)
+            # get data from instruction memory - considering 4 bytes of data
+            binaryInstructionsFromMain = self.getFromMain(address)
             
             # set data in cache  
             # converting dataReceived to a 256 bit binary string
             for i in range(self.block_size):
-                self.instruction_cache[wayNumber][Index][i] = int(binaryDataFromMain[i*8:i*8+8],2)
+                self.instruction_cache[wayNumber][Index][i] = int(binaryInstructionsFromMain[i*8:i*8+8],2)
             
             print("Data in cache block: ", self.instruction_cache[wayNumber][Index])
             
             return self.instruction_cache[wayNumber][Index][blockOffset]
-
 
     def WriteDataInMain(self, address:int, data:int):
         '''
@@ -129,18 +138,13 @@ class ICache:
         # return data from main memory, considering main memory to be a dictionary
         # we have to take blocksize amount of bytes from main memory
 
+        # My instruction memory is MEM
+
         dataBytes = ""
-
         for i in range(self.block_size):
-            AddressInDataDict = address - (address%4) # address of the first byte of the block
+            dataBytes += bin(MEM[address+i])[2:].zfill(8)                
 
-            dataFromMem = MEM[AddressInDataDict] # get 4byte int from the dictionary or else get 0 of 32 bits
-            dataInBinary = bin(dataFromMem)[2:].zfill(32) # converting data to a 32 bit binary string
-            dataBytes += dataInBinary[8*(address%4):8*(address%4)+8]
-            
-            address += 1 # update address, go to next byte
-
-        return dataBytes      
+        return dataBytes     
     
     def writeByte(self, address:int, data:int, wayNumber:int):
         '''
@@ -160,7 +164,6 @@ class ICache:
         # set this data on this address
         self.instruction_cache[wayNumber][Index][blockOffset] = data
 
-    
     def get_data(self,address:int, func3:int):
 
         '''
@@ -168,12 +171,28 @@ class ICache:
         if the data is not in the cache then it will get it from the main memory
 
         address: the address of the data
+        func3: always 2
         '''
-        
+
         func3 = 2
 
-        Tag, Index, blockOffset = self.break_address(address)
+        # the content of all the sets of the cache
+        cacheContent = {}
+        for i in range(self.number_of_ways):
+            for j in range(len(self.tag_arrays[i])):
+                if(self.tag_arrays[i].get(j, -1)!=-1):
+                    cacheContent["wayNum"] = i
+                    cacheContent["Index"]=j
+                    cacheContent["Blocks"] = self.instruction_cache[i][j].tolist()
         
+        self.__CacheContent.append(cacheContent)
+
+        Tag, Index, blockOffset = self.break_address(address)
+        print("Tag: ", Tag, "Index: ", Index, "blockOffset: ", blockOffset)
+
+        JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
+        self.__JSONArr.append(JSONDict)
+
         # requested data in binary
         DataFound = ""
 
@@ -185,7 +204,7 @@ class ICache:
             # check type of miss
             if(self.tag_arrays[0].get(Index, -1)==-1): # cold miss
                 self.cold_misses += 1
-                
+                print("HERE COLD MISS ")
                 self.readHitOrMiss = 0 # cache miss
             elif(self.tag_arrays[0].get(Index, -1)!=Tag): # if tag != -1 and tag != Tag -> conflict miss or capacity miss
                 # so we look into the MCT to find out if it's a conflict or capacity miss
@@ -198,26 +217,28 @@ class ICache:
                     self.capacity_misses += 1
             else:
                 # else the data is present in the cache -> hit
+                print("HERE HIT")
                 self.hits += 1 
                 self.readHitOrMiss=1 # cache hit
 
-            # check type of load instruction
-            if(func3==0): # lb
-                return self.readByte(address, 0)
-            
-            elif(func3==1): # lh
-                for i in range(2):
-                    DataFound += bin(self.readByte(address, 0))[2:].zfill(8) # convert to binary and pad with zeros
-                    address+=1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            
-            elif(func3==2): # lw
-                for i in range(4):
-                    DataFound += bin(self.readByte(address, 0))[2:].zfill(8) # convert to binary and pad with zeros
-                    address += 1 # increment address by 1 to get new address
-                return int(DataFound,2)
+            # lw
+            print("VALUE OF FUNC3: ", func3)
+
+            # get 4 bytes from cache
+
+            for i in range(4):
+                DataFound += bin(self.readByte(address, 0))[2:].zfill(8) # convert to binary and pad with zeros
+                address += 1 # increment address by 1 to get new address
+            return int(DataFound,2)
             
         elif self.mapping == "set-associative":
+            
+            # check for possible errors
+            if(self.number_of_ways%2!=0 and self.number_of_ways==0):
+                raise Exception("Invalid number of ways, expected number of ways to be even but got "+str(self.number_of_ways))
+            
+            # set that is accessed is same as the index
+            self.__SetAccessed.append({"set":Index})
 
             # check type of miss
             ColdMiss = True
@@ -239,7 +260,8 @@ class ICache:
                     break
                 else: # either capacity miss or conflict miss
                     CapacityORConflict = True
-
+                    ColdMiss = False
+            
 
             # ---------------------------------------------------------------
             if(ColdMiss): # if cold miss
@@ -280,26 +302,29 @@ class ICache:
             else: # hit
                 self.hits += 1
                 self.readHitOrMiss = 1 # cache hit
+
+                if(self.replacement_policy=="LRU"):
+                    self.LRU.append(wayNum) # append it to the end of the List
+                elif(self.replacement_policy=='FIFO'):
+                    self.FIFO.append(wayNum) # append it to the end of the queue
+                elif(self.replacement_policy=='random'):
+                    pass
+                elif(self.replacement_policy=='LFU'):
+                    if(wayNum in self.LFU):
+                        self.LFU[wayNum] += 1
+                    else:
+                        self.LFU[wayNum] = 1
+            
             # ---------------------------------------------------------------
             # once you know the wayNumber, now go to that way and get data from there
             # check type of load instruction
-            if(func3==0): # lb
-                return self.readByte(address, wayNum)
             
-            elif(func3==1): # lh
-                for _ in range(2):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address+=1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            
-            elif(func3==2): # lw
-                for _ in range(4):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address += 1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            else:
-                raise ValueError("Invalid func3 value, expected 0, 1 or 2 but got "+str(func3)+" instead")
-
+            # lw
+            for _ in range(4):
+                DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
+                address += 1 # increment address by 1 to get new address
+            return int(DataFound,2)
+        
         
         elif self.mapping == "fully-associative":
             # check type of miss
@@ -356,36 +381,41 @@ class ICache:
                     self.conflict_misses += 1
                 else:
                     self.capacity_misses += 1
+            else: # hit
+                self.hits += 1
+                self.readHitOrMiss = 1 # cache hit
+
+                if(self.replacement_policy=="LRU"):
+                    self.LRU.append(wayNum) # append it to the end of the List
+                elif(self.replacement_policy=='FIFO'):
+                    self.FIFO.append(wayNum) # append it to the end of the queue
+                elif(self.replacement_policy=='random'):
+                    pass
+                elif(self.replacement_policy=='LFU'):
+                    if(wayNum in self.LFU):
+                        self.LFU[wayNum] += 1
+                    else:
+                        self.LFU[wayNum] = 1
             # ---------------------------------------------------------------
             # once you know the wayNumber, now go to that way and get data from there
             # check type of load instruction
-            if(func3==0): # lb
-                return self.readByte(address, wayNum)
             
-            elif(func3==1): # lh
-                for _ in range(2):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address+=1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            
-            elif(func3==2): # lw
-                for _ in range(4):
-                    DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
-                    address += 1 # increment address by 1 to get new address
-                return int(DataFound,2)
-            else:
-                raise ValueError("Invalid func3 value, expected 0, 1 or 2 but got "+str(    3)+" instead")
-
+            # lw
+            for _ in range(4):
+                DataFound += bin(self.readByte(address, wayNum))[2:].zfill(8) # convert to binary and pad with zeros
+                address += 1 # increment address by 1 to get new address
+            return int(DataFound,2)
+        
     def break_address(self, address:int):
-        # considering 32 bit address
-        address = bin(address)[2:].zfill(32) # converting to binary and padding with zeros to make it 32 bits
+        # considering 12 bit address
+        address = bin(address)[2:].zfill(12) # converting to binary and padding with zeros to make it 32 bits
         numberOfBlocks = self.cache_size / self.block_size
         numberOfSets = numberOfBlocks / self.number_of_ways
         
         # Calculating the number of bits for tag, index and block offset
         IndexBitsNum = int(math.log(numberOfSets, 2))
         blockOffsetBitsNum = int(math.log(self.block_size, 2))
-        TagBitsNum = int(32 - IndexBitsNum - blockOffsetBitsNum) # remaining bits are tag bits
+        TagBitsNum = int(12 - IndexBitsNum - blockOffsetBitsNum) # remaining bits are tag bits
 
         # Calculating the tag, index and block offset
         if(address[0:TagBitsNum]==""):
@@ -418,7 +448,7 @@ class ICache:
         print("Miss rate: ", (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
         print("Number of Access: ", self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
         # saving all this stats in a json file
-        file = open("Phase3/stats/ICache_stats.json", "w")
+        file = open("Phase3/Istats/ICache_stats.json", "w")
         StatDict = {
             "total_hits": self.hits,
             "total_misses": self.cold_misses + self.capacity_misses + self.conflict_misses,
@@ -432,13 +462,33 @@ class ICache:
         json.dump(StatDict, file, indent=4)
         file.close()
 
+        # Stores Split of Tag Index and Block Offset
+        file = open("Phase3/Istats/JSONArr.json", "w")
+        json.dump(self.__JSONArr, file, indent=4)
+        file.close()
+
+        # stores the victim blocks
+        file = open("Phase3/Istats/VictimBlocks.json", "w")
+        json.dump(self.__VictimBlocks, file, indent=4)
+        file.close()
+        
+        # stores the sets accessed
+        file = open("Phase3/Istats/SetsAccessed.json", "w")
+        json.dump(self.__SetAccessed, file, indent=4)
+        file.close()
+
+        # stores the cache content
+        file = open("Phase3/Istats/CacheContent.json", "w")
+        json.dump(self.__CacheContent, file, indent=4)
+        file.close()
+
     def getCacheHitOrMiss(self):
         '''
         if cache hit, return 1
         if cache miss, return 0
         else return None
         '''
-        return self.cacheHitORMiss
+        return self.readHitOrMiss
 
     def load_program_memory(self,file, MEM):
         """
@@ -464,31 +514,34 @@ class ICache:
         index = address // 4
         MEM[int(index)] = instruction
 
-if __name__ =='__main__':
+
+
+# if __name__ =='__main__':
     
-    file = "Phase 2\TestFiles\output.mem"
-    L1 = ICache(32, 256, "direct", "LFU", 0)
+#     file = "Phase 2/TestFiles/output.mem"
+#     L1 = ICache(32, 256, "direct", "LFU", 0)
 
-    L1.load_program_memory(file, MEM)
+#     L1.load_program_memory(file, MEM)
 
 
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(0, 2)
-    print(data)
-    data = L1.get_data(56, 2)
-    print(data)
-    data = L1.get_data(567, 0)
-    print(data)
-    L1.printStats()
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(0, 2)
+#     print(data)
+#     data = L1.get_data(56, 2)
+#     print(data)
+#     data = L1.get_data(567, 0)
+#     print(data)
+#     print()
+#     L1.printStats()
 
 
 
