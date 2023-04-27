@@ -71,7 +71,7 @@ class DCache:
         elif mapping == "set-associative":
             self.number_of_ways = numberOfWays
         elif mapping == "fully-associative":
-            self.number_of_ways = cacheSize//blockSize # total Blocks
+            self.number_of_ways = numberOfWays # total Blocks
         
     def setReplacementPolicy(self, policyName:str):
         if(policyName not in self.__policies):
