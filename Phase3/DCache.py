@@ -10,8 +10,8 @@ class DCache:
     __policies = ["LRU", "FIFO", "random", "LFU"]
     __mapping = ["direct", "set-associative", "fully-associative"]
 
-    __JSONArr = []
-    __VictimBlocks = []
+    JSONArr = []
+    VictimBlocks = []
     __SetAccessed = []
     __CacheContent = []
 
@@ -89,12 +89,13 @@ class DCache:
         Tag, Index, blockOffset = self.break_address(address)
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             # using block offset to get data from block
+            # self.VictimBlocks.append({"wayNum":0, "Index":0})
             return self.data_cache[wayNumber][Index][blockOffset]
         
         else: # handle miss, by getting data from main memory
             
             # add the victim block 
-            self.__VictimBlocks.append({"wayNum":wayNumber, "Index":Index})
+            self.VictimBlocks.append({"wayNum":wayNumber, "Index":Index})
 
             # check if there was something in the cache at that index
             if(self.tag_arrays[wayNumber].get(Index, -1)!=-1): # if there was something, then add that tag to MCT and then evict it
@@ -202,6 +203,11 @@ class DCache:
 
         Tag, Index, blockOffset = self.break_address(address)
 
+        JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
+        self.JSONArr.append(JSONDict)
+
+        self.VictimBlocks.append({"wayNum":0, "Index":0})
+
         # dataInBinary = bin(data)[2:].zfill(32) # converting data to a 32 bit binary string
         if(self.mapping=="direct"):
             #  match the tag with the tag array
@@ -280,7 +286,7 @@ class DCache:
 
         Tag, Index, blockOffset = self.break_address(address)
         JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
-        self.__JSONArr.append(JSONDict)
+        self.JSONArr.append(JSONDict)
 
         # requested data in binary
         DataFound = ""
@@ -554,24 +560,31 @@ class DCache:
         print("Access Table: ", self.cache_access)
 
     def printStats(self):
-        print("Total hits: ", self.hits)
-        print("Total cold misses: ", self.cold_misses)
-        print("Total capacity misses: ", self.capacity_misses)
-        print("Total conflict misses: ", self.conflict_misses)
-        print("Total misses: ", self.cold_misses + self.capacity_misses + self.conflict_misses)
-        print("Hit rate: ", self.hits/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
-        print("Miss rate: ", (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
-        print("Number of Access: ", self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
+        # print("Total hits: ", self.hits)
+        # print("Total cold misses: ", self.cold_misses)
+        # print("Total capacity misses: ", self.capacity_misses)
+        # print("Total conflict misses: ", self.conflict_misses)
+        # print("Total misses: ", self.cold_misses + self.capacity_misses + self.conflict_misses)
+        # print("Hit rate: ", self.hits/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
+        # print("Miss rate: ", (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
+        # print("Number of Access: ", self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
         # saving all this stats in a json file
-        file = open("Phase3/stats/stats.json", "w")
+        file = open("./stats/stats.json", "w")
+        hit_rateVar = (self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
+        if(hit_rateVar==0):
+            hit_rateVar = 1
+        missRateVar = (self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
+        if(missRateVar==0):
+            missRateVar = 1
+        
         StatDict = {
             "total_hits": self.hits,
             "total_misses": self.cold_misses + self.capacity_misses + self.conflict_misses,
             "total_cold_misses": self.cold_misses,
             "total_capacity_misses": self.capacity_misses,
             "total_conflict_misses": self.conflict_misses,
-            "hit_rate": self.hits/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses),
-            "miss_rate": (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses),
+            "hit_rate": self.hits/hit_rateVar,
+            "miss_rate": (self.cold_misses + self.capacity_misses + self.conflict_misses)/missRateVar,
             "number_of_access": self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses
         }
         # saving the stats in a json file
@@ -579,22 +592,22 @@ class DCache:
         file.close()
 
         # Stores Split of Tag Index and Block Offset
-        file = open("Phase3/stats/JSONArr.json", "w")
-        json.dump(self.__JSONArr, file, indent=4)
+        file = open("./stats/JSONArr.json", "w")
+        json.dump(self.JSONArr, file, indent=4)
         file.close()
 
         # stores the victim blocks
-        file = open("Phase3/stats/VictimBlocks.json", "w")
-        json.dump(self.__VictimBlocks, file, indent=4)
+        file = open("./stats/VictimBlocks.json", "w")
+        json.dump(self.VictimBlocks, file, indent=4)
         file.close()
         
         # stores the sets accessed
-        file = open("Phase3/stats/SetsAccessed.json", "w")
+        file = open("./stats/SetsAccessed.json", "w")
         json.dump(self.__SetAccessed, file, indent=4)
         file.close()
 
         # stores the cache content
-        file = open("Phase3/stats/CacheContent.json", "w")
+        file = open("./stats/CacheContent.json", "w")
         json.dump(self.__CacheContent, file, indent=4)
         file.close()
 

@@ -14,7 +14,7 @@ CycleWithStallsInCache = 0
 # MEM = [0] * 4000
 
 
-L1 = DCache(32, 256, "set-associative", "LRU", 4)
+L1 = DCache(32, 256, "fully-associative", "LRU", 4)
 iCache = ICache(32, 4096, "set-associative", "LRU", 4)
 
 
@@ -745,6 +745,9 @@ def Memory(memory_input, memory_output, register, codeExitFlag, data_forwarding,
         if MemOp == 0:
             print("There is no Memory Operation")
             ReadData = ALUResult
+            L1.JSONArr.append({"Tag":0, "Index":0, "blockOffset":0})
+            L1.VictimBlocks.append({"wayNum":0, "Index":0})
+            
         elif MemOp == 1:
             # Store
             print("data_mem[", ALUResult, "]=register[",
@@ -764,7 +767,7 @@ def Memory(memory_input, memory_output, register, codeExitFlag, data_forwarding,
         elif MemOp == 2:
             # ReadData = data_mem.get(ALUResult, 0)
             ReadData=L1.get_data(ALUResult,func3)
-            print("DATA GOT FROM L1 CACHE IS", ReadData, "and func3 is ", func3)
+            # print("DATA GOT FROM L1 CACHE IS", ReadData, "and func3 is ", func3)
             check=L1.getCacheHitOrMiss()
             if(check==0): #miss
                 CycleWithStallsInCache += 20
@@ -804,6 +807,8 @@ def Memory(memory_input, memory_output, register, codeExitFlag, data_forwarding,
         register[0] = 0
 
     else:
+        L1.JSONArr.append({"Tag":0, "Index":0, "blockOffset":0})
+        L1.VictimBlocks.append({"wayNum":0, "Index":0})
         print("\nNO MEMORY READY")
         # If memory is not ready, output 0s
         # set all these values to 0, because of the ready and not ready stuff
@@ -1507,18 +1512,21 @@ def run_riscvsim():
     Data_out_Stats.append(stat_dict)
 
     #  Writing Data_out
-    pathName = "./ResultFiles/DataForwarding/data_out_Data_mem.json"
+    pathName = "./Test/ResultFiles/DataForwarding/data_out_Data_mem.json"
     with open(pathName, "w") as outfile:
         json.dump(Data_out_Data_mem, outfile)
-    pathName = "./ResultFiles/DataForwarding/data_out_register.json"
+    pathName = "./Test/ResultFiles/DataForwarding/data_out_register.json"
     with open(pathName, "w") as outfile:
         json.dump(Data_out_register, outfile)
-    pathName = "./ResultFiles/DataForwarding/data_out_printing.json"
+    pathName = "./Test/ResultFiles/DataForwarding/data_out_printing.json"
     with open(pathName, "w") as outfile:
         json.dump(Data_out_printing, outfile)
-    pathName="./ResultFiles/DataForwarding/data_out_Stats.json"
+    pathName="./Test/ResultFiles/DataForwarding/data_out_Stats.json"
     with open(pathName,"w") as outfile:
         json.dump(Data_out_Stats,outfile)
-    pathName="./ResultFiles/DataForwarding/data_out_btb.json"
+    pathName="./Test/ResultFiles/DataForwarding/data_out_btb.json"
     with open(pathName,"w") as outfile:
         json.dump(Data_out_BTB,outfile)
+
+    L1.printStats()
+    # iCache.printStats()   

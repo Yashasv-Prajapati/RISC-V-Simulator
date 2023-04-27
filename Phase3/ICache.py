@@ -92,7 +92,9 @@ class ICache:
 
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             # using block offset to get data from block
+            self.__VictimBlocks.append({"wayNum":0, "Index":0})
             return self.instruction_cache[wayNumber][Index][blockOffset]
+            
         
         else: # handle miss, by getting data from main memory
 
@@ -467,7 +469,7 @@ class ICache:
         print("Miss rate: ", (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
         print("Number of Access: ", self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
         # saving all this stats in a json file
-        file = open("Phase3/Istats/stats.json", "w")
+        file = open("./Istats/stats.json", "w")
         StatDict = {
             "total_hits": self.hits,
             "total_misses": self.cold_misses + self.capacity_misses + self.conflict_misses,
@@ -482,22 +484,22 @@ class ICache:
         file.close()
 
         # Stores Split of Tag Index and Block Offset
-        file = open("Phase3/Istats/JSONArr.json", "w")
+        file = open("./Istats/JSONArr.json", "w")
         json.dump(self.__JSONArr, file, indent=4)
         file.close()
 
         # stores the victim blocks
-        file = open("Phase3/Istats/VictimBlocks.json", "w")
+        file = open("./Istats/VictimBlocks.json", "w")
         json.dump(self.__VictimBlocks, file, indent=4)
         file.close()
         
         # stores the sets accessed
-        file = open("Phase3/Istats/SetsAccessed.json", "w")
+        file = open("./Istats/SetsAccessed.json", "w")
         json.dump(self.__SetAccessed, file, indent=4)
         file.close()
 
         # stores the cache content
-        file = open("Phase3/Istats/CacheContent.json", "w")
+        file = open("./Istats/CacheContent.json", "w")
         json.dump(self.__CacheContent, file, indent=4)
         file.close()
 
