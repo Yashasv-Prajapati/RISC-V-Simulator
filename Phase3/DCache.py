@@ -57,7 +57,8 @@ class DCache:
         self.mct = {} # miss classification table
 
         # total tag arrays -> number of ways and each array is a dictionary 
-        self.tag_arrays = np.full((self.number_of_ways), {}, dtype=object)
+        #self.tag_arrays = np.full((self.number_of_ways), {}, dtype=object)
+        self.tag_arrays = [{} for i in range(self.number_of_ways)]
         # number of data arrays = number of ways. each array has <number of blocks> rows and <block size> columns
         self.data_cache = np.full((self.number_of_ways, cacheSize//blockSize, blockSize), 0, dtype='uint8')
 
@@ -86,12 +87,8 @@ class DCache:
         address: the address of the byte
         '''
         Tag, Index, blockOffset = self.break_address(address)
-        print("BLOCK OFFSET: ", blockOffset)
-        # TotalSets = self.cache_size//(self.block_size*self.number_of_ways)
-        
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             # using block offset to get data from block
-            print("IN TAG")
             return self.data_cache[wayNumber][Index][blockOffset]
         
         else: # handle miss, by getting data from main memory
@@ -126,8 +123,6 @@ class DCache:
                 self.data_cache[wayNumber][tempIndex][tempBO] = int(binaryDataFromMain[i*8:i*8+8],2)
                 tempAddress += 1
             
-            print("Data in cache block: ", self.data_cache[wayNumber][Index])
-            print("DATACACHE: ", self.data_cache[wayNumber][Index][3])
             return self.data_cache[wayNumber][Index][blockOffset]
 
     def WriteDataInMain(self, address:int, data:int):
@@ -176,7 +171,6 @@ class DCache:
             raise Exception("Invalid data, expected data to be in range 0-255 but got "+str(data))
         
         _, Index, blockOffset = self.break_address(address)
-        
 
         # set this data on this address
         self.data_cache[wayNumber][Index][blockOffset] = data
@@ -209,10 +203,6 @@ class DCache:
         Tag, Index, blockOffset = self.break_address(address)
 
         # dataInBinary = bin(data)[2:].zfill(32) # converting data to a 32 bit binary string
-        print("Data IS: ", data)
-        print("BLOCKOFFSET", blockOffset)
-        print("FUNC3: ", func3)
-        print("INDEX: ", Index)
         if(self.mapping=="direct"):
             #  match the tag with the tag array
             if(self.tag_arrays[0].get(Index, -1) == Tag): # found in cache
@@ -224,7 +214,6 @@ class DCache:
                     dataInBinary = bin(data)[2:].zfill(32)
 
                 for i in range(2**func3): # writing data in the cache either a byte, half word or a word
-                    print("dataInBinary bhai: ", dataInBinary[i*8:i*8+8])
                     self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), 0)
                     address += 1
             
@@ -238,8 +227,8 @@ class DCache:
                     elif(func3==2):
                         dataInBinary = bin(data)[2:].zfill(32)
 
-                    for i in range(2**func3):
-                        self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), i)
+                    for j in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[j*8:j*8+8], 2), i)
                         address += 1
                     break
             
@@ -253,8 +242,8 @@ class DCache:
                     elif(func3==2):
                         dataInBinary = bin(data)[2:].zfill(32)
 
-                    for i in range(2**func3):
-                        self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), i)
+                    for j in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[j*8:j*8+8], 2), i)
                         address += 1
                     break
             
@@ -290,7 +279,6 @@ class DCache:
         self.__CacheContent.append(cacheContent)
 
         Tag, Index, blockOffset = self.break_address(address)
-        print("TAG: ", Tag, "INDEX: ", Index, "BLOCKOFFSET: ", blockOffset)
         JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
         self.__JSONArr.append(JSONDict)
 
@@ -338,7 +326,7 @@ class DCache:
                 print("DataFound: ", DataFound)
                 return int(DataFound,2)
             
-        elif self.mapping == "set-associative":
+        elif self.mapping == "set-associative" or self.mapping=="fully-associative":
             
             # check for possible errors
             if(self.number_of_ways%2!=0 and self.number_of_ways==0):

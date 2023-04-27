@@ -42,10 +42,11 @@ class ICache:
 
         # LRU policy
         # number of ways x 3, 3 is for the Valid bit, status bit and tag bit
-        self.LRU = np.zeros((self.number_of_ways), dtype='uint32')
+        self.LRU = [0]*self.number_of_ways
 
         # FIFO policy
-        self.FIFO = np.zeros((self.number_of_ways), dtype='uint32')
+        # self.FIFO = np.zeros((self.number_of_ways), dtype='uint32')
+        self.FIFO = [0]*self.number_of_ways
 
         # LFU policy
         self.LFU = {}
@@ -57,8 +58,7 @@ class ICache:
         self.mct = {} # miss classification table
 
         # total tag arrays -> number of ways and each array is a dictionary 
-        self.tag_arrays = np.full((self.number_of_ways), {}, dtype=object)
-
+        self.tag_arrays = [{} for i in range(self.number_of_ways)]
         # number of data arrays = number of ways. each array has <number of blocks> rows and <block size> columns
         self.instruction_cache = np.full((self.number_of_ways, cacheSize//blockSize, blockSize), 0, dtype='uint8')
 
@@ -105,19 +105,38 @@ class ICache:
             
             # update tag array
             self.tag_arrays[wayNumber][Index] = Tag
-            print("NEW TAG SET IS: ", self.tag_arrays[wayNumber])
 
-            # get data from instruction memory - considering 4 bytes of data
-            binaryInstructionsFromMain = self.getFromMain(address)
-            
-            # set data in cache  
-            # converting dataReceived to a 256 bit binary string
+            tempAddress = address
+
+            # how many bits to make 0 -> log2(block_size)
+            bitsToMakeZero = int(math.log2(self.block_size))
+            tempAddress = bin(tempAddress)[2:].zfill(32)
+            tempAddress = tempAddress[:-bitsToMakeZero] + '0'*bitsToMakeZero
+            tempAddress = int(tempAddress, 2)
+
+            # get data from main memory
+            binaryDataFromMain = self.getFromMain(tempAddress)
+
             for i in range(self.block_size):
-                self.instruction_cache[wayNumber][Index][i] = int(binaryInstructionsFromMain[i*8:i*8+8],2)
-            
-            print("Data in cache block: ", self.instruction_cache[wayNumber][Index])
+                _, tempIndex, tempBO = self.break_address(tempAddress)
+                
+                self.instruction_cache[wayNumber][tempIndex][tempBO] = int(binaryDataFromMain[i*8:i*8+8],2)
+                tempAddress += 1
             
             return self.instruction_cache[wayNumber][Index][blockOffset]
+
+
+            # # get data from instruction memory - considering 4 bytes of data
+            # binaryInstructionsFromMain = self.getFromMain(address)
+            
+            # # set data in cache  
+            # # converting dataReceived to a 256 bit binary string
+            # for i in range(self.block_size):
+            #     self.instruction_cache[wayNumber][Index][i] = int(binaryInstructionsFromMain[i*8:i*8+8],2)
+            
+            # print("Data in cache block: ", self.instruction_cache[wayNumber][Index])
+            
+            # return self.instruction_cache[wayNumber][Index][blockOffset]
 
     def WriteDataInMain(self, address:int, data:int):
         '''
