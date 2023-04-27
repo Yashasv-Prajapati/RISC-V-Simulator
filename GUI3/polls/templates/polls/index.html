@@ -1,0 +1,1167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>RISC-V Simulator</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="html.design">
+<!-- description -->
+<meta name="description" content="Login Form - Responsive Template">
+<!-- <link rel="shortcut icon" href="images2/favicon.png"> -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href={% static 'polls/css/bootstrap.min.css' %}>
+<!-- Material Design Icons CSS -->
+<link rel="stylesheet" href={% static 'polls/css/materialdesignicons.css' %}>
+<!-- Bootstrap Checkbox CSS -->
+<link rel="stylesheet" href={% static 'polls/css/awesome-bootstrap-checkbox.css' %}>
+<!-- Rippler CSS -->
+<link rel="stylesheet" href={% static 'polls/css/rippler.min.css' %}>
+<!-- Style CSS -->
+<link rel="stylesheet" href={% static 'polls/css/style.css' %}>
+<!-- Responsive  CSS -->
+<link rel="stylesheet" href={% static 'polls/css/responsive.css' %}>
+</head>
+<body style="background-color:#A6D0DD">
+
+<div class = "container" style="margin-top:2rem;margin-bottom:2rem">
+    <div class = "row">
+        <div class = "col-md-3"></div>
+        <div class = "col-md-6 text-center">
+            <!-- <p style="color:white">hello</p> -->
+            <div class = "row">
+                <div class = "col-md-3">
+                    <button type="button" id="prevBtn" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Prev</button>
+                </div>
+                <div class = "col-md-3">
+                    <button type="button" id="runBtn" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Run</button>
+                </div>
+                <div class = "col-md-3">
+                    <button type="button" id="resetBtn" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Reset</button>
+                </div>
+                <div class = "col-md-3">
+                    <button type="button" id="nextBtn" class="btn btn-lg btn-block" style="background-color:#FF6969;color:#FFF9DE">Next</button>
+                </div>
+            <!-- <button type="button" class="btn btn-primary btn-lg btn-block">Prev</button>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Run</button>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Reset</button>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Next</button> -->
+            </div>
+        </div>
+        <div class = "col-md-3"></div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-5"></div>
+        <div class = "col-md-2 text-center">
+            <h5 id="Cycles">Cycles: 0</h5>
+        </div>
+        <div class="col-md-5"></div>
+    </div>
+</div>
+
+<div class = "container-fluid" style="margin-top:2rem">
+    <div class = "row">
+        <!-- <div class="col-md-1"></div> -->
+        <div class = "col-md-2"></div>
+        <div class = "col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>Registers</h4>
+            <p id="Registers">
+                X0: 0<br>
+                X1: 0<br>
+                X2: 0<br>
+                X3: 0<br>
+                X4: 0<br>
+                X5: 0<br>
+                X6: 0<br>
+                X7: 0<br>
+                X8: 0<br>
+                X9: 0<br>
+                X10: 0<br>
+                X11: 0<br>
+                X12: 0<br>
+                X13: 0<br>
+                X14: 0<br>
+                X15: 0<br>
+                X16: 0<br>
+                X17: 0<br>
+                X18: 0<br>
+                X19: 0<br>
+                X20: 0<br>
+                X21: 0<br>
+                X22: 0<br>
+                X23: 0<br>
+                X24: 0<br>
+                X25: 0<br>
+                X26: 0<br>
+                X27: 0<br>
+                X28: 0<br>
+                X29: 0<br>
+                X30: 0<br>
+                X31: 0<br>
+
+            </p>
+        </div>
+        <div class = "col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>Memory</h4>
+            <p id="Data_mem"></p>
+        </div>
+        <div class = "col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>BTB</h4>
+            <p id="BTB"></p>
+        </div>
+        <div class="col-md-2" style="background-color:#FFD3B0;margin:0.5rem;height:26rem;padding:1rem;overflow-y: auto;">
+            <h4>Stats</h4>
+            <p id="Stats"></p>
+        </div>
+        <div class = "col-md-2"></div>
+    </div>
+</div>
+
+<div class="container" m>
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-2" id="Fetch" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Fetch
+        </div>
+        <div class="col-md-2" id="Decode" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Decode
+        </div>
+        <div class="col-md-2" id="Execute" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Execute
+        </div>
+        <div class="col-md-2" id="Memory" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Memory
+        </div>
+        <div class="col-md-2" id="Writeback" style="background-color:#FFF9DE;padding:1.5rem;margin:0.5rem;text-align:center;">
+            Writeback
+        </div>
+    </div>
+</div>
+<div class="container" m>
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-2" style="margin:0.5rem;margin-top:0;text-align:center;">
+            FETCH
+        </div>
+        <div class="col-md-2" style="margin:0.5rem;margin-top:0;text-align:center;">
+            DECODE
+        </div>
+        <div class="col-md-2" style="margin:0.5rem;margin-top:0;text-align:center;">
+            EXECUTE
+        </div>
+        <div class="col-md-2" style="margin:0.5rem;margin-top:0;text-align:center;">
+            MEMORY
+        </div>
+        <div class="col-md-2" style="margin:0.5rem;margin-top:0;text-align:center;">
+            WRITEBACK
+        </div>
+    </div>
+</div>
+
+<div class="container" style="margin-top:4rem;margin-bottom:10rem;">
+    <div class="row">
+        <div class = "col-md-8" style="background-color: #FFF9DE;padding:1.5rem;">
+            <div class="row">
+                <div class="col-md-3">
+
+                </div>
+                <div class="col-md-3">
+                    Tag
+                </div>
+                <div class="col-md-3">
+                    Index
+                </div>
+                <div class="col-md-3">
+                    Block Size
+                </div>
+            </div>
+            <div class="row" style="margin-top:1rem;">
+                <div class="col-md-3">
+                    Fetch
+                </div>
+                <div class="col-md-3" id="I-tag">
+                    0
+                </div>
+                <div class="col-md-3" id="I-index">
+                    0
+                </div>
+                <div class="col-md-3" id="I-bo">
+                    0
+                </div>
+            </div>
+            <div class="row" style="margin-top:1rem;">
+                <div class="col-md-3">
+                    Load/Store
+                </div>
+                <div class="col-md-3" id="D-tag">
+                    0
+                </div>
+                <div class="col-md-3" id="D-index">
+                    0
+                </div>
+                <div class="col-md-3" id="D-bo">
+                    0
+                </div>
+            </div>
+        </div>
+        <div class="col-md-1"></div>
+        <div class = "col-md-3" style="background-color: #FFF9DE;padding:1.5rem;">
+            <div class="row">
+                <div class="col-md-4">
+                    <b></b>
+                </div>
+                <div class="col-md-4">
+                    Ways
+                </div>
+                <div class="col-md-4">
+                    Index
+                </div>
+            </div>
+            <div class="row" style="margin-top:1rem;">
+                <div class="col-md-4">
+                    D-Cache
+                </div>
+                <div class="col-md-4" id="D-ways">
+                    0
+                </div>
+                <div class="col-md-4" id="D-ind">
+                    0
+                </div>
+            </div>
+            <div class="row" style="margin-top:1rem;">
+                <div class="col-md-4">
+                    I-Cache
+                </div>
+                <div class="col-md-4" id="I-ways">
+                    0
+                </div>
+                <div class="col-md-4" id="I-ind">
+                    0
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--
+<div class="container py-2">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-6 login-form mx-auto">
+                    <div class="card">
+						
+                        <div class="card-header">
+                            <h4 class="mb-0">Dog's Data Base</h4>
+                        </div>
+                        <div class="card-body" id="sneha">
+
+							
+                        </div>
+                       
+						<div class="card-footer">
+							<div class="copy-text">Created with <i class="fa fa-heart"></i> by <a href="https://www.iitrpr.ac.in/">AWS IIT Ropar</a></div>
+						</div>
+                    </div>
+                   
+                </div>
+            </div>
+           
+        </div>
+        
+    </div>
+
+    
+</div>
+-->
+<!--/container-->
+<script>
+    // var _current_item = $('.single_content').length
+    // console.log(_current_item);
+    const prevBtn = document.getElementById('prevBtn');
+    const runBtn = document.getElementById('runBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    const cycles = document.getElementById('Cycles');
+
+    const registers = document.getElementById('Registers');
+    const data_mem = document.getElementById('Data_mem');
+    const stats = document.getElementById('Stats');
+    const btb = document.getElementById('BTB');
+
+    const fetch_ = document.getElementById('Fetch');
+    const decode_ = document.getElementById('Decode');
+    const execute_ = document.getElementById('Execute');
+    const memory_ = document.getElementById('Memory');
+    const writeback_ = document.getElementById('Writeback');
+
+    const I_tag = document.getElementById('I-tag');
+    const I_index = document.getElementById('I-index');
+    const I_bo = document.getElementById('I-bo');
+
+    const D_tag = document.getElementById('D-tag');
+    const D_index = document.getElementById('D-index');
+    const D_bo = document.getElementById('D-bo');
+
+    const D_ways = document.getElementById('D-ways');
+    const D_ind = document.getElementById('D-ind');
+
+    const I_ways = document.getElementById('I-ways');
+    const I_ind = document.getElementById('I-ind');
+
+    function getVictim(data)
+    {
+        var foo = data['D_victims'];
+        var keys = [];
+        var values = [];
+        for (var key in foo) {
+            keys.push(key);
+        }
+        for (var value in foo) {
+            values.push(foo[value]);
+        }
+
+        D_ways.innerHTML = values[0];
+        D_ind.innerHTML = values[1];
+
+        var foo = data['I_victims'];
+        var keys = [];
+        var values = [];
+        for (var key in foo) {
+            keys.push(key);
+        }
+        for (var value in foo) {
+            values.push(foo[value]);
+        }
+
+        I_ways.innerHTML = values[0];
+        I_ind.innerHTML = values[1];
+
+    }
+
+    function getTag(data)
+    {
+        console.log(data);
+        var foo = data['D_data'];
+        var keys = [];
+        var values = [];
+        for (var key in foo) {
+            keys.push(key);
+        }
+        for (var value in foo) {
+            values.push(foo[value]);
+        }
+
+        D_tag.innerHTML = values[0];
+        D_index.innerHTML = values[1];
+        D_bo.innerHTML = values[2];
+
+        var foo = data['I_data'];
+        var keys = [];
+        var values = [];
+        for (var key in foo) {
+            keys.push(key);
+        }
+        for (var value in foo) {
+            values.push(foo[value]);
+        }
+
+        I_tag.innerHTML = values[0];
+        I_index.innerHTML = values[1];
+        I_bo.innerHTML = values[2];
+        
+    }
+
+
+    function loadPrev() {
+        console.log("Prev Button clicked");
+        $.ajax({
+            url: '{% url "load_prev" %}',
+            type: 'GET',
+            data: {
+                "prev":1
+            },
+            success: function (data)
+            {
+                console.log(data);
+                
+                getTag(data);
+                getVictim(data)
+                //Get cycles
+                var foo = data['cycle'];
+                // console.log(foo);
+                cycles.innerHTML = "Cycle: ";
+                cycles.innerHTML += foo;
+                
+                // Show registers
+                var foo = data['register'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                registers.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    registers.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+                
+                // Show Data Memory
+                var foo = data['data_mem'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                data_mem.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    data_mem.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                //Show stats
+                var foo = data['stats'][0];
+                console.log(foo[0]);
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                stats.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    stats.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Show BTB
+                var foo = data['btb'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                btb.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    btb.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Block Diagram
+                var foo = data['data_out'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                fetch_.innerHTML = "";
+                decode_.innerHTML = "";
+                execute_.innerHTML = "";
+                memory_.innerHTML = "";
+                writeback_.innerHTML = "";
+                
+                for(var i=0; i<keys.length; i++){
+                    if(keys[i] == "FETCH"){
+                        if (values[i] == "STALL")
+                        {
+                            fetch_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            fetch_.style.backgroundColor = "#FFF9DE";
+                        }
+                        fetch_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "DECODE"){
+                        if (values[i] == "STALL")
+                        {
+                            decode_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            decode_.style.backgroundColor = "#FFF9DE";
+                        }
+                        decode_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "EXECUTE"){
+                        if (values[i] == "STALL")
+                        {
+                            execute_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            execute_.style.backgroundColor = "#FFF9DE";
+                        }
+                        execute_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "MEMORY"){
+                        if (values[i] == "STALL")
+                        {
+                            memory_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            memory_.style.backgroundColor = "#FFF9DE";
+                        }
+                        memory_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "WRITE"){
+                        if (values[i] == "STALL")
+                        {
+                            writeback_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            writeback_.style.backgroundColor = "#FFF9DE";
+                        }
+                        writeback_.innerHTML += values[i] + "<br>";
+                    }
+                }
+            },
+            /*
+            success: function (response) {
+                const data = response.posts
+                spinner.classList.add('not-visible')
+                data.map(post => {
+                    console.log(post.title);
+                    content_container.innerHTML += `<div class="single_content border border-success mt-2 pl-2">
+                                                        <h3>${post.title}</h3>
+                                                        <p>${post.desc}</p>
+                                                    </div>`
+                })
+                if (_current_item == total) {
+                    alert.classList.remove('not-visible');
+                } else {
+                    loadBtn.classList.remove('not-visible');
+                }
+            },
+            */
+            error: function (err) {
+                console.log(err);
+            },
+        });
+    }
+    function loadRun() {
+        console.log("Run Button clicked");
+        $.ajax({
+            url: '{% url "load_run" %}',
+            type: 'GET',
+            data: {
+                "run":1
+            },
+            success: function (data)
+            {
+                console.log(data);
+                getTag(data);
+                getVictim(data)
+                
+                 //Get cycles
+                 var foo = data['cycle'];
+                // console.log(foo);
+                cycles.innerHTML = "Cycle: ";
+                cycles.innerHTML += foo;
+
+
+                // Show registers
+                var foo = data['register'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                registers.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    registers.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+                
+                // Show Data Memory
+                var foo = data['data_mem'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                data_mem.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    data_mem.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                //Show stats
+                var foo = data['stats'][0];
+                console.log(foo[0]);
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                stats.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    stats.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Show BTB
+                var foo = data['btb'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                btb.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    btb.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Block Diagram
+                var foo = data['data_out'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                fetch_.innerHTML = "";
+                decode_.innerHTML = "";
+                execute_.innerHTML = "";
+                memory_.innerHTML = "";
+                writeback_.innerHTML = "";
+                
+                for(var i=0; i<keys.length; i++){
+                    if(keys[i] == "FETCH"){
+                        if (values[i] == "STALL")
+                        {
+                            fetch_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            fetch_.style.backgroundColor = "#FFF9DE";
+                        }
+                        fetch_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "DECODE"){
+                        if (values[i] == "STALL")
+                        {
+                            decode_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            decode_.style.backgroundColor = "#FFF9DE";
+                        }
+                        decode_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "EXECUTE"){
+                        if (values[i] == "STALL")
+                        {
+                            execute_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            execute_.style.backgroundColor = "#FFF9DE";
+                        }
+                        execute_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "MEMORY"){
+                        if (values[i] == "STALL")
+                        {
+                            memory_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            memory_.style.backgroundColor = "#FFF9DE";
+                        }
+                        memory_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "WRITE"){
+                        if (values[i] == "STALL")
+                        {
+                            writeback_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            writeback_.style.backgroundColor = "#FFF9DE";
+                        }
+                        writeback_.innerHTML += values[i] + "<br>";
+                    }
+                }
+            },
+            /*
+            success: function (response) {
+                const data = response.posts
+                spinner.classList.add('not-visible')
+                data.map(post => {
+                    console.log(post.title);
+                    content_container.innerHTML += `<div class="single_content border border-success mt-2 pl-2">
+                                                        <h3>${post.title}</h3>
+                                                        <p>${post.desc}</p>
+                                                    </div>`
+                })
+                if (_current_item == total) {
+                    alert.classList.remove('not-visible');
+                } else {
+                    loadBtn.classList.remove('not-visible');
+                }
+            },
+            */
+            error: function (err) {
+                console.log(err);
+            },
+        });
+    }
+    function loadReset() {
+        console.log("Reset Button clicked");
+        $.ajax({
+            url: '{% url "load_reset" %}',
+            type: 'GET',
+            data: {
+                "reset":1
+            },
+            success: function (data)
+            {
+                console.log(data);
+                getTag(data);
+                getVictim(data)
+                
+
+                 //Get cycles
+                 var foo = data['cycle'];
+                // console.log(foo);
+                cycles.innerHTML = "Cycle: ";
+                cycles.innerHTML += foo;
+
+
+                // Show registers
+                var foo = data['register'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                registers.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    registers.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+                
+                // Show Data Memory
+                var foo = data['data_mem'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                data_mem.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    data_mem.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                //Show stats
+                var foo = data['stats'][0];
+                console.log(foo[0]);
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                stats.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    stats.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Show BTB
+                var foo = data['btb'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                btb.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    btb.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Block Diagram
+                var foo = data['data_out'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                fetch_.innerHTML = "";
+                decode_.innerHTML = "";
+                execute_.innerHTML = "";
+                memory_.innerHTML = "";
+                writeback_.innerHTML = "";
+                
+                for(var i=0; i<keys.length; i++){
+                    if(keys[i] == "FETCH"){
+                        if (values[i] == "STALL")
+                        {
+                            fetch_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            fetch_.style.backgroundColor = "#FFF9DE";
+                        }
+                        fetch_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "DECODE"){
+                        if (values[i] == "STALL")
+                        {
+                            decode_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            decode_.style.backgroundColor = "#FFF9DE";
+                        }
+                        decode_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "EXECUTE"){
+                        if (values[i] == "STALL")
+                        {
+                            execute_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            execute_.style.backgroundColor = "#FFF9DE";
+                        }
+                        execute_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "MEMORY"){
+                        if (values[i] == "STALL")
+                        {
+                            memory_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            memory_.style.backgroundColor = "#FFF9DE";
+                        }
+                        memory_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "WRITE"){
+                        if (values[i] == "STALL")
+                        {
+                            writeback_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            writeback_.style.backgroundColor = "#FFF9DE";
+                        }
+                        writeback_.innerHTML += values[i] + "<br>";
+                    }
+                }
+            },
+            /*
+            success: function (response) {
+                const data = response.posts
+                spinner.classList.add('not-visible')
+                data.map(post => {
+                    console.log(post.title);
+                    content_container.innerHTML += `<div class="single_content border border-success mt-2 pl-2">
+                                                        <h3>${post.title}</h3>
+                                                        <p>${post.desc}</p>
+                                                    </div>`
+                })
+                if (_current_item == total) {
+                    alert.classList.remove('not-visible');
+                } else {
+                    loadBtn.classList.remove('not-visible');
+                }
+            },
+            */
+            error: function (err) {
+                console.log(err);
+            },
+        });
+    }
+    function loadNext() {
+        console.log("Next Button clicked");
+        $.ajax({
+            url: '{% url "load_next" %}',
+            type: 'GET',
+            data: {
+                "next":1
+            },
+            success: function (data)
+            {
+                console.log(data);
+                getTag(data);
+                getVictim(data)
+
+                 //Get cycles
+                 var foo = data['cycle'];
+                // console.log(foo);
+                cycles.innerHTML = "Cycle: ";
+                cycles.innerHTML += foo;
+                
+                
+                // Show registers
+                var foo = data['register'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                registers.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    registers.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+                
+                // Show Data Memory
+                var foo = data['data_mem'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                data_mem.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    data_mem.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                //Show stats
+                var foo = data['stats'][0];
+                console.log(foo[0]);
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                stats.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    stats.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Show BTB
+                var foo = data['btb'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                btb.innerHTML = "";
+                for(var i=0; i<keys.length; i++){
+                    btb.innerHTML += keys[i] + ": " + values[i] + "<br>";
+                }
+
+                // Block Diagram
+                var foo = data['data_out'];
+                var keys = [];
+                var values = [];
+                for (var key in foo) {
+                    keys.push(key);
+                }
+                for (var value in foo) {
+                    values.push(foo[value]);
+                }
+                console.log(keys);
+                console.log(values);
+                fetch_.innerHTML = "";
+                decode_.innerHTML = "";
+                execute_.innerHTML = "";
+                memory_.innerHTML = "";
+                writeback_.innerHTML = "";
+                
+                for(var i=0; i<keys.length; i++){
+                    if(keys[i] == "FETCH"){
+                        if (values[i] == "STALL")
+                        {
+                            fetch_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            fetch_.style.backgroundColor = "#FFF9DE";
+                        }
+                        fetch_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "DECODE"){
+                        if (values[i] == "STALL")
+                        {
+                            decode_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            decode_.style.backgroundColor = "#FFF9DE";
+                        }
+                        decode_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "EXECUTE"){
+                        if (values[i] == "STALL")
+                        {
+                            execute_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            execute_.style.backgroundColor = "#FFF9DE";
+                        }
+                        execute_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "MEMORY"){
+                        if (values[i] == "STALL")
+                        {
+                            memory_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            memory_.style.backgroundColor = "#FFF9DE";
+                        }
+                        memory_.innerHTML += values[i] + "<br>";
+                    }
+                    else if(keys[i] == "WRITE"){
+                        if (values[i] == "STALL")
+                        {
+                            writeback_.style.backgroundColor = "red";
+                        }
+                        else
+                        {
+                            writeback_.style.backgroundColor = "#FFF9DE";
+                        }
+                        writeback_.innerHTML += values[i] + "<br>";
+                    }
+                }
+
+
+                
+                
+            },
+            /*
+            success: function (response) {
+                const data = response.posts
+                spinner.classList.add('not-visible')
+                data.map(post => {
+                    console.log(post.title);
+                    content_container.innerHTML += `<div class="single_content border border-success mt-2 pl-2">
+                                                        <h3>${post.title}</h3>
+                                                        <p>${post.desc}</p>
+                                                    </div>`
+                })
+                if (_current_item == total) {
+                    alert.classList.remove('not-visible');
+                } else {
+                    loadBtn.classList.remove('not-visible');
+                }
+            },
+            */
+            error: function (err) {
+                console.log(err);
+            },
+        });
+    }
+    prevBtn.addEventListener('click', () => {
+        loadPrev()
+    });
+    runBtn.addEventListener('click', () => {
+        loadRun()
+    });
+    resetBtn.addEventListener('click', () => {
+        loadReset()
+    });
+    nextBtn.addEventListener('click', () => {
+        loadNext()
+    });
+</script>
+
+<!-- jquery latest version -->
+<script src={% static 'polls/js/jquery.min.js' %}></script>
+<!-- popper.min.js -->
+<script src={% static 'polls/js/popper.min.js' %}></script>    
+<!-- bootstrap js -->
+<script src={% static 'polls/js/bootstrap.min.js' %}></script>
+<!-- Jquery Rippler js -->
+<!-- "static/polls/js/jquery.rippler.min.js" -->
+<script src={% static 'polls/js/jquery.rippler.min.js' %}></script>	
+<!-- script js -->
+</body>
+</html>
