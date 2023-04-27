@@ -9,12 +9,13 @@ from helperFunctions_dF import *
 
 # cycle
 cycle = 0
+CycleWithStallsInCache = 0
 
 # MEM = [0] * 4000
 
 
-L1 = DCache(32, 256, "direct", "LRU", 4)
-iCache = ICache(4, 4096, "direct", "LRU", 1)
+L1 = DCache(32, 256, "set-associative", "LRU", 4)
+iCache = ICache(32, 4096, "set-associative", "LRU", 4)
 
 
 
@@ -48,10 +49,15 @@ def fetch(fetch_input, fetch_output, write_output, register, ready_reg, codeExit
         print()
         print("FETCH")
         print("PC: ", pc)
+        global CycleWithStallsInCache
 
         # global instruction_word
         # instruction_word = read_word(pc, MEM)
         instruction_word = iCache.get_data(pc*4, 2)
+        check = iCache.getCacheHitOrMiss()
+        print("CHECK IS ", check)
+        if(check==0):
+            CycleWithStallsInCache += 1
         print("Instruction Word", hex(instruction_word))
 
         # End of program
@@ -721,6 +727,8 @@ def Memory(memory_input, memory_output, register, codeExitFlag, data_forwarding,
     rs1 = memory_input["rs1"]
     func3 = memory_input["func3"]
     func7 = memory_input["func7"]
+    
+    global CycleWithStallsInCache
 
     # For exiting the code
     codeExitFlag[3] = memory_ready
@@ -744,7 +752,9 @@ def Memory(memory_input, memory_output, register, codeExitFlag, data_forwarding,
             data_mem[ALUResult] = register[rs2]
             # ReadData = data_mem[ALUResult]
             L1.write_data(ALUResult,register[rs2],func3)
-            check=L1.getWriteHitOrMiss()
+            
+            # increment cycle no matter what
+            CycleWithStallsInCache += 20
 
             Stats[4] += 1
 
@@ -756,6 +766,8 @@ def Memory(memory_input, memory_output, register, codeExitFlag, data_forwarding,
             ReadData=L1.get_data(ALUResult,func3)
             print("DATA GOT FROM L1 CACHE IS", ReadData, "and func3 is ", func3)
             check=L1.getCacheHitOrMiss()
+            if(check==0): #miss
+                CycleWithStallsInCache += 20
 
             Stats[4] += 1
 
@@ -1034,6 +1046,7 @@ def Write(
 
 def run_riscvsim():
     global cycle
+    global CycleWithStallsInCache
 
     fetch_ready = 1
     decode_ready = 0
@@ -1273,7 +1286,7 @@ def run_riscvsim():
     while (t<50):
 
         print()
-        print("CYCLE: ", cycle)
+        print("CYCLE: ", CycleWithStallsInCache)
         print("DATAMEM: ", data_mem)
         print("tagArrays:", L1.tag_arrays)
         # t+=1
@@ -1282,12 +1295,14 @@ def run_riscvsim():
         if cycle == 0:  # if cycle is 0, start from beginning
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
                   fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing)
+            CycleWithStallsInCache += 1
             cycle += 1
         elif cycle == 1:  # 1 instruction
             decode(decode_input, decode_output, register, codeExitFlag, ready_reg,
                    fetch_output, flush_due_to_mispredict, fetch_input, data_forwarding, Cycle_dict_printing)
             fetch(fetch_input, fetch_output, fetch2_input, register, ready_reg, codeExitFlag,
                   fetch3_input, btbTable1, btbTable2, flush_due_to_mispredict, data_forwarding, Cycle_dict_printing)
+            CycleWithStallsInCache += 1
             cycle += 1
         elif cycle == 2:  # 2 instruction
             execute(execute_input, execute_output, register, codeExitFlag, btbTable1, btbTable2, fetch3_input,
@@ -1301,6 +1316,7 @@ def run_riscvsim():
                 Cycle_dict_printing["DECODE"] = "STALL"
                 Cycle_dict_printing["FETCH"] = "STALL"
             Load_Casing_Dependency_Detected[0] = 0
+            CycleWithStallsInCache += 1
             cycle += 1
         elif cycle == 3:  # 3 instruction
             Memory(memory_input, memory_output,
@@ -1316,6 +1332,7 @@ def run_riscvsim():
                 Cycle_dict_printing["DECODE"] = "STALL"
                 Cycle_dict_printing["FETCH"] = "STALL"
             Load_Casing_Dependency_Detected[0] = 0
+            CycleWithStallsInCache += 1
             cycle += 1
         elif cycle >= 4:  # 4 or more than 4 instructions, then keep looping in this fashion
             Write(
@@ -1346,6 +1363,7 @@ def run_riscvsim():
                 Cycle_dict_printing["DECODE"] = "STALL"
                 Cycle_dict_printing["FETCH"] = "STALL"
             Load_Casing_Dependency_Detected[0] = 0
+            CycleWithStallsInCache += 1
             cycle += 1
 
         print("register: ", register)
@@ -1392,7 +1410,7 @@ def run_riscvsim():
         ):
             print(
                 "<<<<<<<<<<<<<<---------------EXITING--------------------->>>>>>>>>>>>>>>>")
-            Stats[1] = cycle-2
+            Stats[1] = CycleWithStallsInCache-2
             Stats[2] -= 2
             Stats[5] -= 1
             # Stats[7]-=1

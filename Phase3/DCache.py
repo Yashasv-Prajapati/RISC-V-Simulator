@@ -87,13 +87,8 @@ class DCache:
         address: the address of the byte
         '''
         Tag, Index, blockOffset = self.break_address(address)
-        print("BLOCK OFFSET: ", blockOffset)
-        print("CURRENT WAYNUMBER: ", wayNumber)
-        # TotalSets = self.cache_size//(self.block_size*self.number_of_ways)
-        print("DATA STORED AT THIS ADDReSS: ", self.data_cache[wayNumber][Index])
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             # using block offset to get data from block
-            print("IN TAG")
             return self.data_cache[wayNumber][Index][blockOffset]
         
         else: # handle miss, by getting data from main memory
@@ -106,9 +101,7 @@ class DCache:
                 self.mct[self.tag_arrays[wayNumber][Index]] = True
             
             # update tag array
-            print("BEFORE TAG arrary ", self.tag_arrays[wayNumber])
             self.tag_arrays[wayNumber][Index] = Tag
-            print("UPDATED TAG arrary ", self.tag_arrays)
 
             
             # set data in cache  
@@ -130,8 +123,6 @@ class DCache:
                 self.data_cache[wayNumber][tempIndex][tempBO] = int(binaryDataFromMain[i*8:i*8+8],2)
                 tempAddress += 1
             
-            print("Data in cache block: ", self.data_cache[wayNumber][Index])
-            print("DATACACHE: ", self.data_cache[wayNumber][Index][3])
             return self.data_cache[wayNumber][Index][blockOffset]
 
     def WriteDataInMain(self, address:int, data:int):
@@ -180,12 +171,9 @@ class DCache:
             raise Exception("Invalid data, expected data to be in range 0-255 but got "+str(data))
         
         _, Index, blockOffset = self.break_address(address)
-        print("ADDRESS IS ", address, "INDEX IS ", Index, "BLOCK OFFSET IS ", blockOffset)
 
         # set this data on this address
-        print("IN writeByte func, WRITING DATA: ", data)
         self.data_cache[wayNumber][Index][blockOffset] = data
-        print("Updated data cache: ", self.data_cache[wayNumber][Index])
 
     def write_data(self, address:int, data:int, func3:int):
         '''
@@ -215,10 +203,6 @@ class DCache:
         Tag, Index, blockOffset = self.break_address(address)
 
         # dataInBinary = bin(data)[2:].zfill(32) # converting data to a 32 bit binary string
-        print("Data IS: ", data)
-        print("BLOCKOFFSET", blockOffset)
-        print("FUNC3: ", func3)
-        print("INDEX: ", Index)
         if(self.mapping=="direct"):
             #  match the tag with the tag array
             if(self.tag_arrays[0].get(Index, -1) == Tag): # found in cache
@@ -295,7 +279,6 @@ class DCache:
         self.__CacheContent.append(cacheContent)
 
         Tag, Index, blockOffset = self.break_address(address)
-        print("TAG: ", Tag, "INDEX: ", Index, "BLOCKOFFSET: ", blockOffset)
         JSONDict = {"Tag":Tag, "Index":Index, "blockOffset":blockOffset}
         self.__JSONArr.append(JSONDict)
 
@@ -343,7 +326,7 @@ class DCache:
                 print("DataFound: ", DataFound)
                 return int(DataFound,2)
             
-        elif self.mapping == "set-associative":
+        elif self.mapping == "set-associative" or self.mapping=="fully-associative":
             
             # check for possible errors
             if(self.number_of_ways%2!=0 and self.number_of_ways==0):
@@ -412,7 +395,6 @@ class DCache:
                 else:
                     self.capacity_misses += 1
             else: # hit
-                print("IT IS A HIT")
                 self.hits += 1
                 self.readHitOrMiss = 1 # cache hit
 
