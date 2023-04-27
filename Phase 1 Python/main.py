@@ -1,4 +1,9 @@
+<<<<<<< HEAD
+#from myRISCVSim import *
+from pipeline import *
+=======
 from new import *
+>>>>>>> refs/remotes/origin/main
 import argparse
 import sys
 

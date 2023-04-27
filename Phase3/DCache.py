@@ -141,11 +141,6 @@ class DCache:
         '''
 
         data_mem[int(address)] = data
-        # now considering the instruction is of 4 bytes, we can write it to the memory
-        # dataInBinary = bin(data)[2:].zfill(32)
-        # for i in range(4):
-        #     data_mem[int(address)+i] = int(dataInBinary[8*i:8*i+8],2) # writing byte by byte
-        
           
     def getFromMain(self, address:int):
         '''
@@ -170,12 +165,7 @@ class DCache:
             address += 1 # update address, go to next byte
 
         return dataBytes   
-
-        # dataBytes = ""
-        # for i in range(self.block_size):
-        #     dataBytes += bin(data_mem[address+i])[2:].zfill(8)                
-
-        # return dataBytes     
+   
     
     def writeByte(self, address:int, data:int, wayNumber:int):
         '''

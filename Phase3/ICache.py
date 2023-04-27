@@ -448,7 +448,7 @@ class ICache:
         print("Miss rate: ", (self.cold_misses + self.capacity_misses + self.conflict_misses)/(self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses))
         print("Number of Access: ", self.hits + self.cold_misses + self.capacity_misses + self.conflict_misses)
         # saving all this stats in a json file
-        file = open("Phase3/Istats/ICache_stats.json", "w")
+        file = open("Phase3/Istats/stats.json", "w")
         StatDict = {
             "total_hits": self.hits,
             "total_misses": self.cold_misses + self.capacity_misses + self.conflict_misses,

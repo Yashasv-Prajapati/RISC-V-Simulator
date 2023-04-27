@@ -13,7 +13,7 @@ cycle = 0
 # MEM = [0] * 4000
 
 
-L1 = DCache(4, 256, "fully-associative", "random", 1)
+L1 = DCache(32, 256, "direct", "LRU", 4)
 iCache = ICache(4, 4096, "direct", "LRU", 1)
 
 

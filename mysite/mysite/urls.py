@@ -16,10 +16,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from polls.views import index, load_more
+from polls.views import index, load_next, load_prev, load_reset, load_run
 
 urlpatterns = [
     path("polls/", include("polls.urls")),
     path("admin/", admin.site.urls),
-    path('load/',load_more, name='load')
+    path('load_prev/',load_prev, name='load_prev'),
+    path('load_next/',load_next, name='load_next'),
+    path('load_run/',load_run, name='load_run'),
+    path('load_reset/',load_reset, name='load_reset'),
 ]
