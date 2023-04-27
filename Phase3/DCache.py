@@ -57,7 +57,8 @@ class DCache:
         self.mct = {} # miss classification table
 
         # total tag arrays -> number of ways and each array is a dictionary 
-        self.tag_arrays = np.full((self.number_of_ways), {}, dtype=object)
+        #self.tag_arrays = np.full((self.number_of_ways), {}, dtype=object)
+        self.tag_arrays = [{} for i in range(self.number_of_ways)]
         # number of data arrays = number of ways. each array has <number of blocks> rows and <block size> columns
         self.data_cache = np.full((self.number_of_ways, cacheSize//blockSize, blockSize), 0, dtype='uint8')
 
@@ -87,8 +88,9 @@ class DCache:
         '''
         Tag, Index, blockOffset = self.break_address(address)
         print("BLOCK OFFSET: ", blockOffset)
+        print("CURRENT WAYNUMBER: ", wayNumber)
         # TotalSets = self.cache_size//(self.block_size*self.number_of_ways)
-        
+        print("DATA STORED AT THIS ADDReSS: ", self.data_cache[wayNumber][Index])
         if self.tag_arrays[wayNumber].get(Index, -1) == Tag: # found in cache
             # using block offset to get data from block
             print("IN TAG")
@@ -104,7 +106,9 @@ class DCache:
                 self.mct[self.tag_arrays[wayNumber][Index]] = True
             
             # update tag array
+            print("BEFORE TAG arrary ", self.tag_arrays[wayNumber])
             self.tag_arrays[wayNumber][Index] = Tag
+            print("UPDATED TAG arrary ", self.tag_arrays)
 
             
             # set data in cache  
@@ -186,10 +190,12 @@ class DCache:
             raise Exception("Invalid data, expected data to be in range 0-255 but got "+str(data))
         
         _, Index, blockOffset = self.break_address(address)
-        
+        print("ADDRESS IS ", address, "INDEX IS ", Index, "BLOCK OFFSET IS ", blockOffset)
 
         # set this data on this address
+        print("IN writeByte func, WRITING DATA: ", data)
         self.data_cache[wayNumber][Index][blockOffset] = data
+        print("Updated data cache: ", self.data_cache[wayNumber][Index])
 
     def write_data(self, address:int, data:int, func3:int):
         '''
@@ -234,7 +240,6 @@ class DCache:
                     dataInBinary = bin(data)[2:].zfill(32)
 
                 for i in range(2**func3): # writing data in the cache either a byte, half word or a word
-                    print("dataInBinary bhai: ", dataInBinary[i*8:i*8+8])
                     self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), 0)
                     address += 1
             
@@ -248,8 +253,8 @@ class DCache:
                     elif(func3==2):
                         dataInBinary = bin(data)[2:].zfill(32)
 
-                    for i in range(2**func3):
-                        self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), i)
+                    for j in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[j*8:j*8+8], 2), i)
                         address += 1
                     break
             
@@ -263,8 +268,8 @@ class DCache:
                     elif(func3==2):
                         dataInBinary = bin(data)[2:].zfill(32)
 
-                    for i in range(2**func3):
-                        self.writeByte(address, int(dataInBinary[i*8:i*8+8], 2), i)
+                    for j in range(2**func3):
+                        self.writeByte(address, int(dataInBinary[j*8:j*8+8], 2), i)
                         address += 1
                     break
             
@@ -417,6 +422,7 @@ class DCache:
                 else:
                     self.capacity_misses += 1
             else: # hit
+                print("IT IS A HIT")
                 self.hits += 1
                 self.readHitOrMiss = 1 # cache hit
 

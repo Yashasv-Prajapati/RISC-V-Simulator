@@ -13,7 +13,7 @@ cycle = 0
 # MEM = [0] * 4000
 
 
-L1 = DCache(4, 256, "set-associative", "LRU", 4)
+L1 = DCache(4, 256, "fully-associative", "random", 1)
 iCache = ICache(4, 4096, "direct", "LRU", 1)
 
 
@@ -1275,7 +1275,7 @@ def run_riscvsim():
         print()
         print("CYCLE: ", cycle)
         print("DATAMEM: ", data_mem)
-        print("DATACACHE:", L1.data_cache)
+        print("tagArrays:", L1.tag_arrays)
         # t+=1
         # call for every cycle
         Cycle_dict_printing = {}
