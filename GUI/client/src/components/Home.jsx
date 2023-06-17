@@ -16,6 +16,7 @@ function Home() {
     const [MemoryDataToShow, setMemoryDataToShow]= useState(0);
     const [checkRun, setCheckRun]= useState(false);
 
+    const sampleInput = "Sample Input \n0x0 0x00900093 \n0x4 0x00908113 \n0x8 0x002081b3 \n0xc 0x00218233 \n0x10 0x05a08293 \n0x14 0x05508313 \n0x18 0x05b08393 \n0x1c 0x00820613 \n0x20 0x04108a13 \n0x24 0x007a0c93 \n0x2c 0xfffffffb";
 
 
       function LoadData(){
@@ -127,10 +128,8 @@ function Home() {
         isEditor?
         
             <div>
-            
-
             <div>
-                <textarea onChange={TextAreaChanges} value={instructionString} className='w-1/3 h-96 p-4 border-2 border-gray-300 rounded shadow'></textarea>
+                <textarea onChange={TextAreaChanges} placeholder={sampleInput} value={instructionString} className='w-full h-96 p-4 border-2 border-gray-300 rounded shadow'></textarea>
             </div>
             </div>
         

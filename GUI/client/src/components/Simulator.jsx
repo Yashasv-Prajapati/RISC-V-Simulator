@@ -4,9 +4,6 @@ import { useState } from 'react';
 
 function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, textData, stepNum,setStepNum, setInstructionString, setInstructions }) {
 
-
-    const [pipeline, setPipeline] = useState(false);
-    const [dataForwarding, setDataForwarding] = useState(false);
     const [runbtnClicked, setRunbtnClicked] = useState(false); // run button clicked
     const [prevNum, setPrevNum] = useState(0); // previous number
 
@@ -56,7 +53,6 @@ function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, tex
         res.json().then(data => {
             if(data.success){
 
-            console.log(data);
             // const regArray = [];
             // for(let i=0;i<32;i++){
             //   regArray.push(parseInt(data.resultData[`X[${i}]`]));
@@ -181,21 +177,10 @@ function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, tex
             {/* Reset */}
             <button onClick={Reset} disabled={runbtnClicked?false:true} className='p-2 m-4 rounded bg-orange-300 hover:bg-orange-400 active:bg-orange-300 shadow'>Reset</button>
             
-            {/* Pipeline */}
-            <div className='flex justify-center items-center border-4 m-2 p-2 border-orange-300 rounded '>
-                <label htmlFor="pipelineLabel" className='p-2'>Pipeline</label>
-                <input type="checkbox" name="pipeline" onChange={(e)=>{setPipeline(e.target.checked)}} className='' id="pipeline" />
-            </div>
-            
-            {/* DataForwarding */}
-            <div className='flex justify-center items-center border-4 m-2 p-2 border-orange-300 rounded '>
-                <label htmlFor="pipelineLabel" >Data-Forwarding</label>
-                <input type="checkbox" name="dataForwarding" onChange={(e)=>{setDataForwarding(e.target.checked)}} className='' id="dataForwarding" />
-            </div>
         </div>
 
-        <div className='w-full h-screen flex flex-row border-8 border-black'>
-            <div className='overflow-y-auto max-h-full w-1/4' style={{ maxHeight: 'calc(100% - 100px)' }}>
+        <div className='w-full h-screen flex flex-row border-2 border-black'>
+            <div className='overflow-y-auto max-h-full w-full' style={{ maxHeight: 'calc(100% - 100px)' }}>
 
                 {
                     instructions.map((item, index)=>{
@@ -206,9 +191,6 @@ function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, tex
                         )
                     })
                 }
-            </div>
-            <div className='w-1/4 flex border-2 border-blue-300 rounded'>
-                <Hazards/>
             </div>
         </div>
 

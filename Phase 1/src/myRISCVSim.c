@@ -80,16 +80,11 @@ void run_riscvsim(FILE *jsonFile) {
   
   fprintf(jsonFile, "[ \n");
   int instruction_number=0;
-   int t=1;
+   int t=0;
    while(1){
-    
-    //  printf("t in starting of loop=%d\n", t);
-    //  printf("pc before fetch=%d\n", pc);
-    // printf("-fetch prints:\n");
-    printf("pc=%d\n",pc);
+
     fetch();
     if(instruction_word>=4294967291){
-      // fprintf(jsonFile,"\b \b\n");
       break;
     }
 
@@ -101,28 +96,21 @@ void run_riscvsim(FILE *jsonFile) {
 
     X[0]=0;
 
-    //  printf("pc after fetch=%d\n",pc);
+    //  // printf("pc after fetch=%d\n",pc);
     decode();
 
     X[0]=0;
-    //  printf("pc after decode=%d\n",pc);
+    //  // printf("pc after decode=%d\n",pc);
     execute();
 
     X[0]=0;
-    // printf("pc after execute=%d\n",pc);
+    // // printf("pc after execute=%d\n",pc);
     mem();
 
     X[0]=0;
-    // printf("pc after mem=%d\n",pc);
+    // // printf("pc after mem=%d\n",pc);
     write_back();
-    // printf("pc after write_back=%d\n",pc);
-    // if(t<0){
-    //   break;
-    // }
     X[0]=0;
-    // printf("t in ending of loop=%d\n",t);
-    // printf("X[2] at end of loop=%d\n",X[2]);
-    // printf("\n");
 
     fprintf(jsonFile, "{\n");
 
@@ -144,29 +132,14 @@ void run_riscvsim(FILE *jsonFile) {
       fprintf(jsonFile, "\"DataMem[%d]\":%d,\n",i,DataMEM[i]);
     }
 
-    // if(t==1){
-    //   fprintf(jsonFile,"}\n\n");
-    //   t--;
-    //   continue;
-    // }
     fprintf(jsonFile,"}\n");
     // t--;
     instruction_number++;
     t++;
-    printf("instruction_number=%d\n",instruction_number);
+    // printf("instruction_number=%d\n",instruction_number);
  }
-  printf("SHOWING ALL THE REGISTERS\n");
-  for(int i=0;i<32;i++){
-    printf("X[%d] = %d\n", i, X[i]);
-  }
-  // printf("SHOWING ALL MEMORY\n");
-  // for(int i=0;i<100;i++){
-  //   fprintf("D[%d] = %d\n", i, DataMEM[i]);
-  // }
   fprintf(jsonFile, "]\n");
-  // fclose(jsonFile);
-  
-
+  return;
 }
 
 // it is used to set the reset values
@@ -210,26 +183,26 @@ void load_program_memory(char *file_name, FILE *jsonFile) {
   unsigned int address;
   unsigned int instruction;
   fp = fopen(file_name, "r");
-  printf("FILE NAME IS %s", file_name);
+  // // printf("FILE NAME IS %s", file_name);
 
   if(fp == NULL) {
-    printf("Error opening input mem file\n");
+    // // printf("Error opening input mem file\n");
     exit(1);
   }
 
 
   while(fscanf(fp, "%x %x", &address, &instruction) != EOF) {
     write_word(MEM, address, instruction);
-    printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
-    // printf("Instruction word from file in hex is %X\n", instruction);
+    // printf("Instruction word from file instruction=%u and address=%u\n\n", instruction,address);
+    // // printf("Instruction word from file in hex is %X\n", instruction);
   }
 
   fclose(fp);
 
-  for(int i=0;i<4000;i++){
-    printf(" %x ", MEM[i]);
-  }
-  printf("\n");
+  // for(int i=0;i<4000;i++){
+  //   // // printf(" %x ", MEM[i]);
+  // }
+  // // // printf("\n");
   // initialize the data memory
   DataMEM = (unsigned char*) calloc(10000000 ,sizeof(unsigned char));
 
@@ -241,7 +214,7 @@ void write_data_memory() {
   unsigned int i;
   fp = fopen("data_out.json", "w");
   if(fp == NULL) {
-    printf("Error opening dataout.mem file for writing\n");
+    // // printf("Error opening dataout.mem file for writing\n");
     return;
   }
   
@@ -263,77 +236,77 @@ void fetch(){
   instruction_word = read_word(MEM, pc);
   printf("FETCH:");
   
-  //  printf("instruction_word Read from memory=%u\n", instruction_word);
+  //  // printf("instruction_word Read from memory=%u\n", instruction_word);
 }
 //reads the instruction register, reads operand1, operand2 fromo register file, decides the operation to be performed in execute stage
 void decode() {
-    // printf("instruction_word in Decode startin=%d\n",instruction_word);
+    // // printf("instruction_word in Decode startin=%d\n",instruction_word);
     Dec_to_Hex();//+++++++++c
-    // printf("hexInstruction=%s\n",hex_instr);
-    // printf("hex_instr=%s\n",hex_instr);
+    // // printf("hexInstruction=%s\n",hex_instr);
+    // // printf("hex_instr=%s\n",hex_instr);
       HexToBin();
-      //  printf("hexInstructionafter hex to bin=%s\n",hex_instr);
-      // printf("bin_32_arr=%s\n",bin_32_arr);
+      //  // printf("hexInstructionafter hex to bin=%s\n",hex_instr);
+      // // printf("bin_32_arr=%s\n",bin_32_arr);
       // Working Fine
       opCode_gen(opCode,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
+      // // printf("OpCode=%s\n",opCode);
       rs1_gen(rs1,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      //  printf("rs1=%s\n",rs1);
+      // // printf("OpCode=%s\n",opCode);
+      //  // printf("rs1=%s\n",rs1);
       rs2_gen(rs2,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("rs2=%s\n",rs2);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("rs2=%s\n",rs2);
       rd_gen(rd,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("rd=%s and rd_decimal=%d\n",rd,rd_decimal);
-      // printf("OpCode=%s\n",opCode);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("rd=%s and rd_decimal=%d\n",rd,rd_decimal);
+      // // printf("OpCode=%s\n",opCode);
       funct3_gen(funct3,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("funct3=%s\n",funct3);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("funct3=%s\n",funct3);
       funct7_gen(funct7,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("funct7=%s\n",funct7);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("funct7=%s\n",funct7);
       imm_gen(imm,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("imm=%s\n",imm);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("imm=%s\n",imm);
       immS_gen(immS,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("immS=%s\n",immS);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("immS=%s\n",immS);
       immB_gen(immB,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("immB=%s\n",immB);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("immB=%s\n",immB);
       immU_gen(immU,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("immU=%s\n",immU);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("immU=%s\n",immU);
       immJ_gen(immJ,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("immJ=%s\n",immJ);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("immJ=%s\n",immJ);
       imm_final_gen(imm_final,bin_32_arr);
-      // printf("OpCode=%s\n",opCode);
-      // printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
-      // printf("instType=%c\n",instType);
-      // printf("OpCode=%s\n",opCode);
+      // // printf("OpCode=%s\n",opCode);
+      // // printf("imm_final=%s and imm_final_decimal=%d \n",imm_final,imm_final_decimal);
+      // // printf("instType=%c\n",instType);
+      // // printf("OpCode=%s\n",opCode);
       //Control Signals
       ALUop_gen();
-      // printf("ALUop=%d\n",ALUop);
+      // // printf("ALUop=%d\n",ALUop);
       Op2Select_gen();
-      // printf("Op1=%d and op2_final=%d\n",Op1,Op2_final);
-      // printf("Op2Select=%d\n",Op2Select);
+      // // printf("Op1=%d and op2_final=%d\n",Op1,Op2_final);
+      // // printf("Op2Select=%d\n",Op2Select);
       BranchTargetSet_gen();
 
-      // printf("BranchTargetSet=%d and BranchTargetResult=%d\n",BranchTargetSet,BranchTargetResult);
+      // // printf("BranchTargetSet=%d and BranchTargetResult=%d\n",BranchTargetSet,BranchTargetResult);
       MemOp_gen();
-      // printf("MemOp=%d\n",MemOp);
+      // // printf("MemOp=%d\n",MemOp);
       ResultSelect_gen();
       IsBranch_gen();
       // hex_instr[8]='\0';
-      // printf("hex string is %s", hex_instr);
-      printf("Fetch Instruction 0x%x i.e %d from address 0x%X\n", instruction_word,instruction_word,pc);
-          printf("DECODE:");
+      // // printf("hex string is %s", hex_instr);
+      // printf("Fetch Instruction 0x%x i.e %d from address 0x%X\n", instruction_word,instruction_word,pc);
+          // printf("DECODE:");
       operation_gen();
-      // printf("isBranch=%d\n",isBranch);
-    //  printf("ResultSet=%d and ResultSelect=");
-      // printf("operand1=%d and operand2=%d\n",operand1,operand2);
+      // // printf("isBranch=%d\n",isBranch);
+    //  // printf("ResultSet=%d and ResultSelect=");
+      // // printf("operand1=%d and operand2=%d\n",operand1,operand2);
 }
 //executes the ALU operation based on ALUop
 void execute() {
@@ -349,7 +322,7 @@ void execute() {
     7 - xor
     8 - set less than
   */
-  // printf("ALUop=%d\n",ALUop);
+  // // printf("ALUop=%d\n",ALUop);
   if (ALUop == 1)
   {
     ALUResult = operand1 + operand2;
@@ -394,10 +367,10 @@ void mem() {
     1 - Write in memory --> Store
     2 - Read from memory --> Load
   */
-  printf("MEMORY:");
+  // printf("MEMORY:");
   if (MemOp == 0)
   {
-    printf("There is no Memory Operation\n");
+    // printf("There is no Memory Operation\n");
     ReadData = ALUResult;
   }
   else if (MemOp == 1) // Store
@@ -405,20 +378,20 @@ void mem() {
     unsigned int *data_p;
     data_p = (unsigned int*)(DataMEM + ALUResult);
     int rs2Value = BintoDec(rs2,5);
-    // printf("X[%d] = %d and Op2_final is = %d\n",Op2_final, X[Op2_final], Op2_final);
+    // // printf("X[%d] = %d and Op2_final is = %d\n",Op2_final, X[Op2_final], Op2_final);
 
     *data_p = X[rs2Value];
     ReadData = X[rs2Value];
-    printf("There is a Store Operation to be done from memory\n");
+    // printf("There is a Store Operation to be done from memory\n");
   }
   else if (MemOp == 2) // Load
   {
     int *data_p;
     data_p = (int*)(DataMEM + ALUResult);
-    printf("ReadData=%d and ALUResult=%d");
+    // // printf("ReadData=%d and ALUResult=%d");
     ReadData = *data_p;
-    // printf("ReadData = %d\n", ReadData);
-    printf("There is a Read Operation to be done from memory\n");
+    // // printf("ReadData = %d\n", ReadData);
+    // // printf("There is a Read Operation to be done from memory\n");
   }
 
   // reset the control signal 
@@ -437,50 +410,50 @@ void write_back() {
     3 - LoadData - essentially same as ReadData
     4 - ALUResult
   */
-  printf("WRITEBACK:");
+  // printf("WRITEBACK:");
 //  rd , ImmU_lui, Immu_auipc are to be decided, so creating temp variables in their name
   int rd, ImmU_lui, Immu_auipc;
-  // printf("RFWrite in Write_back=%d and ResultSelect=%d\n",RFWrite,ResultSelect);
+  // // printf("RFWrite in Write_back=%d and ResultSelect=%d\n",RFWrite,ResultSelect);
   if(RFWrite){
-    // printf("rd_decimal = %d\n", rd_decimal);
+    // // printf("rd_decimal = %d\n", rd_decimal);
     switch(ResultSelect){
       case 0:{
         X[rd_decimal] = pc+4;
-        printf("write back %d to R%d\n",pc+4,rd_decimal);
+        // printf("write back %d to R%d\n",pc+4,rd_decimal);
         break;
       }
       case 1:{
         X[rd_decimal] = imm_final_decimal;
-        printf("write back %d to R%d\n", imm_final_decimal, rd_decimal);
+        // printf("write back %d to R%d\n", imm_final_decimal, rd_decimal);
         break;
       }
       case 2:{
         X[rd_decimal] = pc + (imm_final_decimal) ;
-        printf("write back %d to R%d\n", pc + imm_final_decimal, rd_decimal);
+        // printf("write back %d to R%d\n", pc + imm_final_decimal, rd_decimal);
         break;
       }
       case 3:{
-        // printf("ReadData in other = %d\n", ReadData);
+        // // printf("ReadData in other = %d\n", ReadData);
         static unsigned int LoadData;
         LoadData = ReadData ;
         X[rd_decimal] = ReadData;
-        printf("write back %d to R%d\n", ReadData, rd_decimal);
+        // printf("write back %d to R%d\n", ReadData, rd_decimal);
         break;
       }
       case 4:{
         X[rd_decimal] = ALUResult;
-        printf("write back %d to R%d\n", ALUResult, rd_decimal);
+        // printf("write back %d to R%d\n", ALUResult, rd_decimal);
         break;
       }
       // need to make another case for store instruction
     }
   }
   else{
-    printf("There is no Write Back\n");
+    // printf("There is no Write Back\n");
   }
     
-    // printf("ISbranch=%d and ALUResult=%d\n",isBranch,ALUResult);
-    // printf("Branch Target Address=%d\n",BranchTargetAddress);
+    // // printf("ISbranch=%d and ALUResult=%d\n",isBranch,ALUResult);
+    // // printf("Branch Target Address=%d\n",BranchTargetAddress);
     //IS BRANCH MUX
     /*
       IsBranch=0 => ALUResult
@@ -497,17 +470,17 @@ void write_back() {
         pc=pc+4;
     }
 
-    printf("\n");
+    // printf("\n");
 
 }
 
 unsigned int read_word(char *mem, unsigned int address) {
   unsigned int *data;
-  // printf("here instruction_word=%d\n",instruction_word);
-  // printf("pc=%d\n",pc);
-  // printf("mem=%d and address=%d",mem,address);
+  // // printf("here instruction_word=%d\n",instruction_word);
+  // // printf("pc=%d\n",pc);
+  // // printf("mem=%d and address=%d",mem,address);
   data =  (unsigned int*) (mem + address);
-  // printf("READ DATA from read_word function is %d and *data=%d\n", data,*data);
+  // // printf("READ DATA from read_word function is %d and *data=%d\n", data,*data);
   return *data;
 }
 
@@ -532,7 +505,7 @@ int BintoDec(char* Bin,int size){
 
 void Dec_to_Hex(){
     unsigned int decimal_Number=instruction_word;
-    // printf("decimal number is %d\n", decimal_Number);
+    // // printf("decimal number is %d\n", decimal_Number);
     int i=0;
     while (decimal_Number != 0) {
         int temp = decimal_Number % 16;
@@ -556,16 +529,16 @@ void Dec_to_Hex(){
 
     hexa_instr[8]='\0';
     // sprintf(hex_instr, "%08X", decimal_Number);
-    // printf("hex_instr is %s and it's length is %lu\n", hex_instr, strlen(hex_instr));
+    // // printf("hex_instr is %s and it's length is %lu\n", hex_instr, strlen(hex_instr));
     
    for(int i=0;i<=7;i++){
        hex_instr[i]=hexa_instr[7-i];
    }
     hex_instr[8]='\0';
-  //  printf("instruction word is %d\n", instruction_word);
-  //  printf("actual hex = %X\n", instruction_word);
-    // printf("HEX_INSTRUCTION STRING IS %s\n", hex_instr);
-    // printf("HEXA_INSTRUCTION STRING IS %s\n", hexa_instr);
+  //  // printf("instruction word is %d\n", instruction_word);
+  //  // printf("actual hex = %X\n", instruction_word);
+    // // printf("HEX_INSTRUCTION STRING IS %s\n", hex_instr);
+    // // printf("HEXA_INSTRUCTION STRING IS %s\n", hexa_instr);
 
 }
 //int char_to_int(char c){
@@ -595,7 +568,7 @@ void Dec_to_Hex(){
 //    }
 //    // printing binary array in reverse order
 //    for (int j = i - 1; j >= 0; j--)
-//        printf("%d", binaryNum[j]);
+//        // printf("%d", binaryNum[j]);
 //}
 
 void opCode_gen(char *opCode,char *bin_32_arr){
@@ -663,18 +636,18 @@ void immB_gen(char* immB,char* bin_32_arr){
     }
 }
 void immU_gen(char* immU,char* bin_32_arr){
-//    printf("IMMU BEFORE %s\n", immU);
+//    // printf("IMMU BEFORE %s\n", immU);
     for(int i=0;i<=11;i++){
         immU[i]='0';
     }
-//    printf("IMMU INTERMEDIATE %s\n", immU);
+//    // printf("IMMU INTERMEDIATE %s\n", immU);
     for(int i=12;i<=31;i++){
         immU[i]=bin_32_arr[i];
-//        printf("bin_32_arr[i] = %c\n", bin_32_arr[i]);
+//        // printf("bin_32_arr[i] = %c\n", bin_32_arr[i]);
     }
     immU[32]='\0';
-    // printf("IMMU AFTER %s\n", immU);
-//    printf("IMMU SIZE %d\n", sizeof(immU)/sizeof(immU[0]));
+    // // printf("IMMU AFTER %s\n", immU);
+//    // printf("IMMU SIZE %d\n", sizeof(immU)/sizeof(immU[0]));
 }
 void immJ_gen(char* immJ,char* bin_32_arr){
     for(int i=12;i<=19;i++){
@@ -696,14 +669,14 @@ void signExtender(char *array,int index){
 }
 
 void imm_final_gen(char *imm_final,char* bin_32_arr){
-  // printf("STRING COMPARE = %d and opCode is = %s\n", strcmp(opCode,"1100100"), opCode);
+  // // printf("STRING COMPARE = %d and opCode is = %s\n", strcmp(opCode,"1100100"), opCode);
     
-        // printf("YES HERE\n");
-        // printf("opCode = %s\n", opCode);
+        // // printf("YES HERE\n");
+        // // printf("opCode = %s\n", opCode);
     if(!strncmp(opCode,"1100110", 7)){
         //R-Type
         instType='R';
-        // printf("YES HERE\n");
+        // // printf("YES HERE\n");
 //        strncpy(imm_final,imm,12);
 //        signExtender(imm_final,11);
     }
@@ -726,12 +699,12 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
         signExtender(imm_final,12);
     }
     else if(!strncmp(opCode,"1110110",7)){
-      // printf("yooooooo\n");
+      // // printf("yooooooo\n");
         //U-Type
         instType='U';
         strncpy(imm_final,immU,32);
         imm_final[32]='\0';
-        // printf("Immu finzlllll: %s\n", imm_final);
+        // // printf("Immu finzlllll: %s\n", imm_final);
         
 //        signExtender(imm_final)
     }
@@ -744,7 +717,7 @@ void imm_final_gen(char *imm_final,char* bin_32_arr){
       instType = 'Z';
     }
     imm_final_decimal=BintoDec(imm_final,32);
-    // printf("kkkkkkk: %d\n", imm_final_decimal);
+    // // printf("kkkkkkk: %d\n", imm_final_decimal);
 }
 void ALUop_gen(){
     /*
@@ -794,15 +767,15 @@ void HexToBin()
 {
 
     long int i = 0;
-    // printf("hex_instr in hextoBin=%s\n",hex_instr);
-    // printf("HEX STRING 2nd func before %s\n", hex_instr);
+    // // printf("hex_instr in hextoBin=%s\n",hex_instr);
+    // // printf("HEX STRING 2nd func before %s\n", hex_instr);
 //    char bin_32_arr[32];
     while (hex_instr[i]) {
          if(hex_instr[i]== '0'){
             char* c0="0000";
             for(int j=0;j<4;j++){
                 bin_32_arr[31-(4*i)-j]=c0[j];
-//                printf("%c",bin_32_arr[31-(4*i)-j]);
+//                // printf("%c",bin_32_arr[31-(4*i)-j]);
             }
           }
          else if(hex_instr[i]== '1'){
@@ -898,14 +871,14 @@ void HexToBin()
           }
         i++;
     }
-        // printf("hex_instr in hextoBin after while loop=%s\n",hex_instr);
+        // // printf("hex_instr in hextoBin after while loop=%s\n",hex_instr);
 
-//    printf("TS");
-//    printf("%c is the [33] of %s",bin_32_arr[33],bin_32_arr);
+//    // printf("TS");
+//    // printf("%c is the [33] of %s",bin_32_arr[33],bin_32_arr);
         bin_32_arr[32]='\0';
         // *(bin_32_arr+31) = '\0';
 
-        // printf("HEX STRING 2nd func %s\n",hex_instr);
+        // // printf("HEX STRING 2nd func %s\n",hex_instr);
     
 
 //    char *b=bin_32_arr;
@@ -951,11 +924,11 @@ void BranchTargetSet_gen(){
 void MemOp_gen(){
     if(instType=='S'){
         MemOp=1;
-      // printf("YES HERE 1 \n");
+      // // printf("YES HERE 1 \n");
     }
     else if(!strncmp(opCode,"1100000",7)){
         MemOp=2;
-      // printf("YES HERE \n");
+      // // printf("YES HERE \n");
     }
     else {
         MemOp=0;
@@ -976,23 +949,23 @@ void ResultSelect_gen(){
     if(!strncmp(opCode, "1110110",7)){
         ResultSelect=1;
         RFWrite = 1;
-        //  printf("ResultSelect=1");
-        // printf("ResultSelect=1");
+        //  // printf("ResultSelect=1");
+        // // printf("ResultSelect=1");
     }
     else if(!strncmp(opCode, "1110100",7)){
         ResultSelect=2;
         RFWrite = 1;
-        // printf("ResultSelect=2");
+        // // printf("ResultSelect=2");
     }
     else if(!strncmp(opCode, "1111011",7)||!strncmp(opCode, "1110011",7)){
         ResultSelect=0;
         RFWrite = 1;
-        // printf("ResultSelect=3");
+        // // printf("ResultSelect=3");
     }
     else if(!strncmp(opCode, "1100000",7)){
         ResultSelect=3;
         RFWrite = 1;
-        // printf("ResultSelect=4");
+        // // printf("ResultSelect=4");
     }else if(!strncmp(opCode, "1100010",7)){ // store instruction - no write to RF added
         RFWrite = 0;
     }
@@ -1002,7 +975,7 @@ void ResultSelect_gen(){
     else{
         ResultSelect=4;
         
-        // printf("ResultSelect=5");
+        // // printf("ResultSelect=5");
         RFWrite = 1;
     }
 }
@@ -1013,7 +986,7 @@ void IsBranch_gen(){
       =1         => BranchTargetAddress
       =2         => pc+4(default)
     */
-  //  printf("operand1=%d operand2=%d", operand1, operand2);
+  //  // printf("operand1=%d operand2=%d", operand1, operand2);
     if(strncmp(opCode,"1110011",7)==0){
         isBranch=0;
     }
@@ -1021,7 +994,7 @@ void IsBranch_gen(){
       isBranch=2;
 
       // we already have funct3 for Branch so using that funct3
-      // printf("strncmp= %d", strncmp(funct3, "000", 3));
+      // // printf("strncmp= %d", strncmp(funct3, "000", 3));
 
       if(!strncmp(funct3, "000", 3)){
         // beq 
@@ -1060,137 +1033,137 @@ void IsBranch_gen(){
     }
 }
 void operation_gen(){
-  // printf("INSTRUCTION TYPE IS %c", instType);
+  // // printf("INSTRUCTION TYPE IS %c", instType);
 
     if(instType=='R'){
         if (ALUop == 1)
         {
-        printf("Instruction Type is ADD\n");
+        // printf("Instruction Type is ADD\n");
       }
       else if(ALUop==3){
-        printf("Instruction Type is AND\n");
+        // printf("Instruction Type is AND\n");
       }
       else if (ALUop == 4)
       {
-        printf("Instruction Type is OR\n");
+        // printf("Instruction Type is OR\n");
       }
       else if (ALUop == 2)
       {
-        printf("Instruction Type is SUB\n");
+        // printf("Instruction Type is SUB\n");
       }
       else if (ALUop == 7)
       {
-        printf("Instruction Type is XOR\n");
+        // printf("Instruction Type is XOR\n");
       }
       else if (ALUop == 5&&strncmp(funct3,"100",3)==0){
-        printf("Instruction Type is SLL\n");
+        // printf("Instruction Type is SLL\n");
       }
       else if (ALUop == 5 && strncmp(funct3, "010", 3) == 0)
       {
-        printf("Instruction Type is SLT\n");
+        // printf("Instruction Type is SLT\n");
       }
       else if (ALUop == 6 && strncmp(funct7, "0100000", 7) == 0)
       {
-        printf("Instruction Type is SRA\n");
+        // printf("Instruction Type is SRA\n");
       }
       else if (ALUop == 5 && strncmp(funct3, "0000000", 7) == 0)
       {
-        printf("Instruction Type is SRL\n");
+        // printf("Instruction Type is SRL\n");
       }
-      printf("first operand is R%d\n", Op1);
-      printf("Second Operand is R%d\n", Op2_final);
-      printf("Result Register is R%d\n", rd_decimal);
+      // printf("first operand is R%d\n", Op1);
+      // printf("Second Operand is R%d\n", Op2_final);
+      // printf("Result Register is R%d\n", rd_decimal);
     }
     else if(instType=='I'){
       if(ALUop==1&&strncmp(opCode,"1100100",7)==0){
-        printf("Instruction Type is ADDI\n");
+        // printf("Instruction Type is ADDI\n");
       }
       else if (ALUop == 3)
       {
-        printf("Instruction Type is ANDI\n");
+        // printf("Instruction Type is ANDI\n");
       }
       else if (ALUop == 4)
       {
-        printf("Instruction Type is ORI\n");
+        // printf("Instruction Type is ORI\n");
       }
       else if(ALUop==1&&strncmp(opCode,"1100000",7)==0&&strncmp(funct3,"000",3)==0){
-        printf("Instruction Type is LB\n");
+        // printf("Instruction Type is LB\n");
       }
       else if (ALUop == 1 && strncmp(opCode, "1100000", 7) == 0 && strncmp(funct3, "100", 3) == 0)
       {
-        printf("Instruction Type is LH\n");
+        // printf("Instruction Type is LH\n");
       }
       else if (ALUop == 1 && strncmp(opCode, "1100000", 7) == 0 && strncmp(funct3, "010", 3) == 0)
       {
-        printf("Instruction Type is LW\n");
+        // printf("Instruction Type is LW\n");
       }
       else if(strncmp(opCode,"1110011",7)==0){
-        printf("Instruction Type is JALR\n");
+        // printf("Instruction Type is JALR\n");
       }
-      printf("first operand is R%d\n", Op1);
-      printf("value of immediate is %d\n", imm_final_decimal);
-      printf("Result Register is R%d\n", rd_decimal);
+      // printf("first operand is R%d\n", Op1);
+      // printf("value of immediate is %d\n", imm_final_decimal);
+      // printf("Result Register is R%d\n", rd_decimal);
     }
     else if(instType=='S'){
       if(strncmp(funct3,"000",3)==0){
-        printf("Instruction Type is SB\n");
+        // printf("Instruction Type is SB\n");
       }
       else if (strncmp(funct3, "100", 3) == 0)
       {
-        printf("Instruction Type is SH\n");
+        // // printf("Instruction Type is SH\n");
       }
       else if (strncmp(funct3, "010", 3) == 0)
       {
-        printf("Instruction Type is SW\n");
+        // // printf("Instruction Type is SW\n");
       }
-      printf("first operand is R%d\n", Op1);
-      printf("value of immediate is %d\n", imm_final_decimal);
-      printf("Register from which Value to store R%d\n", BintoDec(rs2, 5));
+      // // printf("first operand is R%d\n", Op1);
+      // // printf("value of immediate is %d\n", imm_final_decimal);
+      // // printf("Register from which Value to store R%d\n", BintoDec(rs2, 5));
     }
     else if(instType=='B'){
       if(strncmp(funct3,"000",3)==0){
-        printf("Instruction Type is BEQ\n");
+        // // printf("Instruction Type is BEQ\n");
       }
       else if(strncmp(funct3,"100",3)==0){
-        printf("Instruction Type is BNE\n");
+        // // printf("Instruction Type is BNE\n");
       }
       else if (strncmp(funct3, "001", 3) == 0)
       {
-        printf("Instruction Type is BLT\n");
+        // // printf("Instruction Type is BLT\n");
       }
       else if (strncmp(funct3, "101", 3) == 0)
       {
-        printf("Instruction Type is BGE\n");
+        // // printf("Instruction Type is BGE\n");
       }
-      printf("first operand is R%d\n", Op1);
-      printf("Second Operand is R%d\n", Op2_final);
-      printf("value of immediate is %d\n", imm_final_decimal);
+      // // printf("first operand is R%d\n", Op1);
+      // // printf("Second Operand is R%d\n", Op2_final);
+      // // printf("value of immediate is %d\n", imm_final_decimal);
     }
     else if(instType=='J'){
-      printf("Instruction Type is JAL\n");
-      printf("value of immediate is %d\n", imm_final_decimal);
-      printf("Result Register is R%d\n", rd_decimal);
+      // // printf("Instruction Type is JAL\n");
+      // // printf("value of immediate is %d\n", imm_final_decimal);
+      // // printf("Result Register is R%d\n", rd_decimal);
     }
     else if(instType=='U'){
       if(strncmp(opCode,"1110110",7)==0){
-        printf("Instruction Type is LUI\n");
+        // // printf("Instruction Type is LUI\n");
       }
       else if (strncmp(opCode, "1110100", 7) == 0)
       {
-        printf("Instruction Type is AUIPC\n");
+        // // printf("Instruction Type is AUIPC\n");
       }
-      printf("value of immediate is %d\n", imm_final_decimal);
-      printf("Result Register is R%d\n", rd_decimal);
+      // // printf("value of immediate is %d\n", imm_final_decimal);
+      // // printf("Result Register is R%d\n", rd_decimal);
     }
 
 }
 // void memprint_gen(){
-//   printf("MEMORY:");
+//   // printf("MEMORY:");
 //   if(){
-//     printf("There is a memory operation\n");
+//     // printf("There is a memory operation\n");
 //   }
 //   else {
-//     printf("There is no memory Operation\n");
+//     // printf("There is no memory Operation\n");
 //   }
 // }
 // Decode functions ends here

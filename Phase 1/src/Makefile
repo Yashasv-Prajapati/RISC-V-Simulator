@@ -1,6 +1,6 @@
 
 all:
-	gcc myRISCVSim.c main.c -I ../include -o ../../GUI/server/myRISCVSim 
+	gcc myRISCVSim.c main.c -I ../include -o ../../GUI/Server/myRISCVSim 
 	gcc myRISCVSim.c main.c -I ../include -o ../bin/myRISCVSim
 
 clean:
