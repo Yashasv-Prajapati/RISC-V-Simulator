@@ -31,7 +31,7 @@ app.post('/api/load', (req, res) => {
         let success = true;
         // spawn new child process to run the executable
         try{
-            const child = spawn('myRISCVSim', ['./test.mem']);
+            const child = spawn('./myRISCVSim', ['./test.mem']);
 
 
             const resultData = "Data Loaded";
