@@ -7,11 +7,13 @@ function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, tex
     const [runbtnClicked, setRunbtnClicked] = useState(false); // run button clicked
     const [prevNum, setPrevNum] = useState(0); // previous number
 
+    const backendURL = 'https://riscv-backend.onrender.com';
+
     function Run(){
 
         setRunbtnClicked(true);
         setCheckRun(true);
-        fetch("http://localhost:5000/api/run", {
+        fetch(backendURL+"/api/run", {
             method: 'GET',
             headers: {
             'Content-Type': 'application/json'
@@ -42,7 +44,7 @@ function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, tex
         }
 
         setIsEditor(false);
-        fetch("http://localhost:5000/api/load", {
+        fetch(backendURL+"/api/load", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -78,7 +80,7 @@ function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, tex
         console.log("StepNum is", stepNum);
         setRunbtnClicked(true);
 
-        fetch("http://localhost:5000/api/step", {
+        fetch(backendURL+"/api/step", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -119,7 +121,7 @@ function Simulator({instructions, setCheckRun, setRegisterData, setIsEditor, tex
         console.log("Prev is ", prevNum);
 
         const prev = prevNum-1<=0 ? 0:prevNum-1; // check for negative values
-        fetch("http://localhost:5000/api/prev", {
+        fetch(backendURL+"/api/prev", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

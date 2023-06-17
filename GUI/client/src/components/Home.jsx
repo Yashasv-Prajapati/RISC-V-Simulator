@@ -18,6 +18,7 @@ function Home() {
 
     const sampleInput = "Sample Input \n0x0 0x00900093 \n0x4 0x00908113 \n0x8 0x002081b3 \n0xc 0x00218233 \n0x10 0x05a08293 \n0x14 0x05508313 \n0x18 0x05b08393 \n0x1c 0x00820613 \n0x20 0x04108a13 \n0x24 0x007a0c93 \n0x2c 0xfffffffb";
 
+    const backendURL = 'https://riscv-backend.onrender.com';
 
       function LoadData(){
         if(textData===null || textData===undefined || textData===''){
@@ -25,7 +26,7 @@ function Home() {
         }
     
         setIsEditor(false);
-        fetch("http://localhost:5000/api/load", {
+        fetch(backendURL+"/api/load", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -63,7 +64,7 @@ function Home() {
           return;
         }
     
-        fetch('http://localhost:5000/api/memory',{
+        fetch(backendURL+'/api/memory',{
           method:'post',
           headers:{
             'Content-Type':'application/json'
@@ -86,7 +87,7 @@ function Home() {
           return;
         }
     
-        fetch('http://localhost:5000/api/memory',{
+        fetch(backendURL+'/api/memory',{
           method:'post',
           headers:{
             'Content-Type':'application/json'
